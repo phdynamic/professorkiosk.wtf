@@ -121,7 +121,6 @@ h3.sub { font-size: 16px; font-weight: 800; margin: 18px 0 4px; }
       <li><b>Lock</b> a card to keep it while the others re-roll around it.</li>
       <li><b>My topics:</b> add your own, and they join the mix.</li>
       <li><b>Favorite</b> a result to keep it. History keeps your last eight spins.</li>
-      <li><b>Send to Joke-Web Maker</b> starts a web with your mashup as the subject and each topic as a branch.</li>
     </ul>
 
     <h3>Good to know</h3>
@@ -146,7 +145,6 @@ h3.sub { font-size: 16px; font-weight: 800; margin: 18px 0 4px; }
       <div class="actions">
         <button class="k-btn primary spin" id="spin" type="button">🎲 Spin <span class="sr">(or press Space)</span></button>
         <button class="k-btn" id="copy" type="button">Copy</button>
-        <a class="k-btn" id="send" href="/jokeweb" >Send to Joke-Web Maker</a>
         <button class="k-btn" id="fav" type="button" aria-pressed="false">☆ Favorite</button>
       </div>
       <p class="status" id="status" role="status" aria-live="polite"></p>
@@ -343,13 +341,6 @@ function renderCards() {
   });
   var any = S.cards.length > 0;
   $('copy').disabled = !any; $('fav').disabled = !any;
-  var link = '/jokeweb';
-  if (any) {
-    link += '#subject=' + encodeURIComponent(resultText(S.cards).slice(0, MAX_TEXT));
-    if (S.cards.length > 1) link += '&branches=' + encodeURIComponent(S.cards.map(function (c) { return c.text; }).join('|'));
-  }
-  $('send').setAttribute('href', link);
-  $('send').setAttribute('aria-disabled', String(!any));
   var isFav = any && S.favs.some(function (f) { return key(f.cards) === key(S.cards); });
   $('fav').setAttribute('aria-pressed', String(isFav)); $('fav').textContent = isFav ? '★ Favorited' : '☆ Favorite';
 }
@@ -442,7 +433,6 @@ $('fav').onclick = function () {
   if (at >= 0) S.favs.splice(at, 1); else S.favs.unshift({ cards: S.cards.map(function (c) { return { text: c.text, cat: c.cat }; }) });
   S.favs = S.favs.slice(0, MAX_FAV); renderLists(); renderCards(); save();
 };
-$('send').addEventListener('click', function (e) { if (!S.cards.length) e.preventDefault(); });
 document.addEventListener('keydown', function (e) {
   if (e.key !== ' ' || e.ctrlKey || e.metaKey || e.altKey) return;
   var t = e.target, tag = t && t.tagName;

@@ -32,7 +32,6 @@ Source: the Help text in `public/mashup.html`. The automated suite covers these 
 - Spicy and My topics switches. How: turn Spicy off and spin about 30 times; add a topic of your own, then turn "Include my topics" off. Expect: no topic marked with `*` in `public/topics.js` appears; your topic shows up sometimes when on, never when off.
 - Lock. How: lock one card and spin. Expect: the locked card stays, the others change.
 - Favorite and History. How: spin 10 times, star one result, reload the page. Expect: History shows only the last 8; the favorite is still listed after the reload.
-- Send to Joke-Web Maker. How: click it with a Joke-Web already started. Expect: a new web whose subject is the mashup and whose branches are the topics, and the earlier web one tap away ("Swap with previous web").
 - Saved on this device only. How: use the browser's Network tab while spinning; open the page in a second browser. Expect: no requests except the footer avatar lookup to Bluesky; your topics, history and favorites do not appear in the second browser.
 
 ## Joke-Web Maker: claims in its Help dialog (live site, real browser, desktop and phone)
@@ -48,7 +47,6 @@ Source: the Help text in `public/jokeweb.html`. The automated suite covers these
 - Zoom. How: +, minus and Fit. Expect: Fit always shows the whole web, even three levels deep on a phone.
 - Crowding. How: build about 40 bubbles. Expect: still usable with zoom, as the Help says ("fine, but crowded").
 - Keeping your work. How: make a web and a draft, reload; use Save image, Copy web, Copy joke ideas; tap Start over once, then again. Expect: web and draft survive; a PNG downloads; the outline and the ideas copy; the first tap only asks, the second clears; nothing is sent anywhere except the footer avatar lookup.
-- Send from Mashup. How: send a mashup while a web exists. Expect: a new web starts at once, and "Swap with previous web" brings the old one back (also checked under Mashup).
 - Help itself. How: open Help on a phone. Expect: it fits the screen and scrolls inside; Esc and the close button work.
 
 ## Skeet Receipt: claims in its Help dialog (live site, real browser, desktop and phone)

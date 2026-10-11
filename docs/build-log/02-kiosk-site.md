@@ -42,3 +42,8 @@
 ## 2026-10-10 · remaining Help fact checks filed
 - changed: `TESTING-OWED.md` now has by-hand checks for the Help dialogs of Top Skeets, the Tracer and the Imagine Flagons Saga (all six tool pages covered)
 - live-tested: no
+
+## 2026-10-11 · Send to Joke-Web Maker removed
+- built: removed the button from `mashup.html` and its Help and hub text; removed the incoming-topic banner, spare-web slot and swap button from `jokeweb.html`; README, `TESTING-OWED.md` and the mashup suite (F section) updated
+- note: old `/jokeweb#subject=...` links are now ignored
+- live-tested: no

@@ -86,25 +86,11 @@ const many = (page, set, n = 80) => page.evaluate(([set, n]) => { const S = wind
   await page.locator('#favlist li button[aria-label="Remove favorite"]').click();
   ok('E8 a favorite can be removed', await page.locator('#favlist li b').first().innerText() !== favText);
 
-  // F. send to the Joke-Web Maker
-  await page.evaluate(() => { const S = window.__mashup.state(); S.weird = 0; });
-  await page.click('#spin');
-  const cs = await cards(page); const href = await page.getAttribute('#send', 'href');
-  ok('F1 the send link carries the subject and branches in the fragment', href.startsWith('/jokeweb#subject=') && decodeURIComponent(href.split('&branches=')[1]) === cs.map(c => c.text).join('|'), href.slice(0, 80));
-  await page.click('#send'); await page.waitForSelector('#frame .nd');
-  const jw = await page.evaluate(() => ({ n: document.querySelectorAll('#frame .nd').length, hash: location.hash, step: document.querySelector('[aria-current="step"]').textContent }));
-  ok('F2 the Joke-Web Maker starts a web from it, step 3, address cleaned', jw.n === 1 + cs.length && jw.hash === '' && /Break it down/.test(jw.step), JSON.stringify(jw));
-  // with an existing web: banner, then keep or replace
-  const q = await mk(browser, { init: ['pk-jokeweb-v1', JSON.stringify({ mode: 'guided', step: 2, sel: 0, nextId: 2, nodes: [{ id: 0, t: 'Mine', p: null, x: null, y: null, jokes: [] }, { id: 1, t: 'Kept', p: 0, x: null, y: null, jokes: [] }], draft: 'keep this draft' })] });
-  await q.goto('http://localhost:3988/jokeweb#subject=Cheese%20%C3%97%20Tax&branches=Cheese%7CTax');
-  ok('F3 sending with a web already in progress starts the new web at once and says so', await q.locator('#incoming').isVisible() && /New web started/.test(await q.locator('#inc-title').innerText()) && (await q.locator('#frame .nd text').allTextContents()).includes('Cheese × Tax'));
-  const sent = await q.evaluate(() => ({ n: document.querySelectorAll('#frame .nd').length, draft: document.getElementById('draft').value, prev: !!document.getElementById('prev') }));
-  ok('F4 the new web has the subject plus a branch per topic, the draft stays, and a swap button is offered', sent.n === 3 && sent.draft === 'keep this draft' && sent.prev, JSON.stringify(sent));
-  await q.click('#inc-new');
-  const back = await q.evaluate(() => ({ t: [...document.querySelectorAll('#frame .nd text')].map(x => x.textContent), draft: document.getElementById('draft').value }));
-  ok('F5 switching back restores the web I had, and I can swap again', back.t.join() === 'Mine,Kept' && back.draft === 'keep this draft' && await q.locator('#prev').count() === 1, JSON.stringify(back));
-  await q.reload(); ok('F6 the swap survives a reload', await q.locator('#prev').count() === 1 && await q.locator('#frame .nd').count() === 2);
-  await q.close();
+  // F. there is no send button any more
+  ok('F1 the Mashup Machine has no Send to Joke-Web Maker button', await page.locator('#send').count() === 0 && !/Send to Joke-Web/i.test(await page.locator('body').innerText()));
+  const jwq = await mk(browser); await jwq.goto('http://localhost:3988/jokeweb#subject=Cheese&branches=Tax');
+  ok('F2 the Joke-Web Maker ignores a leftover #subject link and starts empty', await jwq.locator('#incoming').count() === 0 && await jwq.locator('#frame .nd').count() <= 1);
+  await jwq.close();
 
   // G. animation, phone, dark, hub
   const an = await mk(browser, { reduce: false }); await an.goto(BASE);

@@ -40,7 +40,13 @@
 - why: "edit this file and the page restyles itself" (file header, README)
 - source: 4306871
 
-### 2026-10-10 · Sending a topic from the Mashup Machine starts a new Joke-Web at once and keeps the previous web in one spare slot · active
+### 2026-10-10 · Sending a topic from the Mashup Machine starts a new Joke-Web at once and keeps the previous web in one spare slot · superseded
 - what: the old web can be swapped back; the draft post is kept
 - why: so nothing is ever lost (comment in `public/jokeweb.html`)
 - source: 6d1461e
+> Superseded 2026-10-11: the Send button was removed (see the next entry).
+
+### 2026-10-11 · No "Send to Joke-Web Maker" button on the Mashup Machine · active
+- what: the button, the `#subject=...&branches=...` link handling and the spare-web slot ("Swap with previous web") were removed from both pages
+- why: two or three topics don't make sense as one central concept (developer's statement); a different way to carry mashups over is open
+- source: developer request, 2026-10-11

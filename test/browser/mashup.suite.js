@@ -21,7 +21,7 @@ const many = (page, set, n = 80) => page.evaluate(([set, n]) => { const S = wind
 
   // A. data
   const d = await page.evaluate(() => { const D = window.__mashup.data, names = D.POOL.map(t => t.text.toLowerCase()); return { n: D.POOL.length, cats: Object.keys(D.CATS).length - 1, dup: names.length - new Set(names).size, long: D.POOL.filter(t => t.text.length > 40 || !t.text).length, nocat: D.POOL.filter(t => !D.CATS[t.cat]).length, spicy: D.POOL.filter(t => t.spicy).length, oddBad: Object.keys(D.ODD).filter(k => !D.CATS[k]).length, per: Object.keys(D.CATS).filter(k => k !== 'yours').map(k => D.POOL.filter(t => t.cat === k).length) }; });
-  ok('A1 about 600 topics in 20 categories', d.n >= 580 && d.n <= 620 && d.cats === 20, JSON.stringify([d.n, d.cats]));
+  ok('A1 about 2,000 topics in 32 categories', d.n >= 1950 && d.n <= 2100 && d.cats === 32, JSON.stringify([d.n, d.cats]));
   ok('A2 no duplicates, empties, over-long topics, or unknown categories', d.dup === 0 && d.long === 0 && d.nocat === 0 && d.oddBad === 0, JSON.stringify(d));
   ok('A3 every category has at least 25 topics, and some are spicy', d.per.every(x => x >= 25) && d.spicy >= 15, d.spicy + ' spicy');
 

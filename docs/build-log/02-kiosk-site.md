@@ -47,3 +47,9 @@
 - built: removed the button from `mashup.html` and its Help and hub text; removed the incoming-topic banner, spare-web slot and swap button from `jokeweb.html`; README, `TESTING-OWED.md` and the mashup suite (F section) updated
 - note: old `/jokeweb#subject=...` links are now ignored
 - live-tested: no
+
+## 2026-10-11 · Mashup topics grown to about 2,000
+- built: `topics.js` went from 600 topics in 20 categories to 2,045 in 32; 12 new categories (Science & space, Spooky & monsters, Sports & games, Cars & transit, Family & kids, Books & art, Small town, Jobs & trades, Restaurants & cafes, Video games, Superheroes & sci-fi, Awkward moments), each placed on the map, plus 16 new odd pairings
+- built: Distance spread in `mashup.html` narrowed (`sigma` 0.08*dmax+0.25 to 0.06*dmax+0.2) so Distance 0 still stays in one category on the denser map
+- note: topics are mine, unreviewed by the developer; the list should be read through and cut
+- live-tested: no

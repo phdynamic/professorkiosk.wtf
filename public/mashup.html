@@ -288,7 +288,7 @@ function partner(a, used, pool) {
     var p = clamp((S.weird - 30) / 70, 0, 1) * 0.85;
     if (rand() < p) { var odd = left.filter(function (t) { return ODD[a.cat][t.cat]; }); if (odd.length) return odd[Math.floor(rand() * odd.length)]; }
   }
-  var dmax = reach(a.cat, left), target = S.dist / 100 * dmax, sigma = 0.08 * dmax + 0.25;
+  var dmax = reach(a.cat, left), target = S.dist / 100 * dmax, sigma = 0.06 * dmax + 0.2;
   return wpick(left, function (t) { return Math.exp(-Math.pow((cdist(a.cat, t.cat) - target) / sigma, 2)) + 0.0005; });
 }
 // a third topic, far from both

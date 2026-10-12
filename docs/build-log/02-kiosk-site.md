@@ -53,3 +53,10 @@
 - built: Distance spread in `mashup.html` narrowed (`sigma` 0.08*dmax+0.25 to 0.06*dmax+0.2) so Distance 0 still stays in one category on the denser map
 - note: topics are mine, unreviewed by the developer; the list should be read through and cut
 - live-tested: no
+
+## 2026-10-12 · Mini web option in the Joke-Web Maker
+- built: Full web / Mini web switch (`#size-full`, `#size-mini`) in `jokeweb.html`; Mini uses the Sub-subjects wording, shows the word prompts in step 2, caps new bubbles at depth 2 (guided and free), adds the check-every-association tip in step 4, and has a Help section
+- built: `size` saved in `pk-jokeweb-v1`; older saved webs load as Full
+- built: jokeweb suite section N (13 checks)
+- note: double joke-webs not built
+- live-tested: no

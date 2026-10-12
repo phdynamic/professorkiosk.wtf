@@ -50,3 +50,8 @@
 - what: the button, the `#subject=...&branches=...` link handling and the spare-web slot ("Swap with previous web") were removed from both pages
 - why: two or three topics don't make sense as one central concept (developer's statement); a different way to carry mashups over is open
 - source: developer request, 2026-10-11
+
+### 2026-10-12 · Mini joke-web is a Full web / Mini web switch inside the Joke-Web Maker · active
+- what: `size` (`full` or `mini`) is saved with the web; Mini keeps the four steps but renames step 2 Sub-subjects (with the word prompts), asks for one specific angle, and stops adding at two levels out; Start over keeps the size
+- why: the developer asked for the book's mini joke-web (Exercise 5) as an option, unsure how to integrate it, suggested a toggle; double joke-webs were deliberately not built yet
+- source: developer request, 2026-10-12

@@ -230,6 +230,40 @@ const labels = page => page.evaluate(() => [...document.querySelectorAll('#frame
     ok('L3 the fading only belongs to the last step', await page.locator('#frame .faded').count() === 0);
     await page.close();
   }
+  // N. mini web
+  {
+    const { page } = await mk(browser); await page.goto(BASE);
+    ok('N1 a Full web / Mini web switch sits under the mode switch, Full selected', await page.getAttribute('#size-full', 'aria-pressed') === 'true' && await page.getAttribute('#size-mini', 'aria-pressed') === 'false');
+    await page.click('#size-mini');
+    ok('N2 Mini web asks for ONE specific angle, with examples', /ONE specific angle/.test(await page.innerText('#controls')) && /seat belts/.test(await page.getAttribute('#subject', 'placeholder')));
+    await page.fill('#subject', 'seat belts'); await page.click('#subject-go');
+    ok('N3 step 2 is called Sub-subjects and shows the word prompts', /2\. Sub-subjects/.test(await page.innerText('.steps')) && await page.locator('details.pr').count() === 1);
+    for (const w of ['buckle', 'click it', 'safety']) { await page.fill('#sub-input', w); await page.press('#sub-input', 'Enter'); }
+    await page.click('#to3');
+    ok('N4 step 3 covers the subject and offers one more level', /Put your hand over/.test(await page.innerText('#controls')) && await page.locator('#kid-input').count() === 1);
+    await page.fill('#kid-input', 'tongue'); await page.press('#kid-input', 'Enter');
+    ok('N5 an association is added under the sub-subject (level 2)', await page.evaluate(() => window.__jokeweb.state().nodes.length) === 5);
+    const deep = await page.evaluate(() => { const S = window.__jokeweb.state(); return S.nodes.find(n => n.t === 'tongue').id; });
+    await page.locator('#frame .nd[data-id="' + deep + '"]').click();
+    ok('N6 at level 2 the add box is replaced by a stop note, and nothing can be added', await page.locator('#kid-input').count() === 0 && await page.locator('#mini-stop').count() === 1);
+    const grown = await page.evaluate(() => { const S = window.__jokeweb.state(); return S.nodes.length; });
+    ok('N7 the web still has 5 bubbles', grown === 5);
+    await page.click('[data-step="4"]');
+    ok('N8 apply-it-back adds the check-every-association tip', /biggest mistake/.test(await page.innerText('#controls')));
+    await page.reload();
+    ok('N9 the Mini choice survives a reload', await page.getAttribute('#size-mini', 'aria-pressed') === 'true');
+    await page.click('#reset'); await page.click('#reset');
+    ok('N10 Start over keeps the Mini choice', await page.getAttribute('#size-mini', 'aria-pressed') === 'true' && await page.evaluate(() => window.__jokeweb.state().nodes.length) === 1);
+    await page.click('#mode-free'); await page.fill('#free-root', 'ladders'); await page.click('#free-root-go');
+    await page.fill('#free-add', 'rungs'); await page.press('#free-add', 'Enter');
+    await page.fill('#free-add', 'wobble'); await page.press('#free-add', 'Enter');
+    ok('N11 free board: the cap applies at level 2', await page.locator('#free-add').count() === 0 && await page.locator('#mini-stop').count() === 1 && await page.evaluate(() => window.__jokeweb.state().nodes.length) === 3);
+    await page.click('#size-full');
+    ok('N12 switching back to Full web lifts the cap', await page.locator('#free-add').count() === 1 && /as many levels/.test(await page.innerText('#size-hint')));
+    await page.click('#helpBtn');
+    ok('N13 Help explains the Mini web', /Mini web/.test(await page.innerText('#help')));
+    await page.close();
+  }
   // M. help dialog
   {
     const { page } = await mk(browser); await page.goto(BASE);

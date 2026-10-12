@@ -76,7 +76,7 @@ Feeds whose accounts have been deleted, deactivated, or suspended are pruned aut
 
 ## Joke-Web Maker
 
-`/jokeweb` is a browser-only page (no server calls, no sign-in) for free-associating ideas for a post: a guided mode (subject, branches, break it down, apply it back) and a free board where bubbles can be dragged. It has a draft box with a 300-character counter, saves the web as a PNG, copies it as an outline, and remembers your work in the browser (`localStorage`, key `pk-jokeweb-v1`).
+`/jokeweb` is a browser-only page (no server calls, no sign-in) for free-associating ideas for a post: a guided mode (subject, branches, break it down, apply it back) and a free board where bubbles can be dragged. A Full web / Mini web switch picks the size: Mini is the book's mini joke-web for one specific angle, two levels out (sub-subjects, then associations off each), with the word prompts in step 2. It has a draft box with a 300-character counter, saves the web as a PNG, copies it as an outline, and remembers your work in the browser (`localStorage`, key `pk-jokeweb-v1`).
 
 ## Mashup Machine
 

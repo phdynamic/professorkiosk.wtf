@@ -41,6 +41,8 @@ main.k-main { padding: 32px 0 0; }
 .seg { display: inline-flex; border: 2px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--surface); }
 .seg button { border: 0; background: none; padding: 8px 14px; min-height: 40px; font-weight: 700; font-size: 14px; cursor: pointer; color: var(--ink); }
 .seg button[aria-pressed="true"] { background: var(--navy); color: var(--yellow); }
+.sizerow { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 0 0 12px; }
+.sizerow .hint { margin: 0; flex: 1 1 200px; }
 .toprow { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .steps { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 12px; padding: 0; list-style: none; }
 .steps button { min-height: 44px; border: 2px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); padding: 0 12px; font: 700 13px var(--font); cursor: pointer; }
@@ -132,6 +134,9 @@ html[data-theme="dark"] .dcount.over { color: #fca5a5; }
       <li><b>Apply it back.</b> The subject returns. Only it and the idea you pick stand out. Ask how that idea changes what the subject means, and save the joke ideas that come out.</li>
     </ol>
 
+    <h3>Mini web</h3>
+    <p>Short on time? Switch to Mini web (under the mode switch). It is for one specific angle, such as seat belts rather than cars, or sub-tropical fruit rather than food, and it takes about 5 to 15 minutes. You skip the general first level and go only two levels out: sub-subjects off the subject, then associations off each of those. Cover the subject and free-associate on the sub-subjects, then apply the new meanings back to the subject. Check every association, because the biggest mistake is deciding up front that there is no joke. The size is remembered with your web, and Start over keeps it.</p>
+
     <h3>Tips for the best results</h3>
     <ul>
       <li><b>Don't judge while you branch.</b> Silly, wrong and weird all count. You can throw things away later.</li>
@@ -217,7 +222,7 @@ var MAX_NODES = 150, MAX_TEXT = 40, MAX_JOKE = 300, MAX_JOKES = 100, LIMIT = 300
 var INK = '#1d1b4f', PAPER = '#fffdf6', TINT = '#fff0b0';
 var PAL = ['#e0523f', '#1fa88f', '#7d5fe0', '#3a8fd6', '#e0609f', '#d4a017'];
 var FONT_STACK = 'Caveat, "Comic Sans MS", cursive';
-var STEPS = ['Subject', 'Branches', 'Break it down', 'Apply it back'];
+var STEPS = ['Subject', 'Branches', 'Break it down', 'Apply it back'], MINI_STEPS = ['Subject', 'Sub-subjects', 'Break it down', 'Apply it back'], MINI_DEPTH = 2;
 var PROMPTS = [
   ['Split it up', 'Break the word or phrase into pieces. Can any piece be swapped for something else?'],
   ['Pun on it', 'Does all or half of it sound like another word or phrase?'],
@@ -245,7 +250,7 @@ applyThemeLabel();
 
 // ---------- state ----------
 var S = fresh();
-function fresh() { return { mode: 'guided', step: 1, sel: 0, nextId: 1, nodes: [{ id: 0, t: '', p: null, x: null, y: null, jokes: [] }], draft: '' }; }
+function fresh() { return { mode: 'guided', size: 'full', step: 1, sel: 0, nextId: 1, nodes: [{ id: 0, t: '', p: null, x: null, y: null, jokes: [] }], draft: '' }; }
 function clean(s, n) { return String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, n); }
 function load() {
   var raw = null;
@@ -270,6 +275,7 @@ function parseState(raw) {
     var s = fresh();
     s.nodes = nodes; s.nextId = nodes.reduce(function (m, n) { return Math.max(m, n.id); }, 0) + 1;
     s.mode = d.mode === 'free' ? 'free' : 'guided';
+    s.size = d.size === 'mini' ? 'mini' : 'full';
     s.step = Math.min(4, Math.max(1, parseInt(d.step, 10) || 1));
     s.sel = ids[d.sel] ? d.sel : 0;
     s.draft = String(d.draft || '').slice(0, 2000);
@@ -286,11 +292,15 @@ window.addEventListener('pagehide', function () { try { localStorage.setItem(KEY
 // ---------- tree helpers ----------
 function byId(id) { for (var i = 0; i < S.nodes.length; i++) if (S.nodes[i].id === id) return S.nodes[i]; return null; }
 function kidsOf(id) { return S.nodes.filter(function (n) { return n.p === id; }); }
+function isMini() { return S.size === 'mini'; }
 function depthOf(n) { var d = 0; while (n && n.p !== null) { n = byId(n.p); d++; } return d; }
+// A mini joke-web stops two levels out from the subject.
+function canGrow(n) { return !isMini() || depthOf(n) < MINI_DEPTH; }
 function pathOf(n) { var out = []; while (n) { out.push(n.t || '…'); n = n.p === null ? null : byId(n.p); } return out.reverse(); }
 function addNode(parent, text) {
   var t = clean(text, MAX_TEXT);
   if (!t || S.nodes.length >= MAX_NODES) return null;
+  if (parent !== null && byId(parent) && !canGrow(byId(parent))) return null;
   var n = { id: S.nextId++, t: t, p: parent, x: null, y: null, jokes: [] };
   S.nodes.push(n); return n;
 }
@@ -533,18 +543,28 @@ function renderControls() {
     h('div', { class: 'tools' },
       S.mode === 'free' ? h('button', { class: 'k-btn', type: 'button', id: 'tidy', text: 'Tidy up', title: 'Put every bubble back in its automatic place', on: { click: function () { S.nodes.forEach(function (n) { n.x = null; n.y = null; }); clearHold(); render(); save(); } } }) : null, S.mode === 'free' ? ' ' : null,
       h('button', { class: 'k-btn' + (confirmReset ? ' coral' : ''), type: 'button', id: 'reset', text: confirmReset ? 'Really start over?' : 'Start over', on: { click: startOver } }))));
+  c.appendChild(h('div', { class: 'sizerow' },
+    h('div', { class: 'seg', role: 'group', 'aria-label': 'Size of web' },
+      h('button', { type: 'button', id: 'size-full', 'aria-pressed': String(!isMini()), text: 'Full web', on: { click: function () { S.size = 'full'; render(); save(); } } }),
+      h('button', { type: 'button', id: 'size-mini', 'aria-pressed': String(isMini()), text: 'Mini web', on: { click: function () { S.size = 'mini'; render(); save(); } } })),
+    h('p', { class: 'hint', id: 'size-hint', text: isMini() ? 'One specific angle on a subject, two levels out. About 5 to 15 minutes.' : 'A general subject, as many levels out as you like.' })));
   if (guided) renderGuided(c); else renderFree(c);
   renderIdeas(c);
   if (focusId) { var f = $(focusId); if (f) f.focus({ preventScroll: true }); focusId = null; }
 }
 function startOver() {
   if (!confirmReset) { confirmReset = true; clearTimeout(resetTimer); resetTimer = setTimeout(function () { confirmReset = false; renderControls(); }, 4000); renderControls(); return; }
-  clearTimeout(resetTimer); confirmReset = false; S = fresh(); userZoomed = false; clearHold(); render(); save();
+  clearTimeout(resetTimer); confirmReset = false; var size = S.size; S = fresh(); S.size = size; userZoomed = false; clearHold(); render(); save();
   $('draft').value = ''; updateDraft();
+}
+function waysBlock() {
+  var dt = h('details', { class: 'pr', open: 'open' }, h('summary', { text: 'Ways to think about words' }));
+  var ul = h('ul', { class: 'prompts' }); PROMPTS.forEach(function (p) { ul.appendChild(h('li', {}, h('b', { text: p[0] + '. ' }), p[1])); });
+  dt.appendChild(ul); return dt;
 }
 function renderGuided(c) {
   var ol = h('ol', { class: 'steps', 'aria-label': 'Steps' });
-  STEPS.forEach(function (name, i) {
+  (isMini() ? MINI_STEPS : STEPS).forEach(function (name, i) {
     var b = h('button', { type: 'button', 'data-step': i + 1, text: (i + 1) + '. ' + name, on: { click: function () { setStep(i + 1); } } });
     if (S.step === i + 1) b.setAttribute('aria-current', 'step');
     if (i > 0 && !S.nodes[0].t) b.disabled = true;
@@ -554,41 +574,43 @@ function renderGuided(c) {
   var root = S.nodes[0], sel = byId(S.sel) || root;
   if (S.step === 1) {
     c.appendChild(h('h2', { text: 'What is it about?' }));
-    c.appendChild(h('p', { class: 'hint', text: 'Pick the general subject: a thing, a person, a situation. It goes in the middle.' }));
+    c.appendChild(h('p', { class: 'hint', text: isMini() ? 'Pick ONE specific angle or aspect. If your subject is general, break it down first: not cars, but seat belts; not food, but sub-tropical fruit. It goes in the middle.' : 'Pick the general subject: a thing, a person, a situation. It goes in the middle.' }));
     var cur = root.t;
-    var inp = h('input', { type: 'text', id: 'subject', maxlength: MAX_TEXT, placeholder: 'e.g. strikes, cheese, mondays', autocomplete: 'off', 'aria-label': 'General subject' });
+    var inp = h('input', { type: 'text', id: 'subject', maxlength: MAX_TEXT, placeholder: isMini() ? 'e.g. seat belts, sub-tropical fruit' : 'e.g. strikes, cheese, mondays', autocomplete: 'off', 'aria-label': isMini() ? 'Specific subject' : 'General subject' });
     inp.value = cur;
     function go() { var v = clean(inp.value, MAX_TEXT); if (!v) { inp.focus(); return; } root.t = v; S.step = 2; focusId = 'sub-input'; render(); save(); }
     inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); go(); } });
     c.appendChild(h('div', { class: 'row' }, inp, h('button', { class: 'k-btn primary', type: 'button', id: 'subject-go', on: { click: go } }, cur ? 'Update and continue ' : 'Start the web ', h('span', { class: 'arr', 'aria-hidden': 'true', text: '→' }))));
     if (!cur) focusId = 'subject';
   } else if (S.step === 2) {
-    c.appendChild(h('h2', { text: 'Branches' }));
-    c.appendChild(h('p', { class: 'hint' }, h('b', { text: 'Think big things, small things and obscure things ' }), 'that go with “' + root.t + '”. These are your main branches; three to eight is plenty. You will go further out from each one in the next step.'));
-    c.appendChild(inputRow('sub-input', 'Add a main branch…', 'Add', function (v) { addNode(0, v); focusId = 'sub-input'; render(); save(); }));
+    c.appendChild(h('h2', { text: isMini() ? 'Sub-subjects' : 'Branches' }));
+    if (isMini()) c.appendChild(h('p', { class: 'hint' }, h('b', { text: 'See “' + root.t + '” from as many different angles as you can. ' }), 'These are your sub-subjects. Use the word prompts below to break up any words and phrases. You will go one level further out from each in the next step.'));
+    else c.appendChild(h('p', { class: 'hint' }, h('b', { text: 'Think big things, small things and obscure things ' }), 'that go with “' + root.t + '”. These are your main branches; three to eight is plenty. You will go further out from each one in the next step.'));
+    c.appendChild(inputRow('sub-input', isMini() ? 'Add a sub-subject…' : 'Add a main branch…', 'Add', function (v) { addNode(0, v); focusId = 'sub-input'; render(); save(); }));
     c.appendChild(chipList(kidsOf(0), { remove: true, mark: false, pick: function (n) { S.sel = n.id; setStep(3); } }));
-    c.appendChild(h('div', { class: 'next' }, h('button', { class: 'k-btn primary', type: 'button', id: 'to3', text: 'Next: forget the subject →', disabled: kidsOf(0).length ? null : 'disabled', on: { click: function () { setStep(3); } } })));
+    if (isMini()) c.appendChild(waysBlock());
+    c.appendChild(h('div', { class: 'next' }, h('button', { class: 'k-btn primary', type: 'button', id: 'to3', text: isMini() ? 'Next: cover the subject →' : 'Next: forget the subject →', disabled: kidsOf(0).length ? null : 'disabled', on: { click: function () { setStep(3); } } })));
   } else if (S.step === 3) {
     var first = kidsOf(0);
     c.appendChild(h('h2', { text: 'Break it down' }));
-    c.appendChild(h('p', { class: 'hint' }, h('b', { text: 'Forget “' + root.t + '”.' }), ' Pick a main branch and think about it in its own right: what does it make you think of? Go as far out as you like, and add new main branches whenever one occurs to you.'));
+    if (isMini()) c.appendChild(h('p', { class: 'hint' }, h('b', { text: 'Put your hand over “' + root.t + '”.' }), ' Pick a sub-subject and free-associate on it in its own right. One more level out is all a mini web needs.'));
+    else c.appendChild(h('p', { class: 'hint' }, h('b', { text: 'Forget “' + root.t + '”.' }), ' Pick a main branch and think about it in its own right: what does it make you think of? Go as far out as you like, and add new main branches whenever one occurs to you.'));
     if (first.length) c.appendChild(chipList(first, { mark: true }));
     if (sel.id !== 0) {
       c.appendChild(crumbs('Working on: ', sel, true));
-      c.appendChild(inputRow('kid-input', 'Add an association to “' + sel.t + '”…', 'Add', function (v) { addNode(sel.id, v); focusId = 'kid-input'; render(); save(); }));
+      if (canGrow(sel)) c.appendChild(inputRow('kid-input', 'Add an association to “' + sel.t + '”…', 'Add', function (v) { addNode(sel.id, v); focusId = 'kid-input'; render(); save(); }));
+      else c.appendChild(h('p', { class: 'hint', id: 'mini-stop', text: 'A mini web stops two levels out. Pick a sub-subject, or move on to applying it back.' }));
       var kids = kidsOf(sel.id);
       if (kids.length) c.appendChild(chipList(kids, { remove: true, mark: true }));
-      c.appendChild(h('p', { class: 'hint', text: 'Tap any bubble in the web to go deeper from there.' }));
+      c.appendChild(h('p', { class: 'hint', text: isMini() ? 'Tap a sub-subject in the web to add associations to it.' : 'Tap any bubble in the web to go deeper from there.' }));
     } else c.appendChild(h('p', { class: 'hint', text: 'Add a main branch in step 2 first.' }));
-    c.appendChild(h('h3', { text: 'Another main branch' }));
-    c.appendChild(inputRow('main-input', 'A new main branch…', 'Add', function (v) { var n = addNode(0, v); if (n) S.sel = n.id; focusId = 'kid-input'; render(); save(); }));
-    var dt = h('details', { class: 'pr', open: 'open' }, h('summary', { text: 'Ways to think about words' }));
-    var ul = h('ul', { class: 'prompts' }); PROMPTS.forEach(function (p) { ul.appendChild(h('li', {}, h('b', { text: p[0] + '. ' }), p[1])); });
-    dt.appendChild(ul); c.appendChild(dt);
+    c.appendChild(h('h3', { text: isMini() ? 'Another sub-subject' : 'Another main branch' }));
+    c.appendChild(inputRow('main-input', isMini() ? 'A new sub-subject…' : 'A new main branch…', 'Add', function (v) { var n = addNode(0, v); if (n) S.sel = n.id; focusId = 'kid-input'; render(); save(); }));
+    c.appendChild(waysBlock());
     c.appendChild(h('div', { class: 'next' }, h('button', { class: 'k-btn primary', type: 'button', id: 'to4', text: 'Next: apply it back →', on: { click: function () { setStep(4); } } })));
   } else {
     c.appendChild(h('h2', { text: 'Apply it back' }));
-    c.appendChild(h('p', { class: 'hint' }, h('b', { text: 'Remember “' + root.t + '”.' }), ' Pick any bubble, then ask how it changes what the subject means. That is where the joke is.'));
+    c.appendChild(h('p', { class: 'hint' }, h('b', { text: 'Remember “' + root.t + '”.' }), ' Pick any bubble, then ask how it changes what the subject means. That is where the joke is.' + (isMini() ? ' Check every association before ruling it out: the biggest mistake is deciding up front that there is no joke.' : '')));
     c.appendChild(h('div', { class: 'crumbs' }, 'Path: ', h('b', { text: pathOf(sel).join(' → ') })));
     c.appendChild(jokeInput(sel));
     var more = S.nodes.filter(function (n) { return n.id !== 0; });
@@ -621,7 +643,8 @@ function renderFree(c) {
     return;
   }
   c.appendChild(h('p', { class: 'hint' }, 'Tap a bubble to select it, drag to move it. ', h('b', { text: 'Selected: ' + (sel.t || '…') })));
-  c.appendChild(inputRow('free-add', 'Add an idea under “' + sel.t + '”…', 'Add', function (v) { var n = addNode(sel.id, v); if (n) S.sel = n.id; focusId = 'free-add'; render(); save(); }));
+  if (canGrow(sel)) c.appendChild(inputRow('free-add', 'Add an idea under “' + sel.t + '”…', 'Add', function (v) { var n = addNode(sel.id, v); if (n) S.sel = n.id; focusId = 'free-add'; render(); save(); }));
+  else c.appendChild(h('p', { class: 'hint', id: 'mini-stop', text: 'A mini web stops two levels out. Select a bubble nearer the middle to add more.' }));
   c.appendChild(h('h3', { text: 'Rename selected' }));
   c.appendChild(inputRow('free-rename', 'New name…', 'Rename', function (v) { sel.t = clean(v, MAX_TEXT); render(); save(); }, sel.t));
   if (sel.id !== 0) c.appendChild(h('div', { class: 'next' }, h('button', { class: 'k-btn coral', type: 'button', id: 'free-del', text: 'Delete this bubble and its branch', on: { click: function () { removeBranch(sel.id); render(); save(); } } })));

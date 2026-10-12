@@ -270,6 +270,8 @@ const labels = page => page.evaluate(() => [...document.querySelectorAll('#frame
     await page.click('#size-double');
     ok('O1 Double web asks for two subjects', await page.locator('#sub-a').count() === 1 && await page.locator('#sub-b').count() === 1 && /Two subjects/.test(await page.innerText('#controls')));
     ok('O2 the steps are Subjects, First web, Second web, Collide', (await page.innerText('.steps')).replace(/\s+/g, ' ').includes('1. Subjects 2. First web 3. Second web 4. Collide'));
+    const st = await page.evaluate(() => { const i = document.getElementById('sub-a'), r = document.getElementById('free-root') || null, cs = getComputedStyle(i); return { radius: cs.borderRadius, border: cs.borderTopWidth, h: i.getBoundingClientRect().height, open: document.querySelector('details.pr').open }; });
+    ok('O2b the subject boxes are styled like the others and the choosing tips start open', st.radius === '14px' && st.border === '2px' && st.h >= 46 && st.open, JSON.stringify(st));
     await page.fill('#sub-a', 'art'); await page.click('#subjects-go');
     ok('O3 both subjects are required', await page.locator('#sub-b').evaluate(e => e === document.activeElement) && await page.getAttribute('[data-step="2"]', 'aria-current') === null);
     await page.fill('#sub-b', 'relationships'); await page.click('#subjects-go');

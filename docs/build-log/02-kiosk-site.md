@@ -66,3 +66,8 @@
 - built: saved state gains `other` and `which`; older saves load as before
 - built: jokeweb suite section O (19 checks)
 - live-tested: no
+
+## 2026-10-12 · Double web form fixed
+- changed: the two subject boxes now use the same text-box styling as the rest of the page; the "How to choose two subjects" list starts open
+- built: one more jokeweb check (O2b)
+- live-tested: no

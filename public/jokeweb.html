@@ -608,13 +608,13 @@ function subjectsForm(c, onDone) {
     nodesOf(0)[0].t = a; nodesOf(1)[0].t = b; showWeb(0); S.sel = 0; onDone(); render(); save();
   }
   [ia, ib].forEach(function (i) { i.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); go(); } }); });
-  c.appendChild(h('label', { class: 'hint', for: 'sub-a', text: 'First subject' })); c.appendChild(ia);
-  c.appendChild(h('label', { class: 'hint', for: 'sub-b', text: 'Second subject' })); c.appendChild(ib);
+  c.appendChild(h('label', { class: 'hint', style: 'display:block;margin:10px 0 4px', for: 'sub-a', text: 'First subject' })); c.appendChild(h('div', { class: 'row' }, ia));
+  c.appendChild(h('label', { class: 'hint', style: 'display:block;margin:10px 0 4px', for: 'sub-b', text: 'Second subject' })); c.appendChild(h('div', { class: 'row' }, ib));
   c.appendChild(h('div', { class: 'next' }, h('button', { class: 'k-btn primary', type: 'button', id: 'subjects-go', text: ready() ? 'Update and continue →' : 'Start the webs →', on: { click: go } })));
   if (!ia.value) focusId = 'sub-a'; else if (!ib.value) focusId = 'sub-b';
 }
 function topicIdeas() {
-  var dt = h('details', { class: 'pr' }, h('summary', { text: 'How to choose two subjects' })), ul = h('ul', { class: 'prompts' });
+  var dt = h('details', { class: 'pr', open: 'open' }, h('summary', { text: 'How to choose two subjects' })), ul = h('ul', { class: 'prompts' });
   ['Two random ideas work well. The Mashup Machine can spin them for you.', 'Look at the news for odd pairings: a politician with a strange hobby, or monkeys in space.', 'Split a pun in two: a joke-web for each half.', 'Split a popular saying in two, such as General Hospital: one web on General, one on Hospital.', 'Find a contradiction in your own life, like wanting a partner but not wanting to go out and find one.', 'Look for new words (a New Pun Opportunity) and be the first to pun on them.', 'If you do stand-up or tell stories, look for links between the subjects you already talk about.'].forEach(function (t, i) {
     var li = h('li', {}, t); if (i === 0) { li.appendChild(document.createTextNode(' ')); li.appendChild(h('a', { href: '/mashup', text: 'Open it' })); } ul.appendChild(li);
   });

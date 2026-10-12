@@ -66,3 +66,8 @@
 - what: the board draws both webs in one SVG with a × between them; each web keeps its own selection; in Collide you pick one idea per list and both light up (others fade); the tabs now say which web the boxes work on; the other web does not move while you drag in one; Save image uses its own side-by-side layout
 - why: developer asked to see both webs at once and to select a concept from each list and see them highlighted; stacked layout on phones is my choice for fit, not stated
 - source: developer request, 2026-10-12
+
+### 2026-10-12 · No "Working on A / B" tabs in the double web; the steps (and tapping a bubble on the free board) decide the active web · active
+- what: the First web / Second web steps set which web the boxes add to, the other web fades in those steps and ignores taps, and on the free board tapping a bubble in a web makes it the active one
+- why: developer found the tabs duplicated the step buttons and could disagree with them
+- source: developer request, 2026-10-12

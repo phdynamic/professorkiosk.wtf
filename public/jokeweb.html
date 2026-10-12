@@ -43,9 +43,7 @@ main.k-main { padding: 32px 0 0; }
 .seg button[aria-pressed="true"] { background: var(--navy); color: var(--yellow); }
 .sizerow { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 0 0 12px; }
 .sizerow .hint { margin: 0; flex: 1 1 200px; }
-.webtabs { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 0 0 12px; font-size: 14px; color: var(--ink2); }
-.webtabs .k-btn { padding: 6px 12px; min-height: 36px; }
-.webtabs .k-btn[aria-pressed="true"] { background: var(--navy); color: var(--yellow); }
+.web .off { opacity: .45; }
 .toprow { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .steps { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 12px; padding: 0; list-style: none; }
 .steps button { min-height: 44px; border: 2px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); padding: 0 12px; font: 700 13px var(--font); cursor: pointer; }
@@ -141,7 +139,7 @@ html[data-theme="dark"] .dcount.over { color: #fca5a5; }
     <p>Short on time? Switch to Mini web (under the mode switch). It is for one specific angle, such as seat belts rather than cars, or sub-tropical fruit rather than food, and it takes about 5 to 15 minutes. You skip the general first level and go only two levels out: sub-subjects off the subject, then associations off each of those. Cover the subject and free-associate on the sub-subjects, then apply the new meanings back to the subject. Check every association, because the biggest mistake is deciding up front that there is no joke. The size is remembered with your web, and Start over keeps it.</p>
 
     <h3>Double web: the Hadron Joke Collider</h3>
-    <p>Many jokes are a link between two subjects that had nothing to do with each other. Switch to Double web and pick two subjects, such as art and relationships. You build a web for each (one layer of associations is enough, deeper if the thread runs), and then you collide them: take any idea from one web and apply it to the <i>main subject</i> of the other, and then go the other way. Think each one through for a few seconds, however silly it seems, and save every idea, even the weak ones. Some links are already there on both webs. Others only turn up when you force them. Both webs stay on the board (stacked on a narrow screen). The Working on tabs choose which one the boxes add to, and in the Collide step you pick one idea from each list and both light up. Save image draws both webs side by side. Copy web copies both as outlines. Start over clears both webs.</p>
+    <p>Many jokes are a link between two subjects that had nothing to do with each other. Switch to Double web and pick two subjects, such as art and relationships. You build a web for each (one layer of associations is enough, deeper if the thread runs), and then you collide them: take any idea from one web and apply it to the <i>main subject</i> of the other, and then go the other way. Think each one through for a few seconds, however silly it seems, and save every idea, even the weak ones. Some links are already there on both webs. Others only turn up when you force them. Both webs stay on the board (stacked on a narrow screen). In the First web and Second web steps the other web fades while you work on one. In the Collide step you pick one idea from each list and both light up. On the free board, tap a bubble in a web to work on that web. Save image draws both webs side by side. Copy web copies both as outlines. Start over clears both webs.</p>
 
     <h3>Tips for the best results</h3>
     <ul>
@@ -480,7 +478,7 @@ function renderWeb() {
   L.webs.forEach(function (w) {
     var sc = w.sc, list = w.nodes, selId = isDouble() ? selOf(w.i) : S.sel;
     function nodeById(id) { for (var k = 0; k < list.length; k++) if (list[k].id === id) return list[k]; return null; }
-    var wg = se('g', { 'data-web': w.i, transform: 'translate(' + w.sx.toFixed(1) + ' ' + w.sy.toFixed(1) + ')' }, svg);
+    var wg = se('g', { class: isDouble() && S.mode === 'guided' && (S.step === 2 || S.step === 3) && w.i !== S.step - 2 ? 'off' : '', 'data-web': w.i, transform: 'translate(' + w.sx.toFixed(1) + ' ' + w.sy.toFixed(1) + ')' }, svg);
     // "Apply it back" (and Collide): only the subject and the chosen idea stand out; the bubbles between them are half there, the rest fade
     var focusing = S.mode === 'guided' && S.step === 4 && (!isDouble() || selId !== 0), onPath = {}, selNode = nodeById(selId) || list[0];
     if (focusing) for (var pn = selNode; pn; pn = pn.p === null ? null : nodeById(pn.p)) onPath[pn.id] = true;
@@ -571,7 +569,13 @@ $('frame').addEventListener('keydown', function (ev) {
     var again = $('frame').querySelector('[data-web="' + wi + '"] .nd[data-id="' + id + '"]'); if (again) again.focus();
   }
 });
-function select(id, wi) { if (wi !== undefined) showWeb(wi); S.sel = id; render(); save(); }
+function select(id, wi) {
+  if (wi !== undefined && isDouble()) {
+    if (S.mode === 'guided' && (S.step === 2 || S.step === 3) && wi !== S.step - 2) return;   // in those steps only the web you are working on responds
+    showWeb(wi);
+  }
+  S.sel = id; render(); save();
+}
 
 // ---------- controls ----------
 function h(tag, attrs) {
@@ -621,11 +625,6 @@ function renderControls() {
       h('button', { type: 'button', id: 'size-mini', 'aria-pressed': String(S.size === 'mini'), text: 'Mini web', on: { click: function () { setSize('mini'); } } }),
       h('button', { type: 'button', id: 'size-double', 'aria-pressed': String(isDouble()), text: 'Double web', on: { click: function () { setSize('double'); } } })),
     h('p', { class: 'hint', id: 'size-hint', text: isDouble() ? 'Two subjects, a web for each, then bash them together: the Hadron Joke Collider.' : isMini() ? 'One specific angle on a subject, two levels out. About 5 to 15 minutes.' : 'A general subject, as many levels out as you like.' })));
-  if (isDouble() && ready()) {
-    var tabs = h('div', { class: 'webtabs', role: 'group', 'aria-label': 'Which web to work on' }, h('span', { text: 'Working on: ' }));
-    [0, 1].forEach(function (i) { tabs.appendChild(h('button', { type: 'button', class: 'k-btn', id: 'web-' + (i ? 'b' : 'a'), 'aria-pressed': String(S.which === i), text: (i ? 'B: ' : 'A: ') + subjectOf(i), title: 'Work on web ' + (i ? 'B' : 'A'), on: { click: function () { showWeb(i); render(); save(); } } })); });
-    c.appendChild(tabs);
-  }
   if (guided) renderGuided(c); else renderFree(c);
   renderIdeas(c);
   if (focusId) { var f = $(focusId); if (f) f.focus({ preventScroll: true }); focusId = null; }
@@ -659,6 +658,7 @@ function topicIdeas() {
   dt.appendChild(ul); return dt;
 }
 function renderDoubleGuided(c) {
+  if (S.step === 2 || S.step === 3) showWeb(S.step - 2);   // the steps decide which web the boxes work on
   var root = S.nodes[0], sel = byId(S.sel) || root, cur = S.which, other = subjectOf(1 - cur);
   if (S.step === 1) {
     c.appendChild(h('h2', { text: 'Two subjects' }));

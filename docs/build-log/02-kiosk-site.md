@@ -82,3 +82,8 @@
 - changed: the main-branch chips in the first and second web steps now have the x remove button (it was missing)
 - built: two more jokeweb checks (O4b, O5b)
 - live-tested: no
+
+## 2026-10-12 · Double web: tabs removed
+- changed: the Working on A / B tabs are gone; step 2 and 3 pick the web, the other web fades (`.off`) and ignores taps; the free board switches web by tapping a bubble
+- built: jokeweb checks adjusted (O5c added, drag check now measured inside the board)
+- live-tested: no

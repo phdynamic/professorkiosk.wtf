@@ -277,9 +277,14 @@ const labels = page => page.evaluate(() => [...document.querySelectorAll('#frame
     await page.fill('#sub-b', 'relationships'); await page.click('#subjects-go');
     ok('O4 step 2 is web A, and both subjects are already on the board', /Web A: art/.test(await page.innerText('#web-title')) && (await page.locator('#frame .nd text').allTextContents()).includes('art') && (await page.locator('#frame .nd text').allTextContents()).includes('relationships') && await page.locator('#frame [data-web]').count() === 2);
     for (const w of ['paint', 'fake', 'museum']) { await page.fill('#kid-input', w); await page.press('#kid-input', 'Enter'); }
+    await page.locator('.chips .x[aria-label="Remove museum"]').click();
+    ok('O4b a main branch of web A can be removed with its x', !(await page.locator('#frame .nd text').allTextContents()).includes('museum') && await page.locator('.chips .chip').count() === 2);
+    await page.fill('#kid-input', 'museum'); await page.press('#kid-input', 'Enter');
     await page.click('#to3');
     ok('O5 step 3 is web B, and web A is still on the board beside it', /Web B: relationships/.test(await page.innerText('#web-title')) && (await page.locator('#frame .nd text').allTextContents()).includes('paint'));
     for (const w of ['fake', 'dating', 'commitment']) { await page.fill('#kid-input', w); await page.press('#kid-input', 'Enter'); }
+    await page.locator('.chips .x[aria-label="Remove commitment"]').click(); await page.fill('#kid-input', 'commitment'); await page.press('#kid-input', 'Enter');
+    ok('O5b a main branch of web B can be removed too (and web A is untouched)', (await page.locator('#frame [data-web="0"] .nd text').allTextContents()).includes('museum'));
     await page.click('#to4');
     ok('O6 Collide lists each web\'s ideas, aimed at the other subject', (await page.innerText('#controls')).includes('From “art” to “relationships”') && await page.locator('#from-a button').count() === 3 && await page.locator('#from-b button').count() === 3);
     await page.locator('#from-a button', { hasText: 'fake' }).click();

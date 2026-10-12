@@ -77,3 +77,8 @@
 - built: dragging works in either web with the other held still (`holdShift`)
 - built: jokeweb suite checks reworked (now 101)
 - live-tested: no
+
+## 2026-10-12 · Double web: main branches can be removed
+- changed: the main-branch chips in the first and second web steps now have the x remove button (it was missing)
+- built: two more jokeweb checks (O4b, O5b)
+- live-tested: no

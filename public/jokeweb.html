@@ -668,7 +668,7 @@ function renderDoubleGuided(c) {
   } else if (S.step === 2 || S.step === 3) {
     c.appendChild(h('h2', { id: 'web-title', text: 'Web ' + (cur ? 'B' : 'A') + ': ' + root.t }));
     c.appendChild(h('p', { class: 'hint' }, h('b', { text: 'Free-associate on “' + root.t + '”. ' }), 'Think of the big things, the small things, the people, the places, the ideas and the history that go with it. Write everything down. One layer is enough; follow a thread deeper whenever it runs. Give it ten minutes if you can.'));
-    c.appendChild(chipList(kidsOf(0), { mark: true }));
+    c.appendChild(chipList(kidsOf(0), { mark: true, remove: true }));
     if (sel.id !== 0) c.appendChild(crumbs('Adding to: ', sel, false));
     c.appendChild(inputRow('kid-input', 'Add an association to “' + (sel.t || root.t) + '”…', 'Add', function (v) { addNode(sel.id, v); focusId = 'kid-input'; render(); save(); }));
     if (sel.id !== 0) { var kids = kidsOf(sel.id); if (kids.length) c.appendChild(chipList(kids, { remove: true, mark: true })); }

@@ -139,7 +139,7 @@ html[data-theme="dark"] .dcount.over { color: #fca5a5; }
     <p>Short on time? Switch to Mini web (under the mode switch). It is for one specific angle, such as seat belts rather than cars, or sub-tropical fruit rather than food, and it takes about 5 to 15 minutes. You skip the general first level and go only two levels out: sub-subjects off the subject, then associations off each of those. Cover the subject and free-associate on the sub-subjects, then apply the new meanings back to the subject. Check every association, because the biggest mistake is deciding up front that there is no joke. The size is remembered with your web, and Start over keeps it.</p>
 
     <h3>Double web: the Hadron Joke Collider</h3>
-    <p>Many jokes are a link between two subjects that had nothing to do with each other. Switch to Double web and pick two subjects, such as art and relationships. You build a web for each (one layer of associations is enough, deeper if the thread runs), and then you collide them: take any idea from one web and apply it to the <i>main subject</i> of the other, and then go the other way. Think each one through for a few seconds, however silly it seems, and save every idea, even the weak ones. Some links are already there on both webs. Others only turn up when you force them. Both webs stay on the board (stacked on a narrow screen). In the First web and Second web steps the other web fades while you work on one. In the Collide step you pick one idea from each list and both light up. On the free board, tap a bubble in a web to work on that web. Save image draws both webs side by side. Copy web copies both as outlines. Start over clears both webs.</p>
+    <p>Many jokes are a link between two subjects that had nothing to do with each other. Switch to Double web and pick two subjects, such as art and relationships. You build a web for each (one layer of associations is enough, deeper if the thread runs), and then you collide them: take any idea from one web and apply it to the <i>main subject</i> of the other, and then go the other way. Think each one through for a few seconds, however silly it seems, and save every idea, even the weak ones. Some links are already there on both webs. Others only turn up when you force them. Both webs stay on the board (stacked on a narrow screen). In the First web and Second web steps the other web fades while you work on one. In the Collide step you pick one idea from each list and both light up. On the free board, tap a bubble in a web to work on that web. Save image draws both webs side by side. Copy web copies both as outlines.</p>
 
     <h3>Tips for the best results</h3>
     <ul>
@@ -155,7 +155,18 @@ html[data-theme="dark"] .dcount.over { color: #fca5a5; }
     <p>Switch to Free board to drag bubbles around, rename them, delete a bubble with its branch, or add ideas anywhere. Tidy up puts every bubble back in its automatic place. With a bubble selected, the arrow keys nudge it (hold Shift for bigger steps). Use + and &minus; to zoom and Fit to see the whole web.</p>
 
     <h3>Keeping your work</h3>
-    <p>Your web and draft are saved in this browser only, nothing is sent anywhere. Save image downloads a picture of the web, Copy web copies it as an outline, and Copy joke ideas copies just your ideas. Start over asks you twice. If you send topics over from the Mashup Machine (one topic, or two for a double web), it starts a new web and keeps your old one so you can swap back.</p>
+    <p>Your web and draft are saved in this browser only, nothing is sent anywhere. Save image downloads a picture of the web, Copy web copies it as an outline, and Copy joke ideas copies just your ideas. Start over asks first, then erases everything: the web or webs on the board and the previous web kept for swapping. If you send topics over from the Mashup Machine (one topic, or two for a double web), it starts a new web and keeps your old one so you can swap back.</p>
+  </div>
+</dialog>
+
+<dialog class="k-help" id="resetDlg" aria-labelledby="reset-t" style="max-width: 460px">
+  <div class="hh"><h2 id="reset-t">Start over?</h2></div>
+  <div class="hb">
+    <p id="reset-msg"></p>
+    <div class="row" style="margin-top: 16px">
+      <button class="k-btn coral" id="reset-yes" type="button">Erase</button>
+      <button class="k-btn" id="reset-no" type="button">Keep my webs</button>
+    </div>
   </div>
 </dialog>
 
@@ -598,7 +609,7 @@ function h(tag, attrs) {
   for (var i = 2; i < arguments.length; i++) { var c = arguments[i]; if (c) e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); }
   return e;
 }
-var focusId = null, confirmReset = false, resetTimer = null;
+var focusId = null;
 function inputRow(id, ph, btnText, onAdd, value) {
   var inp = h('input', { type: 'text', id: id, maxlength: MAX_TEXT, placeholder: ph, autocomplete: 'off', 'aria-label': ph });
   if (value) inp.value = value;
@@ -633,7 +644,7 @@ function renderControls() {
     h('div', { class: 'tools' },
       hasPrev() ? h('button', { class: 'k-btn', type: 'button', id: 'prev', text: 'Swap with previous web', title: 'Switch back to the web you had before topics were sent here', on: { click: swapPrev } }) : null, hasPrev() ? ' ' : null,
       S.mode === 'free' ? h('button', { class: 'k-btn', type: 'button', id: 'tidy', text: 'Tidy up', title: 'Put every bubble back in its automatic place', on: { click: function () { S.nodes.forEach(function (n) { n.x = null; n.y = null; }); clearHold(); render(); save(); } } }) : null, S.mode === 'free' ? ' ' : null,
-      h('button', { class: 'k-btn' + (confirmReset ? ' coral' : ''), type: 'button', id: 'reset', text: confirmReset ? 'Really start over?' : 'Start over', on: { click: startOver } }))));
+      h('button', { class: 'k-btn', type: 'button', id: 'reset', text: 'Start over', on: { click: startOver } }))));
   c.appendChild(h('div', { class: 'sizerow' },
     h('div', { class: 'seg', role: 'group', 'aria-label': 'Size of web' },
       h('button', { type: 'button', id: 'size-full', 'aria-pressed': String(S.size === 'full'), text: 'Full web', on: { click: function () { setSize('full'); } } }),
@@ -644,11 +655,27 @@ function renderControls() {
   renderIdeas(c);
   if (focusId) { var f = $(focusId); if (f) f.focus({ preventScroll: true }); focusId = null; }
 }
+// Start over asks first (a pop-up) and then wipes everything: the web or webs on the board and the previous web kept for swapping.
 function startOver() {
-  if (!confirmReset) { confirmReset = true; clearTimeout(resetTimer); resetTimer = setTimeout(function () { confirmReset = false; renderControls(); }, 4000); renderControls(); return; }
-  clearTimeout(resetTimer); confirmReset = false; var size = S.size; S = fresh(); S.size = size; if (size === 'double') S.other = blankWeb(); userZoomed = false; clearHold(); render(); save();
+  var dbl = isDouble(), prev = hasPrev();
+  var msg = dbl ? 'Both webs, “' + subjectOf(0) + '” and “' + subjectOf(1) + '”, will be erased.' : 'Your web will be erased.';
+  if (prev) msg = dbl ? 'Both webs on the board will be erased, and so will the previous web saved for switching back.' : 'Both your current web and the previous web saved for switching back will be erased.';
+  $('reset-msg').textContent = msg + ' This can’t be undone.';
+  var d = $('resetDlg'); if (typeof d.showModal === 'function') { if (!d.open) d.showModal(); } else d.setAttribute('open', '');
+  $('reset-no').focus();
+}
+function closeReset() { var d = $('resetDlg'); if (typeof d.close === 'function') d.close(); else d.removeAttribute('open'); }
+function eraseAll() {
+  closeReset();
+  var size = S.size; S = fresh(); S.size = size; if (size === 'double') S.other = blankWeb();
+  prevMem = null; try { localStorage.removeItem(PREVKEY); } catch (e) {}
+  $('incoming').hidden = true;
+  userZoomed = false; clearHold(); render(); save();
   $('draft').value = ''; updateDraft();
 }
+$('reset-yes').addEventListener('click', eraseAll);
+$('reset-no').addEventListener('click', closeReset);
+$('resetDlg').addEventListener('click', function (e) { if (e.target === $('resetDlg')) closeReset(); });
 // Two subject boxes, for the first step of a double web (and for the free board before both are filled in).
 function subjectsForm(c, onDone) {
   var ia = h('input', { type: 'text', id: 'sub-a', maxlength: MAX_TEXT, placeholder: 'e.g. art', autocomplete: 'off', 'aria-label': 'First subject' });

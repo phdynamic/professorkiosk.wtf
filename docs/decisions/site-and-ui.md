@@ -82,3 +82,8 @@
 - what: one topic starts a web (Full, or Mini if that was the size) with it as the subject; a pair starts a Double web with the two topics as its subjects; the previous web (any size) stays in the one spare slot and can be swapped back; the draft is kept
 - why: the developer proposed it once Double web existed, since three topics don't make one central concept but one or two map onto one or two subjects
 - source: developer request, 2026-10-12
+
+### 2026-10-12 · Start over asks in a pop-up, then erases everything including the previous web · active
+- what: replaces the tap-twice confirm with a dialog (Erase / Keep my webs, Esc cancels); Erase wipes the web or both webs of a double web, the draft and the spare previous web, so no swap button remains; the size choice is kept
+- why: developer asked for a warning that both webs will be erased and no switch-back button afterward (I read "both webs" as the current and previous web, and for a double web both A and B)
+- source: developer request, 2026-10-12

@@ -11,7 +11,7 @@ function bigWeb() {
     for (let k = 0; k < 3; k++) { nodes.push({ id, t: t + ' idea ' + (k + 1), p: par, x: null, y: null, jokes: [] }); const p2 = id++; nodes.push({ id, t: 'second ' + id, p: p2, x: null, y: null, jokes: [] }); id++; } });
   return { mode: 'guided', step: 3, sel: 1, nextId: id, nodes, draft: 'saved draft' };
 }
-async function mk(browser, { init, vp = { width: 1100, height: 900 }, blockStorage = false, scheme = 'light' } = {}) {
+async function mk(browser, { init, prev, vp = { width: 1100, height: 900 }, blockStorage = false, scheme = 'light' } = {}) {
   const ctx = await browser.newContext({ viewport: vp, colorScheme: scheme, acceptDownloads: true, permissions: ['clipboard-read', 'clipboard-write'] });
   const page = await ctx.newPage();
   page.on('pageerror', e => errors.push(e.message));
@@ -20,6 +20,7 @@ async function mk(browser, { init, vp = { width: 1100, height: 900 }, blockStora
   await page.route('https://public.api.bsky.app/**', r => r.fulfill({ status: 404, headers: { 'access-control-allow-origin': '*' }, body: '{}' }));
   if (blockStorage) await page.addInitScript(() => { Object.defineProperty(window, 'localStorage', { get() { throw new Error('blocked'); } }); });
   else if (init) await page.addInitScript(([k, v]) => { if (!sessionStorage.getItem('seeded')) { localStorage.setItem(k, v); sessionStorage.setItem('seeded', '1'); } }, [KEY, JSON.stringify(init)]);
+  if (prev) await page.addInitScript(([k, v]) => { if (!sessionStorage.getItem('seededp')) { localStorage.setItem(k, v); sessionStorage.setItem('seededp', '1'); } }, ['pk-jokeweb-prev-v1', JSON.stringify(prev)]);
   return { page, ctx };
 }
 const nds = page => page.locator('#frame .nd');
@@ -252,7 +253,7 @@ const labels = page => page.evaluate(() => [...document.querySelectorAll('#frame
     ok('N8 apply-it-back adds the check-every-association tip', /biggest mistake/.test(await page.innerText('#controls')));
     await page.reload();
     ok('N9 the Mini choice survives a reload', await page.getAttribute('#size-mini', 'aria-pressed') === 'true');
-    await page.click('#reset'); await page.click('#reset');
+    await page.click('#reset'); await page.click('#reset-yes');
     ok('N10 Start over keeps the Mini choice', await page.getAttribute('#size-mini', 'aria-pressed') === 'true' && await page.evaluate(() => window.__jokeweb.state().nodes.length) === 1);
     await page.click('#mode-free'); await page.fill('#free-root', 'ladders'); await page.click('#free-root-go');
     await page.fill('#free-add', 'rungs'); await page.press('#free-add', 'Enter');
@@ -332,7 +333,7 @@ const labels = page => page.evaluate(() => [...document.querySelectorAll('#frame
     const ra1 = await relA();
     const placed = await page.evaluate(() => { const S = window.__jokeweb.state(), all = S.nodes.concat(S.other.nodes); return all.filter(n => n.x !== null).map(n => n.t).join(); });
     ok('O16b dragging a bubble in web B moves only that bubble; web A stays put', placed === 'wedding' && Math.abs(wb1.x - wb.x) > 30 && Math.abs(ra1.x - ra0.x) < 2 && Math.abs(ra1.y - ra0.y) < 2, JSON.stringify({ placed, dx: wb1.x - wb.x, ra0, ra1 }));
-    await page.click('#reset'); await page.click('#reset');
+    await page.click('#reset'); await page.click('#reset-yes');
     ok('O17 Start over clears both webs but stays in Double web', await page.getAttribute('#size-double', 'aria-pressed') === 'true' && (await page.evaluate(() => window.__jokeweb.outline())) === '');
     await page.click('#helpBtn');
     ok('O18 Help explains the double web', /Hadron Joke Collider/.test(await page.innerText('#help')));
@@ -344,6 +345,32 @@ const labels = page => page.evaluate(() => [...document.querySelectorAll('#frame
     const pos = await ph.evaluate(() => { const a = document.querySelector('#frame [data-web="0"]').getBoundingClientRect(), b = document.querySelector('#frame [data-web="1"]').getBoundingClientRect(), f = document.getElementById('frame').getBoundingClientRect(); return { aBottom: a.bottom, bTop: b.top, bw: b.width, fw: f.width }; });
     ok('O20 phone: the two webs are stacked, one above the other', pos.bTop >= pos.aBottom - 2, JSON.stringify(pos));
     await ph.close();
+  }
+  // P. start over wipes everything, after a warning
+  {
+    const prevWeb = { mode: 'guided', step: 2, sel: 0, nextId: 2, nodes: [{ id: 0, t: 'Old', p: null, x: null, y: null, jokes: [] }, { id: 1, t: 'Older', p: 0, x: null, y: null, jokes: [] }], draft: '' };
+    const { page } = await mk(browser, { prev: prevWeb }); await page.goto(BASE);
+    await page.click('#size-double'); await page.fill('#sub-a', 'fish'); await page.fill('#sub-b', 'books'); await page.click('#subjects-go');
+    ok('P1 a previous web exists, so the swap button is there', await page.locator('#prev').count() === 1);
+    await page.click('#reset');
+    const dlg = await page.evaluate(() => ({ open: document.getElementById('resetDlg').open, msg: document.getElementById('reset-msg').textContent }));
+    ok('P2 Start over opens a warning that both webs, and the previous web, will be erased', dlg.open && /Both webs on the board will be erased/.test(dlg.msg) && /previous web/.test(dlg.msg), JSON.stringify(dlg));
+    await page.click('#reset-no');
+    ok('P3 Keep my webs leaves everything alone', !(await page.evaluate(() => document.getElementById('resetDlg').open)) && (await page.evaluate(() => window.__jokeweb.outline())).includes('fish') && await page.locator('#prev').count() === 1);
+    await page.click('#reset'); await page.keyboard.press('Escape');
+    ok('P4 Esc also cancels', !(await page.evaluate(() => document.getElementById('resetDlg').open)) && await page.locator('#prev').count() === 1);
+    await page.click('#reset'); await page.click('#reset-yes');
+    const after = await page.evaluate(() => ({ outline: window.__jokeweb.outline(), prevKey: localStorage.getItem('pk-jokeweb-prev-v1'), draft: document.getElementById('draft').value, size: document.getElementById('size-double').getAttribute('aria-pressed'), subs: document.querySelectorAll('#sub-a, #sub-b').length }));
+    ok('P5 Erase wipes both webs and the stored previous web, and there is no swap button', after.outline === '' && after.prevKey === null && await page.locator('#prev').count() === 0, JSON.stringify(after));
+    ok('P6 it stays a Double web, asking for two fresh subjects', after.size === 'true' && after.subs === 2);
+    await page.reload();
+    ok('P7 the swap button does not come back after a reload', await page.locator('#prev').count() === 0);
+    await page.fill('#sub-a', 'x'); await page.fill('#sub-b', 'y'); await page.click('#subjects-go'); await page.click('#size-full'); await page.click('#reset');
+    ok('P8 with no previous web, the warning is only about the one web', /Your web will be erased/.test(await page.innerText('#reset-msg')) && !/previous/.test(await page.innerText('#reset-msg')));
+    await page.close();
+    const { page: p2 } = await mk(browser, { prev: prevWeb }); await p2.goto(BASE); await p2.fill('#subject', 'Seat belts'); await p2.click('#subject-go'); await p2.click('#reset');
+    ok('P9 a single web with a previous one warns that both will be erased', /Both your current web and the previous web/.test(await p2.innerText('#reset-msg')));
+    await p2.close();
   }
   // M. help dialog
   {

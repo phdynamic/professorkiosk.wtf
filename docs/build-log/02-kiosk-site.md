@@ -103,3 +103,8 @@
 - built: `#send` in `mashup.html` shown for 1 or 2 topics only, linking `#subject=X` or `#a=X&b=Y`; `jokeweb.html` handles both (new web at once, banner, spare slot and Swap with previous web, restored)
 - built: Help text on both pages and the hub card mention it; mashup suite section F rewritten (49 checks)
 - live-tested: no
+
+## 2026-10-12 · Start over warns, then wipes everything
+- changed: `#resetDlg` pop-up replaces the tap-twice button; Erase clears the board (both webs in a double), the draft and the stored previous web (`pk-jokeweb-prev-v1`)
+- built: jokeweb section P (9 checks, now 116); test helper `mk` can seed the previous-web slot
+- live-tested: no

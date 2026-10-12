@@ -43,6 +43,9 @@ main.k-main { padding: 32px 0 0; }
 .seg button[aria-pressed="true"] { background: var(--navy); color: var(--yellow); }
 .sizerow { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 0 0 12px; }
 .sizerow .hint { margin: 0; flex: 1 1 200px; }
+.webtabs { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 0 0 12px; font-size: 14px; color: var(--ink2); }
+.webtabs .k-btn { padding: 6px 12px; min-height: 36px; }
+.webtabs .k-btn[aria-pressed="true"] { background: var(--navy); color: var(--yellow); }
 .toprow { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .steps { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 12px; padding: 0; list-style: none; }
 .steps button { min-height: 44px; border: 2px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); padding: 0 12px; font: 700 13px var(--font); cursor: pointer; }
@@ -137,6 +140,9 @@ html[data-theme="dark"] .dcount.over { color: #fca5a5; }
     <h3>Mini web</h3>
     <p>Short on time? Switch to Mini web (under the mode switch). It is for one specific angle, such as seat belts rather than cars, or sub-tropical fruit rather than food, and it takes about 5 to 15 minutes. You skip the general first level and go only two levels out: sub-subjects off the subject, then associations off each of those. Cover the subject and free-associate on the sub-subjects, then apply the new meanings back to the subject. Check every association, because the biggest mistake is deciding up front that there is no joke. The size is remembered with your web, and Start over keeps it.</p>
 
+    <h3>Double web: the Hadron Joke Collider</h3>
+    <p>Many jokes are a link between two subjects that had nothing to do with each other. Switch to Double web and pick two subjects, such as art and relationships. You build a web for each (one layer of associations is enough, deeper if the thread runs), and then you collide them: take any idea from one web and apply it to the <i>main subject</i> of the other, and then go the other way. Think each one through for a few seconds, however silly it seems, and save every idea, even the weak ones. Some links are already there on both webs. Others only turn up when you force them. Use the tabs to look at either web, and the Collide step to pick ideas. Save image draws both webs side by side. Copy web copies both as outlines. Start over clears both webs.</p>
+
     <h3>Tips for the best results</h3>
     <ul>
       <li><b>Don't judge while you branch.</b> Silly, wrong and weird all count. You can throw things away later.</li>
@@ -222,7 +228,7 @@ var MAX_NODES = 150, MAX_TEXT = 40, MAX_JOKE = 300, MAX_JOKES = 100, LIMIT = 300
 var INK = '#1d1b4f', PAPER = '#fffdf6', TINT = '#fff0b0';
 var PAL = ['#e0523f', '#1fa88f', '#7d5fe0', '#3a8fd6', '#e0609f', '#d4a017'];
 var FONT_STACK = 'Caveat, "Comic Sans MS", cursive';
-var STEPS = ['Subject', 'Branches', 'Break it down', 'Apply it back'], MINI_STEPS = ['Subject', 'Sub-subjects', 'Break it down', 'Apply it back'], MINI_DEPTH = 2;
+var STEPS = ['Subject', 'Branches', 'Break it down', 'Apply it back'], MINI_STEPS = ['Subject', 'Sub-subjects', 'Break it down', 'Apply it back'], MINI_DEPTH = 2, DOUBLE_STEPS = ['Subjects', 'First web', 'Second web', 'Collide'];
 var PROMPTS = [
   ['Split it up', 'Break the word or phrase into pieces. Can any piece be swapped for something else?'],
   ['Pun on it', 'Does all or half of it sound like another word or phrase?'],
@@ -250,35 +256,47 @@ applyThemeLabel();
 
 // ---------- state ----------
 var S = fresh();
-function fresh() { return { mode: 'guided', size: 'full', step: 1, sel: 0, nextId: 1, nodes: [{ id: 0, t: '', p: null, x: null, y: null, jokes: [] }], draft: '' }; }
+function fresh() { return { mode: 'guided', size: 'full', step: 1, sel: 0, nextId: 1, nodes: [{ id: 0, t: '', p: null, x: null, y: null, jokes: [] }], draft: '', other: null, which: 0 }; }
+// A double web keeps the web you are not looking at in S.other, and swaps it in when you switch (which: 0 = web A is showing, 1 = web B).
+function blankWeb() { return { nodes: [{ id: 0, t: '', p: null, x: null, y: null, jokes: [] }], nextId: 1, sel: 0 }; }
 function clean(s, n) { return String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, n); }
 function load() {
   var raw = null;
   try { raw = localStorage.getItem(KEY); } catch (e) { return; }
   var s = parseState(raw); if (s) S = s;
 }
+// Turns a saved list of bubbles back into a safe one, or null if it isn't one.
+function parseNodes(arr) {
+  if (!Array.isArray(arr) || !arr.length) return null;
+  var nodes = [], ids = {};
+  arr.slice(0, MAX_NODES).forEach(function (n, i) {
+    if (!n || typeof n.id !== 'number' || ids[n.id]) return;
+    var node = { id: n.id, t: clean(n.t, MAX_TEXT), p: (typeof n.p === 'number' ? n.p : null), x: (typeof n.x === 'number' && isFinite(n.x) ? n.x : null), y: (typeof n.y === 'number' && isFinite(n.y) ? n.y : null), jokes: [] };
+    if (Array.isArray(n.jokes)) node.jokes = n.jokes.slice(0, MAX_JOKES).map(function (j) { return clean(j, MAX_JOKE); }).filter(Boolean);
+    if (i === 0) { node.id = 0; node.p = null; }
+    ids[node.id] = true; nodes.push(node);
+  });
+  if (!nodes.length || nodes[0].id !== 0) return null;
+  nodes = nodes.filter(function (n) { return n.p === null ? n.id === 0 : ids[n.p]; });
+  return { nodes: nodes, ids: ids, nextId: nodes.reduce(function (m, n) { return Math.max(m, n.id); }, 0) + 1 };
+}
 // Turns saved text back into a safe state, or null if it isn't one.
 function parseState(raw) {
   if (!raw) return null;
   try {
-    var d = JSON.parse(raw), nodes = [], ids = {};
-    if (!d || !Array.isArray(d.nodes) || !d.nodes.length) return null;
-    d.nodes.slice(0, MAX_NODES).forEach(function (n, i) {
-      if (!n || typeof n.id !== 'number' || ids[n.id]) return;
-      var node = { id: n.id, t: clean(n.t, MAX_TEXT), p: (typeof n.p === 'number' ? n.p : null), x: (typeof n.x === 'number' && isFinite(n.x) ? n.x : null), y: (typeof n.y === 'number' && isFinite(n.y) ? n.y : null), jokes: [] };
-      if (Array.isArray(n.jokes)) node.jokes = n.jokes.slice(0, MAX_JOKES).map(function (j) { return clean(j, MAX_JOKE); }).filter(Boolean);
-      if (i === 0) { node.id = 0; node.p = null; }
-      ids[node.id] = true; nodes.push(node);
-    });
-    if (!nodes.length || nodes[0].id !== 0) return null;
-    nodes = nodes.filter(function (n) { return n.p === null ? n.id === 0 : ids[n.p]; });
+    var d = JSON.parse(raw);
+    if (!d) return null;
+    var main = parseNodes(d.nodes); if (!main) return null;
     var s = fresh();
-    s.nodes = nodes; s.nextId = nodes.reduce(function (m, n) { return Math.max(m, n.id); }, 0) + 1;
+    s.nodes = main.nodes; s.nextId = main.nextId;
     s.mode = d.mode === 'free' ? 'free' : 'guided';
-    s.size = d.size === 'mini' ? 'mini' : 'full';
+    s.size = d.size === 'mini' ? 'mini' : d.size === 'double' ? 'double' : 'full';
     s.step = Math.min(4, Math.max(1, parseInt(d.step, 10) || 1));
-    s.sel = ids[d.sel] ? d.sel : 0;
+    s.sel = main.ids[d.sel] ? d.sel : 0;
     s.draft = String(d.draft || '').slice(0, 2000);
+    var oth = d.other ? parseNodes(d.other.nodes) : null;
+    if (oth) { s.other = { nodes: oth.nodes, nextId: oth.nextId, sel: oth.ids[d.other.sel] ? d.other.sel : 0 }; s.which = d.which === 1 ? 1 : 0; }
+    if (s.size === 'double' && !s.other) s.size = 'full';
     return s;
   } catch (e) { return null; }
 }
@@ -293,6 +311,17 @@ window.addEventListener('pagehide', function () { try { localStorage.setItem(KEY
 function byId(id) { for (var i = 0; i < S.nodes.length; i++) if (S.nodes[i].id === id) return S.nodes[i]; return null; }
 function kidsOf(id) { return S.nodes.filter(function (n) { return n.p === id; }); }
 function isMini() { return S.size === 'mini'; }
+function isDouble() { return S.size === 'double' && !!S.other; }
+function swapRaw() { var o = S.other, cur = { nodes: S.nodes, nextId: S.nextId, sel: S.sel }; S.nodes = o.nodes; S.nextId = o.nextId; S.sel = o.sel; S.other = cur; S.which = 1 - S.which; }
+function showWeb(i) { if (isDouble() && S.which !== i) { swapRaw(); userZoomed = false; clearHold(); } }
+function nodesOf(i) { return i === S.which ? S.nodes : S.other.nodes; }
+function subjectOf(i) { return nodesOf(i)[0].t; }
+function ready() { return isDouble() ? !!(subjectOf(0) && subjectOf(1)) : !!S.nodes[0].t; }
+function setSize(sz) {
+  if (sz === 'double') { if (!S.other) { S.other = blankWeb(); S.which = 0; } S.size = 'double'; }
+  else { if (S.other && S.which === 1) { swapRaw(); userZoomed = false; clearHold(); } S.size = sz; }
+  render(); save();
+}
 function depthOf(n) { var d = 0; while (n && n.p !== null) { n = byId(n.p); d++; } return d; }
 // A mini joke-web stops two levels out from the subject.
 function canGrow(n) { return !isMini() || depthOf(n) < MINI_DEPTH; }
@@ -313,9 +342,13 @@ function removeBranch(id) {
   S.nodes = S.nodes.filter(function (n) { return !gone[n.id]; });
   if (gone[S.sel]) S.sel = parent === null ? 0 : parent;
 }
+function pathIn(list, n) { var out = []; while (n) { out.push(n.t || '…'); var par = n.p; n = par === null ? null : list.filter(function (x) { return x.id === par; })[0]; } return out.reverse(); }
 function allIdeas() {
   var out = [];
-  S.nodes.forEach(function (n) { n.jokes.forEach(function (j, i) { out.push({ node: n, i: i, text: j }); }); });
+  [0, 1].slice(0, isDouble() ? 2 : 1).forEach(function (i) {
+    var list = isDouble() ? nodesOf(i) : S.nodes, there = isDouble() ? subjectOf(1 - i) : '';
+    list.forEach(function (n) { n.jokes.forEach(function (j, k) { out.push({ node: n, i: k, text: j, label: pathIn(list, n).join(' → ') + (there && n.id !== 0 ? '  (applied to ' + there + ')' : '') }); }); });
+  });
   return out;
 }
 
@@ -421,7 +454,7 @@ function renderWeb() {
   var focusing = S.mode === 'guided' && S.step === 4, onPath = {}, selNode = byId(S.sel) || S.nodes[0];
   if (focusing) for (var pn = selNode; pn; pn = pn.p === null ? null : byId(pn.p)) onPath[pn.id] = true;
   sc.items.forEach(function (it) { se('path', { class: 'edge' + (focusing ? (onPath[it.id] ? ' mid' : ' faded') : ''), d: it.d, 'stroke-width': it.w, stroke: it.c }, svg); });
-  var dimRoot = S.mode === 'guided' && S.step === 3;
+  var dimRoot = S.mode === 'guided' && S.step === 3 && !isDouble();
   sc.nodes.forEach(function (nd) {
     var n = byId(nd.id), g = se('g', { class: 'nd' + (nd.id === 0 && dimRoot ? ' dim' : '') + (focusing && nd.id !== 0 && nd.id !== selNode.id ? (onPath[nd.id] ? ' mid' : ' faded') : ''), 'data-id': nd.id, tabindex: 0, role: 'button', 'aria-label': (n.t || 'subject') + (nd.id === S.sel ? ' (selected)' : '') }, svg), b = nd.b;
     if (b.root) {
@@ -528,9 +561,10 @@ function chipList(nodes, opts) {
   return ul;
 }
 function setStep(n) {
-  if (n > 1 && !S.nodes[0].t) return;
+  if (n > 1 && !ready()) return;
   S.step = n;
-  if (n === 3) { var sel = byId(S.sel); if (!sel || sel.id === 0) { var k = kidsOf(0)[0]; if (k) S.sel = k.id; } }
+  if (isDouble()) { if (n === 2) showWeb(0); if (n === 3) showWeb(1); }
+  else if (n === 3) { var sel = byId(S.sel); if (!sel || sel.id === 0) { var k = kidsOf(0)[0]; if (k) S.sel = k.id; } }
   render(); save();
 }
 function renderControls() {
@@ -545,17 +579,82 @@ function renderControls() {
       h('button', { class: 'k-btn' + (confirmReset ? ' coral' : ''), type: 'button', id: 'reset', text: confirmReset ? 'Really start over?' : 'Start over', on: { click: startOver } }))));
   c.appendChild(h('div', { class: 'sizerow' },
     h('div', { class: 'seg', role: 'group', 'aria-label': 'Size of web' },
-      h('button', { type: 'button', id: 'size-full', 'aria-pressed': String(!isMini()), text: 'Full web', on: { click: function () { S.size = 'full'; render(); save(); } } }),
-      h('button', { type: 'button', id: 'size-mini', 'aria-pressed': String(isMini()), text: 'Mini web', on: { click: function () { S.size = 'mini'; render(); save(); } } })),
-    h('p', { class: 'hint', id: 'size-hint', text: isMini() ? 'One specific angle on a subject, two levels out. About 5 to 15 minutes.' : 'A general subject, as many levels out as you like.' })));
+      h('button', { type: 'button', id: 'size-full', 'aria-pressed': String(S.size === 'full'), text: 'Full web', on: { click: function () { setSize('full'); } } }),
+      h('button', { type: 'button', id: 'size-mini', 'aria-pressed': String(S.size === 'mini'), text: 'Mini web', on: { click: function () { setSize('mini'); } } }),
+      h('button', { type: 'button', id: 'size-double', 'aria-pressed': String(isDouble()), text: 'Double web', on: { click: function () { setSize('double'); } } })),
+    h('p', { class: 'hint', id: 'size-hint', text: isDouble() ? 'Two subjects, a web for each, then bash them together: the Hadron Joke Collider.' : isMini() ? 'One specific angle on a subject, two levels out. About 5 to 15 minutes.' : 'A general subject, as many levels out as you like.' })));
+  if (isDouble() && ready()) {
+    var tabs = h('div', { class: 'webtabs', role: 'group', 'aria-label': 'Which web to show' }, h('span', { text: 'Showing: ' }));
+    [0, 1].forEach(function (i) { tabs.appendChild(h('button', { type: 'button', class: 'k-btn', id: 'web-' + (i ? 'b' : 'a'), 'aria-pressed': String(S.which === i), text: (i ? 'B: ' : 'A: ') + subjectOf(i), title: 'Show web ' + (i ? 'B' : 'A'), on: { click: function () { showWeb(i); render(); save(); } } })); });
+    c.appendChild(tabs);
+  }
   if (guided) renderGuided(c); else renderFree(c);
   renderIdeas(c);
   if (focusId) { var f = $(focusId); if (f) f.focus({ preventScroll: true }); focusId = null; }
 }
 function startOver() {
   if (!confirmReset) { confirmReset = true; clearTimeout(resetTimer); resetTimer = setTimeout(function () { confirmReset = false; renderControls(); }, 4000); renderControls(); return; }
-  clearTimeout(resetTimer); confirmReset = false; var size = S.size; S = fresh(); S.size = size; userZoomed = false; clearHold(); render(); save();
+  clearTimeout(resetTimer); confirmReset = false; var size = S.size; S = fresh(); S.size = size; if (size === 'double') S.other = blankWeb(); userZoomed = false; clearHold(); render(); save();
   $('draft').value = ''; updateDraft();
+}
+// Two subject boxes, for the first step of a double web (and for the free board before both are filled in).
+function subjectsForm(c, onDone) {
+  var ia = h('input', { type: 'text', id: 'sub-a', maxlength: MAX_TEXT, placeholder: 'e.g. art', autocomplete: 'off', 'aria-label': 'First subject' });
+  var ib = h('input', { type: 'text', id: 'sub-b', maxlength: MAX_TEXT, placeholder: 'e.g. relationships', autocomplete: 'off', 'aria-label': 'Second subject' });
+  ia.value = subjectOf(0); ib.value = subjectOf(1);
+  function go() {
+    var a = clean(ia.value, MAX_TEXT), b = clean(ib.value, MAX_TEXT);
+    if (!a) { ia.focus(); return; } if (!b) { ib.focus(); return; }
+    nodesOf(0)[0].t = a; nodesOf(1)[0].t = b; showWeb(0); S.sel = 0; onDone(); render(); save();
+  }
+  [ia, ib].forEach(function (i) { i.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); go(); } }); });
+  c.appendChild(h('label', { class: 'hint', for: 'sub-a', text: 'First subject' })); c.appendChild(ia);
+  c.appendChild(h('label', { class: 'hint', for: 'sub-b', text: 'Second subject' })); c.appendChild(ib);
+  c.appendChild(h('div', { class: 'next' }, h('button', { class: 'k-btn primary', type: 'button', id: 'subjects-go', text: ready() ? 'Update and continue →' : 'Start the webs →', on: { click: go } })));
+  if (!ia.value) focusId = 'sub-a'; else if (!ib.value) focusId = 'sub-b';
+}
+function topicIdeas() {
+  var dt = h('details', { class: 'pr' }, h('summary', { text: 'How to choose two subjects' })), ul = h('ul', { class: 'prompts' });
+  ['Two random ideas work well. The Mashup Machine can spin them for you.', 'Look at the news for odd pairings: a politician with a strange hobby, or monkeys in space.', 'Split a pun in two: a joke-web for each half.', 'Split a popular saying in two, such as General Hospital: one web on General, one on Hospital.', 'Find a contradiction in your own life, like wanting a partner but not wanting to go out and find one.', 'Look for new words (a New Pun Opportunity) and be the first to pun on them.', 'If you do stand-up or tell stories, look for links between the subjects you already talk about.'].forEach(function (t, i) {
+    var li = h('li', {}, t); if (i === 0) { li.appendChild(document.createTextNode(' ')); li.appendChild(h('a', { href: '/mashup', text: 'Open it' })); } ul.appendChild(li);
+  });
+  dt.appendChild(ul); return dt;
+}
+function renderDoubleGuided(c) {
+  var root = S.nodes[0], sel = byId(S.sel) || root, cur = S.which, other = subjectOf(1 - cur);
+  if (S.step === 1) {
+    c.appendChild(h('h2', { text: 'Two subjects' }));
+    c.appendChild(h('p', { class: 'hint', text: 'Pick two subjects to bash together. They can be unrelated; many jokes are a link between two things that had nothing to do with each other.' }));
+    subjectsForm(c, function () { S.step = 2; focusId = 'kid-input'; });
+    c.appendChild(topicIdeas());
+  } else if (S.step === 2 || S.step === 3) {
+    c.appendChild(h('h2', { id: 'web-title', text: 'Web ' + (cur ? 'B' : 'A') + ': ' + root.t }));
+    c.appendChild(h('p', { class: 'hint' }, h('b', { text: 'Free-associate on “' + root.t + '”. ' }), 'Think of the big things, the small things, the people, the places, the ideas and the history that go with it. Write everything down. One layer is enough; follow a thread deeper whenever it runs. Give it ten minutes if you can.'));
+    c.appendChild(chipList(kidsOf(0), { mark: true }));
+    if (sel.id !== 0) c.appendChild(crumbs('Adding to: ', sel, false));
+    c.appendChild(inputRow('kid-input', 'Add an association to “' + (sel.t || root.t) + '”…', 'Add', function (v) { addNode(sel.id, v); focusId = 'kid-input'; render(); save(); }));
+    if (sel.id !== 0) { var kids = kidsOf(sel.id); if (kids.length) c.appendChild(chipList(kids, { remove: true, mark: true })); }
+    else if (kidsOf(0).length) c.appendChild(h('p', { class: 'hint', text: 'Tap a bubble in the web to add associations under it.' }));
+    c.appendChild(waysBlock());
+    c.appendChild(h('div', { class: 'next' }, h('button', { class: 'k-btn primary', type: 'button', id: cur ? 'to4' : 'to3', text: cur ? 'Next: collide them →' : 'Next: the second web →', disabled: kidsOf(0).length ? null : 'disabled', on: { click: function () { setStep(cur ? 4 : 3); } } })));
+  } else {
+    c.appendChild(h('h2', { text: 'Collide' }));
+    c.appendChild(h('p', { class: 'hint' }, h('b', { text: 'Bash the two webs together. ' }), 'Pick any idea from one web and apply it to the main subject of the other. Think it through for a few seconds, however silly it seems, and save every idea. Then go the other way. Watch for a word that shows up on both webs: the creativity is in how you use it.'));
+    [0, 1].forEach(function (i) {
+      var list = nodesOf(i).filter(function (n) { return n.id !== 0; }).slice(0, 60);
+      c.appendChild(h('h3', { text: 'From “' + subjectOf(i) + '” to “' + subjectOf(1 - i) + '”' }));
+      if (!list.length) { c.appendChild(h('p', { class: 'hint', text: 'Nothing on this web yet.' })); return; }
+      var ul = h('ul', { class: 'chips', id: 'from-' + (i ? 'b' : 'a') });
+      list.forEach(function (n) {
+        ul.appendChild(h('li', { class: 'chip' + (i === S.which && n.id === S.sel ? ' on' : '') }, h('button', { type: 'button', text: n.t, title: n.t, 'data-chip': n.id, on: { click: function () { showWeb(i); S.sel = n.id; render(); save(); } } })));
+      });
+      c.appendChild(ul);
+    });
+    if (sel.id !== 0) {
+      c.appendChild(h('div', { class: 'crumbs', id: 'applying' }, 'Applying: ', h('b', { text: pathOf(sel).join(' → ') }), ' to ', h('b', { text: other })));
+      c.appendChild(jokeInput(sel, other));
+    } else c.appendChild(h('p', { class: 'hint', text: 'Pick an idea above to apply to the other subject.' }));
+  }
 }
 function waysBlock() {
   var dt = h('details', { class: 'pr', open: 'open' }, h('summary', { text: 'Ways to think about words' }));
@@ -564,13 +663,14 @@ function waysBlock() {
 }
 function renderGuided(c) {
   var ol = h('ol', { class: 'steps', 'aria-label': 'Steps' });
-  (isMini() ? MINI_STEPS : STEPS).forEach(function (name, i) {
+  (isDouble() ? DOUBLE_STEPS : isMini() ? MINI_STEPS : STEPS).forEach(function (name, i) {
     var b = h('button', { type: 'button', 'data-step': i + 1, text: (i + 1) + '. ' + name, on: { click: function () { setStep(i + 1); } } });
     if (S.step === i + 1) b.setAttribute('aria-current', 'step');
-    if (i > 0 && !S.nodes[0].t) b.disabled = true;
+    if (i > 0 && !ready()) b.disabled = true;
     ol.appendChild(h('li', {}, b));
   });
   c.appendChild(ol);
+  if (isDouble()) { renderDoubleGuided(c); return; }
   var root = S.nodes[0], sel = byId(S.sel) || root;
   if (S.step === 1) {
     c.appendChild(h('h2', { text: 'What is it about?' }));
@@ -628,8 +728,8 @@ function crumbs(label, sel, forget) {
   });
   return d;
 }
-function jokeInput(sel) {
-  var inp = h('input', { type: 'text', id: 'joke-input', maxlength: MAX_JOKE, placeholder: 'Joke idea for “' + (sel.t || 'the subject') + '”…', autocomplete: 'off', 'aria-label': 'Joke idea' });
+function jokeInput(sel, target) {
+  var inp = h('input', { type: 'text', id: 'joke-input', maxlength: MAX_JOKE, placeholder: target ? '“' + sel.t + '” applied to “' + target + '”…' : 'Joke idea for “' + (sel.t || 'the subject') + '”…', autocomplete: 'off', 'aria-label': 'Joke idea' });
   function go() { var v = clean(inp.value, MAX_JOKE); if (!v) { inp.focus(); return; } if (allIdeas().length < MAX_JOKES) sel.jokes.push(v); focusId = 'joke-input'; render(); save(); }
   inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); go(); } });
   return h('div', { class: 'row' }, inp, h('button', { class: 'k-btn primary', type: 'button', id: 'joke-go', text: 'Save idea', on: { click: go } }));
@@ -637,6 +737,7 @@ function jokeInput(sel) {
 function renderFree(c) {
   var sel = byId(S.sel) || S.nodes[0];
   c.appendChild(h('h2', { text: 'Free board' }));
+  if (isDouble() && !ready()) { c.appendChild(h('p', { class: 'hint', text: 'Start with two subjects.' })); subjectsForm(c, function () {}); return; }
   if (!S.nodes[0].t) {
     c.appendChild(h('p', { class: 'hint', text: 'Start with the general subject.' }));
     c.appendChild(inputRow('free-root', 'General subject…', 'Start', function (v) { S.nodes[0].t = clean(v, MAX_TEXT); S.sel = 0; render(); save(); }));
@@ -659,7 +760,7 @@ function renderIdeas(c) {
   list.forEach(function (it) {
     ul.appendChild(h('li', {},
       h('span', { text: it.text }),
-      h('small', { text: pathOf(it.node).join(' → ') }),
+      h('small', { text: it.label }),
       h('div', { class: 'acts' },
         h('button', { class: 'k-btn', type: 'button', 'data-use': '1', text: 'Use in draft', on: { click: function () { useInDraft(it.text); } } }),
         h('button', { class: 'k-btn', type: 'button', text: 'Remove', 'aria-label': 'Remove idea', on: { click: function () { it.node.jokes.splice(it.i, 1); render(); save(); } } }))));
@@ -688,42 +789,58 @@ $('dcopy').onclick = function () { var v = $('draft').value; if (!v.trim()) { sa
 // ---------- outputs ----------
 var sayTimer = null;
 function say(t) { var s = $('status'); s.textContent = t; clearTimeout(sayTimer); sayTimer = setTimeout(function () { s.textContent = ''; }, 3500); }
-function outline() {
-  if (!S.nodes[0].t) return '';
+function outlineOf(list) {
+  if (!list[0].t) return '';
   var out = [];
-  (function walk(n, d) { out.push(new Array(d * 2 + 1).join(' ') + n.t); kidsOf(n.id).forEach(function (k) { walk(k, d + 1); }); })(S.nodes[0], 0);
+  (function walk(n, d) { out.push(new Array(d * 2 + 1).join(' ') + n.t); list.filter(function (k) { return k.p === n.id; }).forEach(function (k) { walk(k, d + 1); }); })(list[0], 0);
   return out.join('\n');
+}
+function outline() {
+  if (isDouble()) return [0, 1].map(function (i) { return outlineOf(nodesOf(i)); }).filter(Boolean).join('\n\n');
+  return outlineOf(S.nodes);
 }
 $('copyWeb').onclick = function () { var t = outline(); if (!t) { say('Add a subject first.'); return; } copyText(t, 'Web copied as an outline.'); };
 $('copyIdeas').onclick = function () { var l = allIdeas(); if (!l.length) { say('No joke ideas saved yet.'); return; } copyText(l.map(function (i) { return i.text; }).join('\n'), 'Joke ideas copied.'); };
 $('saveImg').onclick = function () {
-  if (!S.nodes[0].t) { say('Add a subject first.'); return; }
-  var ready = document.fonts && document.fonts.load ? document.fonts.load('700 20px Caveat') : Promise.resolve();
-  Promise.resolve(ready).then(drawImage, drawImage);
+  if (!ready()) { say(isDouble() ? 'Add both subjects first.' : 'Add a subject first.'); return; }
+  var fontsReady = document.fonts && document.fonts.load ? document.fonts.load('700 20px Caveat') : Promise.resolve();
+  Promise.resolve(fontsReady).then(drawImage, drawImage);
 };
 function drawImage() {
-  var sc = buildScene(), b = sc.box, scale = Math.min(2, 4000 / b.w, 4000 / b.h), cv = document.createElement('canvas');
+  var scenes = [];
+  if (isDouble()) { swapRaw(); var sb = buildScene(); swapRaw(); var sa = buildScene(); scenes = S.which === 0 ? [sa, sb] : [sb, sa]; }
+  else scenes.push(buildScene());
+  // a double web is drawn as web A, a cross, then web B
+  var GAP = 90, W = scenes.reduce(function (t, x) { return t + x.box.w; }, 0) + GAP * (scenes.length - 1), H = scenes.reduce(function (m, x) { return Math.max(m, x.box.h); }, 0);
+  var scale = Math.min(2, 4000 / W, 4000 / H), cv = document.createElement('canvas');
   var credit = 'professorkiosk.wtf/jokeweb', extra = 34;
-  cv.width = Math.round(b.w * scale); cv.height = Math.round((b.h + extra) * scale);
-  var g = cv.getContext('2d'); g.scale(scale, scale);
-  g.fillStyle = PAPER; g.fillRect(0, 0, b.w, b.h + extra);
-  g.translate(-b.x, -b.y);
-  g.lineCap = 'round'; g.lineJoin = 'round';
-  sc.items.forEach(function (it) { g.strokeStyle = it.c; g.lineWidth = it.w; g.stroke(new Path2D(it.d)); });
-  var root = sc.nodes[0];
-  g.fillStyle = TINT; g.strokeStyle = INK; g.lineWidth = 3; var rp = new Path2D(sc.rootShape); g.fill(rp); g.stroke(rp);
-  g.fillStyle = INK; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
-  sc.nodes.forEach(function (nd) {
-    g.font = '700 ' + nd.b.fs + 'px ' + FONT_STACK;
-    nd.b.lines.forEach(function (l, i) { g.fillText(l, nd.x, nd.y + (i - (nd.b.lines.length - 1) / 2) * nd.b.lh + nd.b.fs * 0.3); });
-  });
+  cv.width = Math.round(W * scale); cv.height = Math.round((H + extra) * scale);
+  var g = cv.getContext('2d');
   g.setTransform(scale, 0, 0, scale, 0, 0);
-  g.font = '400 12px "DM Mono", ui-monospace, Menlo, monospace'; g.fillStyle = INK; g.globalAlpha = 0.7; g.textAlign = 'right';
-  g.fillText(credit, b.w - 14, b.h + extra - 12); g.globalAlpha = 1;
+  g.fillStyle = PAPER; g.fillRect(0, 0, W, H + extra);
+  var ox = 0;
+  scenes.forEach(function (sc, k) {
+    var b = sc.box;
+    g.save(); g.translate(ox - b.x, (H - b.h) / 2 - b.y);
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    sc.items.forEach(function (it) { g.strokeStyle = it.c; g.lineWidth = it.w; g.stroke(new Path2D(it.d)); });
+    g.fillStyle = TINT; g.strokeStyle = INK; g.lineWidth = 3; var rp = new Path2D(sc.rootShape); g.fill(rp); g.stroke(rp);
+    g.fillStyle = INK; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+    sc.nodes.forEach(function (nd) {
+      g.font = '700 ' + nd.b.fs + 'px ' + FONT_STACK;
+      nd.b.lines.forEach(function (l, i) { g.fillText(l, nd.x, nd.y + (i - (nd.b.lines.length - 1) / 2) * nd.b.lh + nd.b.fs * 0.3); });
+    });
+    g.restore();
+    ox += b.w;
+    if (k < scenes.length - 1) { g.fillStyle = INK; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 48px ' + FONT_STACK; g.fillText('×', ox + GAP / 2, H / 2); ox += GAP; }
+  });
+  g.font = '400 12px "DM Mono", ui-monospace, Menlo, monospace'; g.fillStyle = INK; g.globalAlpha = 0.7; g.textAlign = 'right'; g.textBaseline = 'alphabetic';
+  g.fillText(credit, W - 14, H + extra - 12); g.globalAlpha = 1;
   cv.toBlob(function (blob) {
     if (!blob) { say("Couldn't make the image."); return; }
+    var slugOf = function (t) { return clean(t, 20).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); };
     var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-    a.download = 'joke-web-' + clean(S.nodes[0].t, 20).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.png';
+    a.download = 'joke-web-' + (isDouble() ? slugOf(subjectOf(0)) + '-x-' + slugOf(subjectOf(1)) : slugOf(S.nodes[0].t)) + '.png';
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
     say('Image saved.');
   }, 'image/png');

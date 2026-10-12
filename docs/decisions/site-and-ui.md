@@ -55,3 +55,8 @@
 - what: `size` (`full` or `mini`) is saved with the web; Mini keeps the four steps but renames step 2 Sub-subjects (with the word prompts), asks for one specific angle, and stops adding at two levels out; Start over keeps the size
 - why: the developer asked for the book's mini joke-web (Exercise 5) as an option, unsure how to integrate it, suggested a toggle; double joke-webs were deliberately not built yet
 - source: developer request, 2026-10-12
+
+### 2026-10-12 · Double joke-web is a third size in the Joke-Web Maker, with the second web held in `S.other` and swapped in · active
+- what: `size: 'double'`; web A is shown first, web B is kept in `S.other` and swapped in by the A/B tabs (`which` says which is showing); steps are Subjects, First web, Second web, Collide; ideas are stored on the idea's own bubble and labeled "applied to" the other subject; Save image and Copy web cover both webs; switching to Full or Mini hides web B without deleting it, Start over clears both
+- why: the developer asked for double webs from the book (Chapter 5, Exercise 6); swapping reuses the single-web drawing, layout and drag code unchanged (design choice, not stated by the developer)
+- source: developer request, 2026-10-12

@@ -48,6 +48,7 @@ Source: the Help text in `public/jokeweb.html`. The automated suite covers these
 - Crowding. How: build about 40 bubbles. Expect: still usable with zoom, as the Help says ("fine, but crowded").
 - Keeping your work. How: make a web and a draft, reload; use Save image, Copy web, Copy joke ideas; tap Start over once, then again. Expect: web and draft survive; a PNG downloads; the outline and the ideas copy; the first tap only asks, the second clears; nothing is sent anywhere except the footer avatar lookup.
 - Mini web. How: choose Mini web, build seat belts with 3 sub-subjects and some associations, try to go a third level out in guided and free mode, then switch to Full web. Expect: the Help's description (about 5 to 15 minutes, two levels out) matches how it feels, nothing can be added past level 2, and Full web lifts the limit.
+- Double web. How: choose Double web, subjects art and relationships, 4 or 5 associations each, collide a few ideas both ways, then Save image, Copy web and reload. Expect: the Help's description matches (tabs show either web, ideas say what they were applied to, the image shows both webs side by side with a cross, Copy web gives both outlines, nothing is lost on reload), and it feels usable on a phone.
 - Help itself. How: open Help on a phone. Expect: it fits the screen and scrolls inside; Esc and the close button work.
 
 ## Skeet Receipt: claims in its Help dialog (live site, real browser, desktop and phone)

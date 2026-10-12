@@ -60,3 +60,9 @@
 - built: jokeweb suite section N (13 checks)
 - note: double joke-webs not built
 - live-tested: no
+
+## 2026-10-12 · Double web (Hadron Joke Collider) in the Joke-Web Maker
+- built: third size, Double web, with two-subject start, web A and web B tabs, a Collide step (pick an idea from one web, applied to the other web's subject), choose-a-topic tips, two-web outline and side-by-side PNG, Help section
+- built: saved state gains `other` and `which`; older saves load as before
+- built: jokeweb suite section O (19 checks)
+- live-tested: no

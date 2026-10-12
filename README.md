@@ -80,7 +80,7 @@ Feeds whose accounts have been deleted, deactivated, or suspended are pruned aut
 
 ## Mashup Machine
 
-`/mashup` is a browser-only page that spins a random topic or mashes two or three together. The topics live in `public/topics.js` (about 2,000 in 32 categories; edit freely, `*` marks a spicy one). Each category sits on a small map, and the Distance dial picks topics by how far apart their categories are; the Weirdness dial adds odd pairings and a third topic. Visitors can add their own topics, lock a card while re-rolling, keep a history and favorites. Everything is saved in the browser only (`localStorage`, key `pk-mashup-v1`).
+`/mashup` is a browser-only page that spins a random topic or mashes two or three together. The topics live in `public/topics.js` (about 2,000 in 32 categories; edit freely, `*` marks a spicy one). Each category sits on a small map, and the Distance dial picks topics by how far apart their categories are; the Weirdness dial adds odd pairings and a third topic. Visitors can add their own topics, lock a card while re-rolling, keep a history and favorites, and send a single topic or a pair to the Joke-Web Maker (`/jokeweb#subject=X` or `/jokeweb#a=X&b=Y`, a double web for a pair); three topics have no send button. Everything is saved in the browser only (`localStorage`, key `pk-mashup-v1`).
 
 ## Bluesky Tutorials
 

@@ -32,6 +32,7 @@ Source: the Help text in `public/mashup.html`. The automated suite covers these 
 - Spicy and My topics switches. How: turn Spicy off and spin about 30 times; add a topic of your own, then turn "Include my topics" off. Expect: no topic marked with `*` in `public/topics.js` appears; your topic shows up sometimes when on, never when off.
 - Lock. How: lock one card and spin. Expect: the locked card stays, the others change.
 - Favorite and History. How: spin 10 times, star one result, reload the page. Expect: History shows only the last 8; the favorite is still listed after the reload.
+- Send to Joke-Web Maker. How: with one topic, then with a pair, then with three, click the button (three should show none), once with a Joke-Web already started. Expect: one topic starts a web with it as the subject, a pair starts a Double web with both subjects on the board, the earlier web is one tap away ("Swap with previous web"), and the Help text on both pages matches.
 - Saved on this device only. How: use the browser's Network tab while spinning; open the page in a second browser. Expect: no requests except the footer avatar lookup to Bluesky; your topics, history and favorites do not appear in the second browser.
 
 ## Joke-Web Maker: claims in its Help dialog (live site, real browser, desktop and phone)

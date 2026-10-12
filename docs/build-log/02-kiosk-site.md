@@ -98,3 +98,8 @@
 - built: `ap` saved with each idea (`addIdea`, `removeIdea`, sanitized in `parseNodes`); Joke ideas list shows the full pairing; later picks do not change it
 - built: jokeweb checks O9b, O9c (now 107)
 - live-tested: no
+
+## 2026-10-12 · Send to Joke-Web Maker is back (one topic or a pair)
+- built: `#send` in `mashup.html` shown for 1 or 2 topics only, linking `#subject=X` or `#a=X&b=Y`; `jokeweb.html` handles both (new web at once, banner, spare slot and Swap with previous web, restored)
+- built: Help text on both pages and the hub card mention it; mashup suite section F rewritten (49 checks)
+- live-tested: no

@@ -46,10 +46,11 @@
 - source: 6d1461e
 > Superseded 2026-10-11: the Send button was removed (see the next entry).
 
-### 2026-10-11 · No "Send to Joke-Web Maker" button on the Mashup Machine · active
+### 2026-10-11 · No "Send to Joke-Web Maker" button on the Mashup Machine · superseded
 - what: the button, the `#subject=...&branches=...` link handling and the spare-web slot ("Swap with previous web") were removed from both pages
 - why: two or three topics don't make sense as one central concept (developer's statement); a different way to carry mashups over is open
 - source: developer request, 2026-10-11
+> Superseded 2026-10-12: the button came back for one topic or a pair, see the last entry below.
 
 ### 2026-10-12 · Mini joke-web is a Full web / Mini web switch inside the Joke-Web Maker · active
 - what: `size` (`full` or `mini`) is saved with the web; Mini keeps the four steps but renames step 2 Sub-subjects (with the word prompts), asks for one specific angle, and stops adding at two levels out; Start over keeps the size
@@ -75,4 +76,9 @@
 ### 2026-10-12 · Each double-web idea is saved with the full pairing it was written for · active
 - what: nodes carry `ap`, a list kept in step with `jokes`, holding the "to books → biographies" side of each idea; the Joke ideas list reads "fish → salmon to books → biographies"; ideas saved before this fall back to the other web's subject
 - why: developer asked for the full pairing to be saved with each idea
+- source: developer request, 2026-10-12
+
+### 2026-10-12 · The Mashup Machine can send one topic or a pair to the Joke-Web Maker; three topics have no button · active
+- what: one topic starts a web (Full, or Mini if that was the size) with it as the subject; a pair starts a Double web with the two topics as its subjects; the previous web (any size) stays in the one spare slot and can be swapped back; the draft is kept
+- why: the developer proposed it once Double web existed, since three topics don't make one central concept but one or two map onto one or two subjects
 - source: developer request, 2026-10-12

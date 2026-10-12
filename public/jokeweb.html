@@ -155,7 +155,7 @@ html[data-theme="dark"] .dcount.over { color: #fca5a5; }
     <p>Switch to Free board to drag bubbles around, rename them, delete a bubble with its branch, or add ideas anywhere. Tidy up puts every bubble back in its automatic place. With a bubble selected, the arrow keys nudge it (hold Shift for bigger steps). Use + and &minus; to zoom and Fit to see the whole web.</p>
 
     <h3>Keeping your work</h3>
-    <p>Your web and draft are saved in this browser only, nothing is sent anywhere. Save image downloads a picture of the web, Copy web copies it as an outline, and Copy joke ideas copies just your ideas. Start over asks you twice.</p>
+    <p>Your web and draft are saved in this browser only, nothing is sent anywhere. Save image downloads a picture of the web, Copy web copies it as an outline, and Copy joke ideas copies just your ideas. Start over asks you twice. If you send topics over from the Mashup Machine (one topic, or two for a double web), it starts a new web and keeps your old one so you can swap back.</p>
   </div>
 </dialog>
 
@@ -171,6 +171,14 @@ html[data-theme="dark"] .dcount.over { color: #fca5a5; }
 
 <main class="k-main">
   <div class="k-wrap">
+    <section class="panel" id="incoming" hidden style="margin-bottom: 24px" aria-label="Topics from the Mashup Machine">
+      <h2 id="inc-title">New web started</h2>
+      <p class="hint" id="inc-text"></p>
+      <div class="row">
+        <button class="k-btn primary" id="inc-new" type="button">Switch back to my previous web</button>
+        <button class="k-btn" id="inc-keep" type="button">Got it</button>
+      </div>
+    </section>
     <div class="layout" id="layout">
 
       <section class="panel" id="controls" aria-label="Build your web"></section>
@@ -221,7 +229,7 @@ html[data-theme="dark"] .dcount.over { color: #fca5a5; }
 'use strict';
 
 // ---------- constants ----------
-var KEY = 'pk-jokeweb-v1';
+var KEY = 'pk-jokeweb-v1', PREVKEY = 'pk-jokeweb-prev-v1', prevMem = null;
 var MAX_NODES = 150, MAX_TEXT = 40, MAX_JOKE = 300, MAX_JOKES = 100, LIMIT = 300;
 var INK = '#1d1b4f', PAPER = '#fffdf6', TINT = '#fff0b0';
 var PAL = ['#e0523f', '#1fa88f', '#7d5fe0', '#3a8fd6', '#e0609f', '#d4a017'];
@@ -623,6 +631,7 @@ function renderControls() {
       h('button', { type: 'button', id: 'mode-guided', 'aria-pressed': String(guided), text: 'Guided', on: { click: function () { S.mode = 'guided'; render(); save(); } } }),
       h('button', { type: 'button', id: 'mode-free', 'aria-pressed': String(!guided), text: 'Free board', on: { click: function () { S.mode = 'free'; render(); save(); } } })),
     h('div', { class: 'tools' },
+      hasPrev() ? h('button', { class: 'k-btn', type: 'button', id: 'prev', text: 'Swap with previous web', title: 'Switch back to the web you had before topics were sent here', on: { click: swapPrev } }) : null, hasPrev() ? ' ' : null,
       S.mode === 'free' ? h('button', { class: 'k-btn', type: 'button', id: 'tidy', text: 'Tidy up', title: 'Put every bubble back in its automatic place', on: { click: function () { S.nodes.forEach(function (n) { n.x = null; n.y = null; }); clearHold(); render(); save(); } } }) : null, S.mode === 'free' ? ' ' : null,
       h('button', { class: 'k-btn' + (confirmReset ? ' coral' : ''), type: 'button', id: 'reset', text: confirmReset ? 'Really start over?' : 'Start over', on: { click: startOver } }))));
   c.appendChild(h('div', { class: 'sizerow' },
@@ -905,6 +914,46 @@ updateDraft();
 render();
 if (document.fonts && document.fonts.load) document.fonts.load('700 20px Caveat').then(function () { renderWeb(); });
 
+// Topics sent from the Mashup Machine arrive in the address after the #: subject=X (one topic) or a=X&b=Y (two topics, for a double web)
+function incomingTopic() {
+  var m = location.hash.match(/^#(.+)$/); if (!m) return null;
+  var p; try { p = new URLSearchParams(m[1]); } catch (e) { return null; }
+  var a = clean(p.get('a'), MAX_TEXT), b = clean(p.get('b'), MAX_TEXT), one = clean(p.get('subject'), MAX_TEXT);
+  if (a && b) return { subjects: [a, b] };
+  return one ? { subjects: [one] } : null;
+}
+function applyIncoming(inc) {
+  var draft = S.draft, size = S.size; S = fresh(); S.draft = draft;
+  if (inc.subjects.length === 2) { S.size = 'double'; S.other = blankWeb(); S.which = 0; S.nodes[0].t = inc.subjects[0]; S.other.nodes[0].t = inc.subjects[1]; }
+  else { S.size = size === 'mini' ? 'mini' : 'full'; S.nodes[0].t = inc.subjects[0]; }
+  S.step = 2; S.sel = 0;
+  userZoomed = false; clearHold(); $('draft').value = S.draft; render(); save();
+}
+// The web you had before topics were sent here is kept in one spare slot, so nothing is ever lost.
+function readPrev() { try { var r = localStorage.getItem(PREVKEY); if (r) return r; } catch (e) {} return prevMem; }
+function hasPrev() { return !!parseState(readPrev()); }
+function stashPrev(raw) { prevMem = raw; try { localStorage.setItem(PREVKEY, raw); } catch (e) {} }
+function swapPrev() {
+  var p = parseState(readPrev()); if (!p) return;
+  var draft = S.draft; stashPrev(JSON.stringify(S)); S = p; S.draft = draft;
+  userZoomed = false; clearHold(); $('draft').value = S.draft; $('incoming').hidden = true; render(); save();
+}
+(function () {
+  var inc = incomingTopic(); if (!inc) return;
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+  var all = S.nodes.concat(S.other ? S.other.nodes : []);
+  var had = all.length > 1 || all.some(function (n) { return !!n.t; });
+  // a web you have really worked on is always kept; a tiny one that was itself just sent here doesn't push out an older saved one
+  var worked = all.length >= 6 || all.some(function (n) { return n.jokes.length || n.x !== null; });
+  if (had && (worked || !hasPrev())) stashPrev(JSON.stringify(S));
+  applyIncoming(inc);
+  $('inc-title').textContent = 'New web started';
+  $('inc-text').textContent = (inc.subjects.length === 2 ? 'Started a new double web with “' + inc.subjects[0] + '” and “' + inc.subjects[1] + '”.' : 'Started a new web with “' + inc.subjects[0] + '”.') + (had ? ' The web you had before is saved, and you can switch back.' : '');
+  $('inc-new').hidden = !had;
+  $('incoming').hidden = false;
+  $('inc-new').onclick = swapPrev;
+  $('inc-keep').onclick = function () { $('incoming').hidden = true; };
+})();
 window.__jokeweb = { state: function () { return S; }, outline: outline, glen: glen };
 })();
 </script>

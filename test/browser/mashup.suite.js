@@ -86,11 +86,39 @@ const many = (page, set, n = 80) => page.evaluate(([set, n]) => { const S = wind
   await page.locator('#favlist li button[aria-label="Remove favorite"]').click();
   ok('E8 a favorite can be removed', await page.locator('#favlist li b').first().innerText() !== favText);
 
-  // F. there is no send button any more
-  ok('F1 the Mashup Machine has no Send to Joke-Web Maker button', await page.locator('#send').count() === 0 && !/Send to Joke-Web/i.test(await page.locator('body').innerText()));
-  const jwq = await mk(browser); await jwq.goto('http://localhost:3988/jokeweb#subject=Cheese&branches=Tax');
-  ok('F2 the Joke-Web Maker ignores a leftover #subject link and starts empty', await jwq.locator('#incoming').count() === 0 && await jwq.locator('#frame .nd').count() <= 1);
-  await jwq.close();
+  // F. send to the Joke-Web Maker: one topic or a pair, never three
+  await page.evaluate(() => { const S = window.__mashup.state(); S.weird = 0; S.mode = 'randomize'; });
+  await page.click('#spin');
+  const one = await cards(page);
+  ok('F1 a single topic shows the send button, linking to a web with that subject', one.length === 1 && await page.locator('#send').isVisible() && (await page.getAttribute('#send', 'href')) === '/jokeweb#subject=' + encodeURIComponent(one[0].text), await page.getAttribute('#send', 'href'));
+  await page.click('#m-mash'); await page.evaluate(() => { window.__mashup.state().weird = 0; }); await page.click('#spin');
+  const two = await cards(page); const href2 = await page.getAttribute('#send', 'href');
+  ok('F2 a pair shows the button, linking to a double web with both topics', two.length === 2 && await page.locator('#send').isVisible() && href2 === '/jokeweb#a=' + encodeURIComponent(two[0].text) + '&b=' + encodeURIComponent(two[1].text), href2);
+  await page.evaluate(() => { window.__mashup.state().weird = 100; }); await page.click('#spin');
+  const three = await cards(page);
+  ok('F3 three topics have no send button', three.length === 3 && await page.locator('#send').isHidden(), String(three.length));
+  await page.evaluate(() => { const S = window.__mashup.state(); S.weird = 0; S.mode = 'mashup'; }); await page.click('#spin');
+  const pair = await cards(page); await page.click('#send'); await page.waitForSelector('#frame .nd');
+  const jw = await page.evaluate(() => ({ subs: [...document.querySelectorAll('#frame [data-web] .nd:first-child')].map(g => [...g.querySelectorAll('text')].map(x => x.textContent).join(' ')), size: document.querySelector('#size-double').getAttribute('aria-pressed'), hash: location.hash, step: document.querySelector('[aria-current="step"]').textContent, banner: !document.getElementById('incoming').hidden }));
+  ok('F4 sending a pair starts a double web with both subjects on the board, at the first web step, address cleaned', jw.subs.join('|') === pair.map(c => c.text).join('|') && jw.size === 'true' && jw.hash === '' && /First web/.test(jw.step) && jw.banner, JSON.stringify(jw));
+  const single = await mk(browser); await single.goto('http://localhost:3988/jokeweb#subject=Seat%20belts');
+  const sj = await single.evaluate(() => ({ n: document.querySelectorAll('#frame .nd').length, full: document.querySelector('#size-full').getAttribute('aria-pressed'), step: document.querySelector('[aria-current="step"]').textContent, inv: document.getElementById('inc-new').hidden }));
+  ok('F5 sending one topic starts a full web with it as the subject, at the branches step; no old web, so no switch-back button', sj.n === 1 && sj.full === 'true' && /Branches/.test(sj.step) && sj.inv, JSON.stringify(sj));
+  await single.close();
+  const mini = await mk(browser, { init: ['pk-jokeweb-v1', JSON.stringify({ mode: 'guided', size: 'mini', step: 1, sel: 0, nextId: 1, nodes: [{ id: 0, t: '', p: null, x: null, y: null, jokes: [] }], draft: '' })] });
+  await mini.goto('http://localhost:3988/jokeweb#subject=Goose');
+  ok('F6 sending one topic keeps a Mini web as Mini', await mini.getAttribute('#size-mini', 'aria-pressed') === 'true' && /Sub-subjects/.test(await mini.innerText('.steps')));
+  await mini.close();
+  // with an existing web: the new web starts at once, the old one is one tap away
+  const q = await mk(browser, { init: ['pk-jokeweb-v1', JSON.stringify({ mode: 'guided', step: 2, sel: 0, nextId: 2, nodes: [{ id: 0, t: 'Mine', p: null, x: null, y: null, jokes: [] }, { id: 1, t: 'Kept', p: 0, x: null, y: null, jokes: [] }], draft: 'keep this draft' })] });
+  await q.goto('http://localhost:3988/jokeweb#a=Cheese&b=Tax');
+  const sent = await q.evaluate(() => ({ draft: document.getElementById('draft').value, prev: !!document.getElementById('prev'), dbl: document.getElementById('size-double').getAttribute('aria-pressed'), text: document.getElementById('inc-text').textContent }));
+  ok('F7 sending a pair with a web in progress starts a double web at once, says so, keeps the draft and offers a swap', sent.dbl === 'true' && sent.draft === 'keep this draft' && sent.prev && /double web/.test(sent.text) && /switch back/.test(sent.text), JSON.stringify(sent));
+  await q.click('#inc-new');
+  const back = await q.evaluate(() => ({ t: [...document.querySelectorAll('#frame .nd text')].map(x => x.textContent), size: document.getElementById('size-full').getAttribute('aria-pressed'), draft: document.getElementById('draft').value, prev: !!document.getElementById('prev') }));
+  ok('F8 switching back restores the web I had (as a full web), the draft stays, and I can swap again', back.t.join() === 'Mine,Kept' && back.size === 'true' && back.draft === 'keep this draft' && back.prev, JSON.stringify(back));
+  await q.reload(); ok('F9 the swap survives a reload', await q.locator('#prev').count() === 1 && await q.locator('#frame .nd').count() === 2);
+  await q.close();
 
   // G. animation, phone, dark, hub
   const an = await mk(browser, { reduce: false }); await an.goto(BASE);

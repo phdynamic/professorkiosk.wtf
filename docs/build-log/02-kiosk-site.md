@@ -87,3 +87,9 @@
 - changed: the Working on A / B tabs are gone; step 2 and 3 pick the web, the other web fades (`.off`) and ignores taps; the free board switches web by tapping a bubble
 - built: jokeweb checks adjusted (O5c added, drag check now measured inside the board)
 - live-tested: no
+
+## 2026-10-12 · Collide line names both concepts
+- changed: the "Applying:" line in Collide reads "fish → salmon to books → biographies" when a concept is picked in both webs, and "fish → salmon to books" when only one is; the idea box placeholder follows
+- note: saved ideas are still labeled with the other web's subject only
+- built: one more jokeweb check (O8b)
+- live-tested: no

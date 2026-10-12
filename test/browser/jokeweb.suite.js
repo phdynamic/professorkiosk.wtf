@@ -295,6 +295,8 @@ const labels = page => page.evaluate(() => [...document.querySelectorAll('#frame
     await page.locator('#from-b button', { hasText: 'dating' }).click();
     const lit = await page.evaluate(() => ({ halos: document.querySelectorAll('#frame .halo').length, faded: document.querySelectorAll('#frame .faded').length, aHalo: !!document.querySelector('#frame [data-web="0"] .halo'), bHalo: !!document.querySelector('#frame [data-web="1"] .halo'), a: document.querySelectorAll('#frame [data-web="0"] .nd:not(.faded):not(.mid)').length, b: document.querySelectorAll('#frame [data-web="1"] .nd:not(.faded):not(.mid)').length }));
     ok('O8 one idea from each list is highlighted on the board, one in each web, the rest faded', lit.halos === 2 && lit.aHalo && lit.bHalo && lit.faded > 0 && lit.a === 2 && lit.b === 2, JSON.stringify(lit));
+    const both = [(await page.innerText('#applying-a')).replace(/\s+/g, ' '), (await page.innerText('#applying-b')).replace(/\s+/g, ' ')];
+    ok('O8b with a concept picked in each web, each line reads "subject → concept to subject → concept"', both[0] === 'Applying: art → fake to relationships → dating' && both[1] === 'Applying: relationships → dating to art → fake', JSON.stringify(both));
     await page.fill('#joke-input-a', 'My art dealer could tell it was fake'); await page.click('#joke-go-a');
     await page.fill('#joke-input-b', 'Dating is a still life'); await page.click('#joke-go-b');
     const ideas = await page.locator('#ideas li small').allTextContents();

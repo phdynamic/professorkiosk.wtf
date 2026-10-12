@@ -688,9 +688,11 @@ function renderDoubleGuided(c) {
       });
       c.appendChild(ul);
       var node = nodesOf(i).filter(function (n) { return n.id === selId; })[0];
+      // when a concept is picked on the other web too, the idea is aimed at that concept: "fish → salmon to books → biographies"
+      var hit = nodesOf(1 - i).filter(function (n) { return n.id === selOf(1 - i); })[0], hitPath = hit && hit.id !== 0 ? pathIn(nodesOf(1 - i), hit).join(' → ') : target;
       if (node && node.id !== 0) {
-        c.appendChild(h('div', { class: 'crumbs', id: 'applying' + sfx }, 'Applying: ', h('b', { text: pathIn(nodesOf(i), node).join(' → ') }), ' to ', h('b', { text: target })));
-        c.appendChild(jokeInput(node, target, sfx));
+        c.appendChild(h('div', { class: 'crumbs', id: 'applying' + sfx }, 'Applying: ', h('b', { text: pathIn(nodesOf(i), node).join(' → ') }), ' to ', h('b', { text: hitPath })));
+        c.appendChild(jokeInput(node, hit && hit.id !== 0 ? hit.t : target, sfx));
       } else c.appendChild(h('p', { class: 'hint', text: 'Pick an idea above to apply to “' + target + '”.' }));
     });
   }

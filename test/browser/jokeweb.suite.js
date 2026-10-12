@@ -275,19 +275,20 @@ const labels = page => page.evaluate(() => [...document.querySelectorAll('#frame
     await page.fill('#sub-a', 'art'); await page.click('#subjects-go');
     ok('O3 both subjects are required', await page.locator('#sub-b').evaluate(e => e === document.activeElement) && await page.getAttribute('[data-step="2"]', 'aria-current') === null);
     await page.fill('#sub-b', 'relationships'); await page.click('#subjects-go');
-    ok('O4 step 2 is web A and the web shows art', /Web A: art/.test(await page.innerText('#web-title')) && (await page.locator('#frame .nd text').allTextContents()).includes('art'));
+    ok('O4 step 2 is web A, and both subjects are already on the board', /Web A: art/.test(await page.innerText('#web-title')) && (await page.locator('#frame .nd text').allTextContents()).includes('art') && (await page.locator('#frame .nd text').allTextContents()).includes('relationships') && await page.locator('#frame [data-web]').count() === 2);
     for (const w of ['paint', 'fake', 'museum']) { await page.fill('#kid-input', w); await page.press('#kid-input', 'Enter'); }
     await page.click('#to3');
-    ok('O5 step 3 is web B, showing relationships and not art', /Web B: relationships/.test(await page.innerText('#web-title')) && !(await page.locator('#frame .nd text').allTextContents()).includes('paint'));
+    ok('O5 step 3 is web B, and web A is still on the board beside it', /Web B: relationships/.test(await page.innerText('#web-title')) && (await page.locator('#frame .nd text').allTextContents()).includes('paint'));
     for (const w of ['fake', 'dating', 'commitment']) { await page.fill('#kid-input', w); await page.press('#kid-input', 'Enter'); }
     await page.click('#to4');
     ok('O6 Collide lists each web\'s ideas, aimed at the other subject', (await page.innerText('#controls')).includes('From “art” to “relationships”') && await page.locator('#from-a button').count() === 3 && await page.locator('#from-b button').count() === 3);
     await page.locator('#from-a button', { hasText: 'fake' }).click();
-    ok('O7 picking an idea from web A shows web A and says it is applied to relationships', /fake/.test(await page.innerText('#applying')) && /relationships/.test(await page.innerText('#applying')) && (await page.getAttribute('#joke-input', 'placeholder')).includes('applied to “relationships”'));
-    await page.fill('#joke-input', 'My art dealer could tell it was fake'); await page.click('#joke-go');
+    ok('O7 picking an idea from web A says it is applied to relationships, with its own box', /fake/.test(await page.innerText('#applying-a')) && /relationships/.test(await page.innerText('#applying-a')) && (await page.getAttribute('#joke-input-a', 'placeholder')).includes('applied to “relationships”'));
     await page.locator('#from-b button', { hasText: 'dating' }).click();
-    ok('O8 picking from web B switches to web B', await page.getAttribute('#web-b', 'aria-pressed') === 'true' && (await page.locator('#frame .nd text').allTextContents()).includes('dating'));
-    await page.fill('#joke-input', 'Dating is a still life'); await page.click('#joke-go');
+    const lit = await page.evaluate(() => ({ halos: document.querySelectorAll('#frame .halo').length, faded: document.querySelectorAll('#frame .faded').length, aHalo: !!document.querySelector('#frame [data-web="0"] .halo'), bHalo: !!document.querySelector('#frame [data-web="1"] .halo'), a: document.querySelectorAll('#frame [data-web="0"] .nd:not(.faded):not(.mid)').length, b: document.querySelectorAll('#frame [data-web="1"] .nd:not(.faded):not(.mid)').length }));
+    ok('O8 one idea from each list is highlighted on the board, one in each web, the rest faded', lit.halos === 2 && lit.aHalo && lit.bHalo && lit.faded > 0 && lit.a === 2 && lit.b === 2, JSON.stringify(lit));
+    await page.fill('#joke-input-a', 'My art dealer could tell it was fake'); await page.click('#joke-go-a');
+    await page.fill('#joke-input-b', 'Dating is a still life'); await page.click('#joke-go-b');
     const ideas = await page.locator('#ideas li small').allTextContents();
     ok('O9 both ideas are listed, each saying what it was applied to', ideas.length === 2 && ideas[0].includes('applied to relationships') && ideas[1].includes('applied to art'), JSON.stringify(ideas));
     const o = await page.evaluate(() => window.__jokeweb.outline());
@@ -297,13 +298,18 @@ const labels = page => page.evaluate(() => [...document.querySelectorAll('#frame
     const dl = page.waitForEvent('download'); await page.click('#saveImg'); const d = await dl;
     ok('O12 Save image names the file after both subjects', d.suggestedFilename() === 'joke-web-art-x-relationships.png', d.suggestedFilename());
     await page.click('#size-full');
-    ok('O13 Full web shows only web A again, and Double web brings web B back', (await page.locator('#frame .nd text').allTextContents()).includes('art') && (await page.evaluate(() => window.__jokeweb.outline())).startsWith('art') && !(await page.evaluate(() => window.__jokeweb.outline())).includes('relationships'));
+    ok('O13 Full web shows only web A again, and Double web brings web B back', (await page.locator('#frame .nd text').allTextContents()).includes('art') && await page.locator('#frame [data-web]').count() === 1 && (await page.evaluate(() => window.__jokeweb.outline())).startsWith('art') && !(await page.evaluate(() => window.__jokeweb.outline())).includes('relationships'));
     await page.click('#size-double');
     ok('O14 switching back to Double web restores web B', await page.locator('#web-b').count() === 1 && (await page.innerText('#web-b')).includes('relationships'));
     await page.click('#mode-free');
     ok('O15 free board has the web tabs, and ideas can be added to either web', await page.locator('#web-b').count() === 1 && await page.locator('#free-add').count() === 1);
     await page.click('#web-b'); await page.fill('#free-add', 'wedding'); await page.press('#free-add', 'Enter');
-    ok('O16 adding on web B in the free board', (await page.locator('#frame .nd text').allTextContents()).includes('wedding'));
+    ok('O16 adding on web B in the free board', (await page.locator('#frame [data-web="1"] .nd text').allTextContents()).includes('wedding'));
+    const wb = await page.locator('#frame [data-web="1"] .nd', { hasText: 'wedding' }).boundingBox(), wa0 = await page.locator('#frame [data-web="0"] .nd', { hasText: 'paint' }).boundingBox();
+    await page.mouse.move(wb.x + wb.width / 2, wb.y + wb.height / 2); await page.mouse.down(); await page.mouse.move(wb.x + wb.width / 2 + 60, wb.y + wb.height / 2 + 40, { steps: 6 }); await page.mouse.up();
+    const wa1 = await page.locator('#frame [data-web="0"] .nd', { hasText: 'paint' }).boundingBox(), wb1 = await page.locator('#frame [data-web="1"] .nd', { hasText: 'wedding' }).boundingBox();
+    const placed = await page.evaluate(() => { const S = window.__jokeweb.state(), all = S.nodes.concat(S.other.nodes); return all.filter(n => n.x !== null).map(n => n.t).join(); });
+    ok('O16b dragging a bubble in web B moves only that bubble; web A stays put', placed === 'wedding' && Math.abs(wb1.x - wb.x) > 30 && Math.abs(wa1.x - wa0.x) < 2 && Math.abs(wa1.y - wa0.y) < 6, JSON.stringify({ placed, dx: wb1.x - wb.x, ax: wa1.x - wa0.x, ay: wa1.y - wa0.y }));
     await page.click('#reset'); await page.click('#reset');
     ok('O17 Start over clears both webs but stays in Double web', await page.getAttribute('#size-double', 'aria-pressed') === 'true' && (await page.evaluate(() => window.__jokeweb.outline())) === '');
     await page.click('#helpBtn');
@@ -313,6 +319,8 @@ const labels = page => page.evaluate(() => [...document.querySelectorAll('#frame
     await ph.fill('#sub-a', 'a very long first subject here'); await ph.fill('#sub-b', 'and another long second subject'); await ph.click('#subjects-go');
     const over = await ph.evaluate(() => document.documentElement.scrollWidth > innerWidth);
     ok('O19 phone: no sideways scroll in double web', !over);
+    const pos = await ph.evaluate(() => { const a = document.querySelector('#frame [data-web="0"]').getBoundingClientRect(), b = document.querySelector('#frame [data-web="1"]').getBoundingClientRect(), f = document.getElementById('frame').getBoundingClientRect(); return { aBottom: a.bottom, bTop: b.top, bw: b.width, fw: f.width }; });
+    ok('O20 phone: the two webs are stacked, one above the other', pos.bTop >= pos.aBottom - 2, JSON.stringify(pos));
     await ph.close();
   }
   // M. help dialog

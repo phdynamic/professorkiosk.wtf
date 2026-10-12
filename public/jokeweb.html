@@ -141,7 +141,7 @@ html[data-theme="dark"] .dcount.over { color: #fca5a5; }
     <p>Short on time? Switch to Mini web (under the mode switch). It is for one specific angle, such as seat belts rather than cars, or sub-tropical fruit rather than food, and it takes about 5 to 15 minutes. You skip the general first level and go only two levels out: sub-subjects off the subject, then associations off each of those. Cover the subject and free-associate on the sub-subjects, then apply the new meanings back to the subject. Check every association, because the biggest mistake is deciding up front that there is no joke. The size is remembered with your web, and Start over keeps it.</p>
 
     <h3>Double web: the Hadron Joke Collider</h3>
-    <p>Many jokes are a link between two subjects that had nothing to do with each other. Switch to Double web and pick two subjects, such as art and relationships. You build a web for each (one layer of associations is enough, deeper if the thread runs), and then you collide them: take any idea from one web and apply it to the <i>main subject</i> of the other, and then go the other way. Think each one through for a few seconds, however silly it seems, and save every idea, even the weak ones. Some links are already there on both webs. Others only turn up when you force them. Use the tabs to look at either web, and the Collide step to pick ideas. Save image draws both webs side by side. Copy web copies both as outlines. Start over clears both webs.</p>
+    <p>Many jokes are a link between two subjects that had nothing to do with each other. Switch to Double web and pick two subjects, such as art and relationships. You build a web for each (one layer of associations is enough, deeper if the thread runs), and then you collide them: take any idea from one web and apply it to the <i>main subject</i> of the other, and then go the other way. Think each one through for a few seconds, however silly it seems, and save every idea, even the weak ones. Some links are already there on both webs. Others only turn up when you force them. Both webs stay on the board (stacked on a narrow screen). The Working on tabs choose which one the boxes add to, and in the Collide step you pick one idea from each list and both light up. Save image draws both webs side by side. Copy web copies both as outlines. Start over clears both webs.</p>
 
     <h3>Tips for the best results</h3>
     <ul>
@@ -313,7 +313,9 @@ function kidsOf(id) { return S.nodes.filter(function (n) { return n.p === id; })
 function isMini() { return S.size === 'mini'; }
 function isDouble() { return S.size === 'double' && !!S.other; }
 function swapRaw() { var o = S.other, cur = { nodes: S.nodes, nextId: S.nextId, sel: S.sel }; S.nodes = o.nodes; S.nextId = o.nextId; S.sel = o.sel; S.other = cur; S.which = 1 - S.which; }
-function showWeb(i) { if (isDouble() && S.which !== i) { swapRaw(); userZoomed = false; clearHold(); } }
+function showWeb(i) { if (isDouble() && S.which !== i) swapRaw(); }   // makes web i the one the controls work on; both webs stay on the board
+function selOf(i) { return i === S.which ? S.sel : S.other.sel; }
+function setSelOf(i, id) { if (i === S.which) S.sel = id; else S.other.sel = id; }
 function nodesOf(i) { return i === S.which ? S.nodes : S.other.nodes; }
 function subjectOf(i) { return nodesOf(i)[0].t; }
 function ready() { return isDouble() ? !!(subjectOf(0) && subjectOf(1)) : !!S.nodes[0].t; }
@@ -370,11 +372,12 @@ function box(n, d) {
 }
 function frameMaxH() { return window.matchMedia && window.matchMedia('(min-width: 900px)').matches ? Math.min(innerHeight * 0.78, 720) : innerHeight * 0.85; }
 function frameAspect() { var w = $('frame').clientWidth || 800; return Math.max(0.55, Math.min(2, w / Math.max(300, frameMaxH()))); }
+var aspectMul = 1;   // a double web gives each web half the board, so its layout is shaped for half
 function autoLayout() {
   var kids = {}, leaves = {};
   S.nodes.forEach(function (n) { if (n.p !== null) (kids[n.p] = kids[n.p] || []).push(n); });
   (function count(id) { var k = kids[id] || []; leaves[id] = k.length ? k.reduce(function (s, c) { return s + count(c.id); }, 0) : 1; return leaves[id]; })(0);
-  var aspect = frameAspect(), xf = Math.max(0.7, Math.min(1.9, aspect)) * 0.85;
+  var aspect = Math.max(0.55, Math.min(2, frameAspect() * aspectMul)), xf = Math.max(0.7, Math.min(1.9, aspect)) * 0.85;
   var scale = (1 + Math.max(0, (S.nodes.length - 25) / 90)) * (1 + Math.max(0, 1 - aspect) * 0.5), pos = {};
   function R(d) { return (d === 0 ? 0 : 175 + (d - 1) * 135) * scale; }
   function place(n, d, a0, a1) {
@@ -431,45 +434,75 @@ function buildScene() {
   return { items: items, rootShape: rootShape, nodes: nodes, box: { x: cx0 - hx, y: cy0 - hy, w: 2 * hx, h: 2 * hy, hx: hx, hy: hy, cx: cx0, cy: cy0, minX: minX - pad, maxX: maxX + pad, minY: minY - pad, maxY: maxY + pad } };
 }
 
+// Both webs of a double web, indexed by web (0 = A, 1 = B), whichever one the controls are working on.
+function buildBoth() {
+  var out = [null, null]; out[S.which] = buildScene(); swapRaw(); out[S.which] = buildScene(); swapRaw();
+  return out;
+}
+// What is on the board: one web, or two side by side (stacked on a narrow screen) with a cross between them.
+var holdShift = null, lastLayout = null;
+function layoutWebs() {
+  if (!isDouble()) { var one = buildScene(); return { webs: [{ i: 0, sc: one, nodes: S.nodes, sx: 0, sy: 0 }], box: one.box, vertical: false }; }
+  var vertical = frameAspect() < 1; aspectMul = vertical ? 2 : 0.5;
+  var both = buildBoth(); aspectMul = 1;
+  var GAP = 110, a = both[0].box, b = both[1].box, sh;
+  if (holdShift) sh = holdShift;
+  else if (vertical) sh = [{ x: 0, y: 0 }, { x: 0, y: (a.maxY + GAP) - b.minY }];
+  else sh = [{ x: 0, y: 0 }, { x: (a.maxX + GAP) - b.minX, y: 0 }];
+  var webs = both.map(function (sc, i) { return { i: i, sc: sc, nodes: nodesOf(i), sx: sh[i].x, sy: sh[i].y }; });
+  var minX = Math.min(a.minX + sh[0].x, b.minX + sh[1].x), maxX = Math.max(a.maxX + sh[0].x, b.maxX + sh[1].x), minY = Math.min(a.minY + sh[0].y, b.minY + sh[1].y), maxY = Math.max(a.maxY + sh[0].y, b.maxY + sh[1].y);
+  var cx = (minX + maxX) / 2, cy = (minY + maxY) / 2, hx = (maxX - minX) / 2, hy = (maxY - minY) / 2;
+  var cross = vertical ? { x: cx, y: (a.maxY + sh[0].y + b.minY + sh[1].y) / 2 } : { x: (a.maxX + sh[0].x + b.minX + sh[1].x) / 2, y: cy };
+  return { webs: webs, box: { x: minX, y: minY, w: 2 * hx, h: 2 * hy, hx: hx, hy: hy, cx: cx, cy: cy, minX: minX, maxX: maxX, minY: minY, maxY: maxY }, vertical: vertical, cross: cross };
+}
+
 // ---------- drawing on screen ----------
 var NS = 'http://www.w3.org/2000/svg';
 function se(tag, attrs, parent) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
 var zoom = 1, userZoomed = false, holdView = null, vb = { x: 0, y: 0, w: 1000, h: 600 };   // holdView: half-extents kept after a drag, so the board never snaps
 function renderWeb() {
-  var frame = $('frame'), has = !!S.nodes[0].t;
+  var frame = $('frame'), has = isDouble() ? !!(subjectOf(0) || subjectOf(1)) : !!S.nodes[0].t;
   frame.textContent = '';
   if (!has) {
     var em = document.createElement('div'); em.className = 'empty'; em.innerHTML = '<b>Your web grows here</b><span>Start with a subject.</span>';
     em.querySelector('b').textContent = 'Your web grows here'; frame.appendChild(em);
+    lastLayout = null;
     return;
   }
-  var sc = buildScene(), bx = sc.box;
+  var L = layoutWebs(), bx = L.box; lastLayout = L;
   if (holdView) {   // keep the center and size the board had, growing only as far as needed
     holdView.hx = Math.max(holdView.hx, holdView.cx - bx.minX, bx.maxX - holdView.cx); holdView.hy = Math.max(holdView.hy, holdView.cy - bx.minY, bx.maxY - holdView.cy);
     vb = { x: holdView.cx - holdView.hx, y: holdView.cy - holdView.hy, w: 2 * holdView.hx, h: 2 * holdView.hy };
   }
   else vb = { x: bx.x, y: bx.y, w: bx.w, h: bx.h };
-  var svg = se('svg', { class: 'web', viewBox: vb.x.toFixed(0) + ' ' + vb.y.toFixed(0) + ' ' + vb.w.toFixed(0) + ' ' + vb.h.toFixed(0), role: 'group', 'aria-label': 'Joke-web with ' + S.nodes.length + ' bubbles' });
-  // "Apply it back": only the subject and the chosen idea stand out; the bubbles between them are half there, the rest fade
-  var focusing = S.mode === 'guided' && S.step === 4, onPath = {}, selNode = byId(S.sel) || S.nodes[0];
-  if (focusing) for (var pn = selNode; pn; pn = pn.p === null ? null : byId(pn.p)) onPath[pn.id] = true;
-  sc.items.forEach(function (it) { se('path', { class: 'edge' + (focusing ? (onPath[it.id] ? ' mid' : ' faded') : ''), d: it.d, 'stroke-width': it.w, stroke: it.c }, svg); });
-  var dimRoot = S.mode === 'guided' && S.step === 3 && !isDouble();
-  sc.nodes.forEach(function (nd) {
-    var n = byId(nd.id), g = se('g', { class: 'nd' + (nd.id === 0 && dimRoot ? ' dim' : '') + (focusing && nd.id !== 0 && nd.id !== selNode.id ? (onPath[nd.id] ? ' mid' : ' faded') : ''), 'data-id': nd.id, tabindex: 0, role: 'button', 'aria-label': (n.t || 'subject') + (nd.id === S.sel ? ' (selected)' : '') }, svg), b = nd.b;
-    if (b.root) {
-      if (nd.id === S.sel) se('ellipse', { class: 'halo', cx: nd.x, cy: nd.y, rx: b.rx + 8, ry: b.ry + 8 }, g);
-      se('path', { class: 'root-shape', d: wobbleEllipse(nd.x, nd.y, b.rx, b.ry, 3) }, g);
-      se('ellipse', { class: 'hit', cx: nd.x, cy: nd.y, rx: b.rx, ry: b.ry }, g);
-    } else {
-      if (nd.id === S.sel) se('rect', { class: 'halo', x: nd.x - b.w / 2 - 6, y: nd.y - b.h / 2 - 4, width: b.w + 12, height: b.h + 8, rx: 10 }, g);
-      se('rect', { class: 'hit', x: nd.x - Math.max(b.w, 44) / 2, y: nd.y - Math.max(b.h, 44) / 2, width: Math.max(b.w, 44), height: Math.max(b.h, 44), rx: 8 }, g);
-    }
-    b.lines.forEach(function (l, i) {
-      var t = se('text', { x: nd.x.toFixed(1), y: (nd.y + (i - (b.lines.length - 1) / 2) * b.lh + b.fs * 0.3).toFixed(1), 'font-size': b.fs }, g);
-      t.textContent = l;
+  var total = L.webs.reduce(function (t, w) { return t + w.nodes.length; }, 0);
+  var svg = se('svg', { class: 'web', viewBox: vb.x.toFixed(0) + ' ' + vb.y.toFixed(0) + ' ' + vb.w.toFixed(0) + ' ' + vb.h.toFixed(0), role: 'group', 'aria-label': (L.webs.length > 1 ? 'Two joke-webs with ' : 'Joke-web with ') + total + ' bubbles' });
+  L.webs.forEach(function (w) {
+    var sc = w.sc, list = w.nodes, selId = isDouble() ? selOf(w.i) : S.sel;
+    function nodeById(id) { for (var k = 0; k < list.length; k++) if (list[k].id === id) return list[k]; return null; }
+    var wg = se('g', { 'data-web': w.i, transform: 'translate(' + w.sx.toFixed(1) + ' ' + w.sy.toFixed(1) + ')' }, svg);
+    // "Apply it back" (and Collide): only the subject and the chosen idea stand out; the bubbles between them are half there, the rest fade
+    var focusing = S.mode === 'guided' && S.step === 4 && (!isDouble() || selId !== 0), onPath = {}, selNode = nodeById(selId) || list[0];
+    if (focusing) for (var pn = selNode; pn; pn = pn.p === null ? null : nodeById(pn.p)) onPath[pn.id] = true;
+    sc.items.forEach(function (it) { se('path', { class: 'edge' + (focusing ? (onPath[it.id] ? ' mid' : ' faded') : ''), d: it.d, 'stroke-width': it.w, stroke: it.c }, wg); });
+    var dimRoot = S.mode === 'guided' && S.step === 3 && !isDouble();
+    sc.nodes.forEach(function (nd) {
+      var n = nodeById(nd.id), g = se('g', { class: 'nd' + (nd.id === 0 && dimRoot ? ' dim' : '') + (focusing && nd.id !== 0 && nd.id !== selNode.id ? (onPath[nd.id] ? ' mid' : ' faded') : ''), 'data-id': nd.id, tabindex: 0, role: 'button', 'aria-label': (n.t || 'subject') + (nd.id === selId ? ' (selected)' : '') }, wg), b = nd.b;
+      if (b.root) {
+        if (nd.id === selId) se('ellipse', { class: 'halo', cx: nd.x, cy: nd.y, rx: b.rx + 8, ry: b.ry + 8 }, g);
+        se('path', { class: 'root-shape', d: wobbleEllipse(nd.x, nd.y, b.rx, b.ry, 3) }, g);
+        se('ellipse', { class: 'hit', cx: nd.x, cy: nd.y, rx: b.rx, ry: b.ry }, g);
+      } else {
+        if (nd.id === selId) se('rect', { class: 'halo', x: nd.x - b.w / 2 - 6, y: nd.y - b.h / 2 - 4, width: b.w + 12, height: b.h + 8, rx: 10 }, g);
+        se('rect', { class: 'hit', x: nd.x - Math.max(b.w, 44) / 2, y: nd.y - Math.max(b.h, 44) / 2, width: Math.max(b.w, 44), height: Math.max(b.h, 44), rx: 8 }, g);
+      }
+      b.lines.forEach(function (l, i) {
+        var t = se('text', { x: nd.x.toFixed(1), y: (nd.y + (i - (b.lines.length - 1) / 2) * b.lh + b.fs * 0.3).toFixed(1), 'font-size': b.fs }, g);
+        t.textContent = l;
+      });
     });
   });
+  if (L.cross) { var cr = se('text', { class: 'cross', x: L.cross.x.toFixed(1), y: L.cross.y.toFixed(1), 'font-size': 56, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'aria-hidden': 'true' }, svg); cr.textContent = '×'; }
   frame.appendChild(svg);
   sizeSvg();
 }
@@ -490,23 +523,28 @@ var drag = null;
 function startHold() {   // keep the board's center, size and frame height as they are, so nothing moves or rescales while editing positions
   if (holdView) return; var f = $('frame'); f.style.height = f.getBoundingClientRect().height + 'px';
   holdView = { hx: vb.w / 2, hy: vb.h / 2, cx: vb.x + vb.w / 2, cy: vb.y + vb.h / 2 };
+  if (lastLayout && lastLayout.webs.length > 1) holdShift = lastLayout.webs.map(function (w) { return { x: w.sx, y: w.sy }; });   // the other web stays where it is while you drag
 }
-function clearHold() { holdView = null; $('frame').style.height = ''; }
+function webOf(g) { var wg = g.closest('[data-web]'); return wg ? +wg.getAttribute('data-web') : 0; }
+function layoutFor(wi) { return lastLayout.webs.filter(function (w) { return w.i === wi; })[0]; }
+function nodeIn(wi, id) { return layoutFor(wi).nodes.filter(function (n) { return n.id === id; })[0]; }
+function clearHold() { holdView = null; holdShift = null; $('frame').style.height = ''; }
 function rootCenter() { var e = $('frame').querySelector('svg'); if (!e) return null; var r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
 function svgPoint(svg, ev) { var pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY; var m = svg.getScreenCTM(); return m ? pt.matrixTransform(m.inverse()) : { x: 0, y: 0 }; }
 $('frame').addEventListener('pointerdown', function (ev) {
   var g = ev.target.closest && ev.target.closest('.nd'); if (!g) return;
-  var id = +g.getAttribute('data-id'), svg = g.ownerSVGElement, p = svgPoint(svg, ev), n = byId(id);
-  var cur = buildScene().nodes.filter(function (x) { return x.id === id; })[0];
-  drag = { id: id, sx: ev.clientX, sy: ev.clientY, dx: cur.x - p.x, dy: cur.y - p.y, moved: false, svg: svg, vb: { x: vb.x, y: vb.y, w: vb.w, h: vb.h } };
+  if (!lastLayout) return;
+  var id = +g.getAttribute('data-id'), wi = webOf(g), svg = g.ownerSVGElement, p = svgPoint(svg, ev), lw = layoutFor(wi);
+  var cur = lw.sc.nodes.filter(function (x) { return x.id === id; })[0];
+  drag = { id: id, wi: wi, sx: ev.clientX, sy: ev.clientY, dx: cur.x + lw.sx - p.x, dy: cur.y + lw.sy - p.y, moved: false, svg: svg, vb: { x: vb.x, y: vb.y, w: vb.w, h: vb.h } };
 });
 window.addEventListener('pointermove', function (ev) {
   if (!drag || S.mode !== 'free') return;
   if (!drag.moved && Math.abs(ev.clientX - drag.sx) + Math.abs(ev.clientY - drag.sy) < 5) return;
   if (!drag.moved) { drag.moved = true; startHold(); }
   ev.preventDefault();
-  var svg = $('frame').querySelector('svg'), p = svgPoint(svg, ev), n = byId(drag.id);
-  n.x = Math.round(p.x + drag.dx); n.y = Math.round(p.y + drag.dy);
+  var svg = $('frame').querySelector('svg'), p = svgPoint(svg, ev), lw = layoutFor(drag.wi), n = nodeIn(drag.wi, drag.id);
+  n.x = Math.round(p.x + drag.dx - lw.sx); n.y = Math.round(p.y + drag.dy - lw.sy);
   var fr = $('frame'), keep = { l: fr.scrollLeft, t: fr.scrollTop }, before = rootCenter();
   renderWeb(); fr.scrollLeft = keep.l; fr.scrollTop = keep.t;
   var after = rootCenter();   // the board grew around its center: scroll by the difference so nothing on screen moves
@@ -517,23 +555,23 @@ window.addEventListener('pointerup', function () {
   if (!drag) return;
   var d = drag; drag = null;
   if (d.moved) { save(); return; }
-  select(d.id);
+  select(d.id, d.wi);
 });
 $('frame').addEventListener('keydown', function (ev) {
   var g = ev.target.closest && ev.target.closest('.nd'); if (!g) return;
-  var id = +g.getAttribute('data-id');
-  if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); select(id); return; }
+  var id = +g.getAttribute('data-id'), wi = webOf(g);
+  if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); select(id, wi); return; }
   var step = ev.shiftKey ? 30 : 10, dx = ev.key === 'ArrowLeft' ? -step : ev.key === 'ArrowRight' ? step : 0, dy = ev.key === 'ArrowUp' ? -step : ev.key === 'ArrowDown' ? step : 0;
   if ((dx || dy) && S.mode === 'free') {
     ev.preventDefault();
-    var cur = buildScene().nodes.filter(function (x) { return x.id === id; })[0], n = byId(id);
+    var lw = layoutFor(wi), cur = lw.sc.nodes.filter(function (x) { return x.id === id; })[0], n = nodeIn(wi, id);
     startHold();
     n.x = Math.round(cur.x + dx); n.y = Math.round(cur.y + dy);
     renderWeb(); save();
-    var again = $('frame').querySelector('.nd[data-id="' + id + '"]'); if (again) again.focus();
+    var again = $('frame').querySelector('[data-web="' + wi + '"] .nd[data-id="' + id + '"]'); if (again) again.focus();
   }
 });
-function select(id) { S.sel = id; render(); save(); }
+function select(id, wi) { if (wi !== undefined) showWeb(wi); S.sel = id; render(); save(); }
 
 // ---------- controls ----------
 function h(tag, attrs) {
@@ -584,8 +622,8 @@ function renderControls() {
       h('button', { type: 'button', id: 'size-double', 'aria-pressed': String(isDouble()), text: 'Double web', on: { click: function () { setSize('double'); } } })),
     h('p', { class: 'hint', id: 'size-hint', text: isDouble() ? 'Two subjects, a web for each, then bash them together: the Hadron Joke Collider.' : isMini() ? 'One specific angle on a subject, two levels out. About 5 to 15 minutes.' : 'A general subject, as many levels out as you like.' })));
   if (isDouble() && ready()) {
-    var tabs = h('div', { class: 'webtabs', role: 'group', 'aria-label': 'Which web to show' }, h('span', { text: 'Showing: ' }));
-    [0, 1].forEach(function (i) { tabs.appendChild(h('button', { type: 'button', class: 'k-btn', id: 'web-' + (i ? 'b' : 'a'), 'aria-pressed': String(S.which === i), text: (i ? 'B: ' : 'A: ') + subjectOf(i), title: 'Show web ' + (i ? 'B' : 'A'), on: { click: function () { showWeb(i); render(); save(); } } })); });
+    var tabs = h('div', { class: 'webtabs', role: 'group', 'aria-label': 'Which web to work on' }, h('span', { text: 'Working on: ' }));
+    [0, 1].forEach(function (i) { tabs.appendChild(h('button', { type: 'button', class: 'k-btn', id: 'web-' + (i ? 'b' : 'a'), 'aria-pressed': String(S.which === i), text: (i ? 'B: ' : 'A: ') + subjectOf(i), title: 'Work on web ' + (i ? 'B' : 'A'), on: { click: function () { showWeb(i); render(); save(); } } })); });
     c.appendChild(tabs);
   }
   if (guided) renderGuided(c); else renderFree(c);
@@ -639,21 +677,22 @@ function renderDoubleGuided(c) {
     c.appendChild(h('div', { class: 'next' }, h('button', { class: 'k-btn primary', type: 'button', id: cur ? 'to4' : 'to3', text: cur ? 'Next: collide them →' : 'Next: the second web →', disabled: kidsOf(0).length ? null : 'disabled', on: { click: function () { setStep(cur ? 4 : 3); } } })));
   } else {
     c.appendChild(h('h2', { text: 'Collide' }));
-    c.appendChild(h('p', { class: 'hint' }, h('b', { text: 'Bash the two webs together. ' }), 'Pick any idea from one web and apply it to the main subject of the other. Think it through for a few seconds, however silly it seems, and save every idea. Then go the other way. Watch for a word that shows up on both webs: the creativity is in how you use it.'));
+    c.appendChild(h('p', { class: 'hint' }, h('b', { text: 'Bash the two webs together. ' }), 'Pick an idea in each list; both light up on the board. Apply each one to the main subject of the other web, think it through for a few seconds however silly it seems, and save every idea. Watch for a word that shows up on both webs: the creativity is in how you use it.'));
     [0, 1].forEach(function (i) {
-      var list = nodesOf(i).filter(function (n) { return n.id !== 0; }).slice(0, 60);
-      c.appendChild(h('h3', { text: 'From “' + subjectOf(i) + '” to “' + subjectOf(1 - i) + '”' }));
+      var sfx = i ? '-b' : '-a', target = subjectOf(1 - i), list = nodesOf(i).filter(function (n) { return n.id !== 0; }).slice(0, 60), selId = selOf(i);
+      c.appendChild(h('h3', { text: 'From “' + subjectOf(i) + '” to “' + target + '”' }));
       if (!list.length) { c.appendChild(h('p', { class: 'hint', text: 'Nothing on this web yet.' })); return; }
-      var ul = h('ul', { class: 'chips', id: 'from-' + (i ? 'b' : 'a') });
+      var ul = h('ul', { class: 'chips', id: 'from' + sfx });
       list.forEach(function (n) {
-        ul.appendChild(h('li', { class: 'chip' + (i === S.which && n.id === S.sel ? ' on' : '') }, h('button', { type: 'button', text: n.t, title: n.t, 'data-chip': n.id, on: { click: function () { showWeb(i); S.sel = n.id; render(); save(); } } })));
+        ul.appendChild(h('li', { class: 'chip' + (n.id === selId ? ' on' : '') }, h('button', { type: 'button', text: n.t, title: n.t, 'data-chip': n.id, on: { click: function () { setSelOf(i, n.id); render(); save(); } } })));
       });
       c.appendChild(ul);
+      var node = nodesOf(i).filter(function (n) { return n.id === selId; })[0];
+      if (node && node.id !== 0) {
+        c.appendChild(h('div', { class: 'crumbs', id: 'applying' + sfx }, 'Applying: ', h('b', { text: pathIn(nodesOf(i), node).join(' → ') }), ' to ', h('b', { text: target })));
+        c.appendChild(jokeInput(node, target, sfx));
+      } else c.appendChild(h('p', { class: 'hint', text: 'Pick an idea above to apply to “' + target + '”.' }));
     });
-    if (sel.id !== 0) {
-      c.appendChild(h('div', { class: 'crumbs', id: 'applying' }, 'Applying: ', h('b', { text: pathOf(sel).join(' → ') }), ' to ', h('b', { text: other })));
-      c.appendChild(jokeInput(sel, other));
-    } else c.appendChild(h('p', { class: 'hint', text: 'Pick an idea above to apply to the other subject.' }));
   }
 }
 function waysBlock() {
@@ -728,11 +767,12 @@ function crumbs(label, sel, forget) {
   });
   return d;
 }
-function jokeInput(sel, target) {
-  var inp = h('input', { type: 'text', id: 'joke-input', maxlength: MAX_JOKE, placeholder: target ? '“' + sel.t + '” applied to “' + target + '”…' : 'Joke idea for “' + (sel.t || 'the subject') + '”…', autocomplete: 'off', 'aria-label': 'Joke idea' });
-  function go() { var v = clean(inp.value, MAX_JOKE); if (!v) { inp.focus(); return; } if (allIdeas().length < MAX_JOKES) sel.jokes.push(v); focusId = 'joke-input'; render(); save(); }
+function jokeInput(sel, target, sfx) {
+  sfx = sfx || '';
+  var inp = h('input', { type: 'text', id: 'joke-input' + sfx, maxlength: MAX_JOKE, placeholder: target ? '“' + sel.t + '” applied to “' + target + '”…' : 'Joke idea for “' + (sel.t || 'the subject') + '”…', autocomplete: 'off', 'aria-label': 'Joke idea' });
+  function go() { var v = clean(inp.value, MAX_JOKE); if (!v) { inp.focus(); return; } if (allIdeas().length < MAX_JOKES) sel.jokes.push(v); focusId = 'joke-input' + sfx; render(); save(); }
   inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); go(); } });
-  return h('div', { class: 'row' }, inp, h('button', { class: 'k-btn primary', type: 'button', id: 'joke-go', text: 'Save idea', on: { click: go } }));
+  return h('div', { class: 'row' }, inp, h('button', { class: 'k-btn primary', type: 'button', id: 'joke-go' + sfx, text: 'Save idea', on: { click: go } }));
 }
 function renderFree(c) {
   var sel = byId(S.sel) || S.nodes[0];

@@ -56,7 +56,13 @@
 - why: the developer asked for the book's mini joke-web (Exercise 5) as an option, unsure how to integrate it, suggested a toggle; double joke-webs were deliberately not built yet
 - source: developer request, 2026-10-12
 
-### 2026-10-12 · Double joke-web is a third size in the Joke-Web Maker, with the second web held in `S.other` and swapped in · active
+### 2026-10-12 · Double joke-web is a third size in the Joke-Web Maker, with the second web held in `S.other` and swapped in · partly superseded
 - what: `size: 'double'`; web A is shown first, web B is kept in `S.other` and swapped in by the A/B tabs (`which` says which is showing); steps are Subjects, First web, Second web, Collide; ideas are stored on the idea's own bubble and labeled "applied to" the other subject; Save image and Copy web cover both webs; switching to Full or Mini hides web B without deleting it, Start over clears both
 - why: the developer asked for double webs from the book (Chapter 5, Exercise 6); swapping reuses the single-web drawing, layout and drag code unchanged (design choice, not stated by the developer)
+- source: developer request, 2026-10-12
+> Partly superseded 2026-10-12: the tabs no longer show one web at a time; see the next-but-one entry about both webs on the board.
+
+### 2026-10-12 · In a double web both webs are on the board at once, side by side (stacked on a narrow screen) · active
+- what: the board draws both webs in one SVG with a × between them; each web keeps its own selection; in Collide you pick one idea per list and both light up (others fade); the tabs now say which web the boxes work on; the other web does not move while you drag in one; Save image uses its own side-by-side layout
+- why: developer asked to see both webs at once and to select a concept from each list and see them highlighted; stacked layout on phones is my choice for fit, not stated
 - source: developer request, 2026-10-12

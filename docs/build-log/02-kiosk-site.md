@@ -71,3 +71,9 @@
 - changed: the two subject boxes now use the same text-box styling as the rest of the page; the "How to choose two subjects" list starts open
 - built: one more jokeweb check (O2b)
 - live-tested: no
+
+## 2026-10-12 · Both webs on the board in Double web
+- built: `renderWeb` draws one or two webs (`layoutWebs`, `buildBoth`), a × between them, side by side or stacked when the board is narrow; per-web selection highlights (halo, path, fade) in Collide; each list has its own idea box (`joke-input-a/-b`)
+- built: dragging works in either web with the other held still (`holdShift`)
+- built: jokeweb suite checks reworked (now 101)
+- live-tested: no

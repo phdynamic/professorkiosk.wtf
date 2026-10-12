@@ -9,7 +9,7 @@
 
 ## Tested
 - Unit (`npm test`): budget, clientip, links. Last run 2026-10-10 at e89d28b: 17 of 17 pass.
-- Browser (`npm run test:browser`): tracer 39, imagine 7, receipt 122, jokeweb 105, mashup 42, icon 11, help 45, tutorials 29, feeds 12, footer 1. Last run 2026-10-10 at e89d28b: all pass. All use mocked Bluesky responses.
+- Browser (`npm run test:browser`): tracer 39, imagine 7, receipt 122, jokeweb 107, mashup 42, icon 11, help 45, tutorials 29, feeds 12, footer 1. Last run 2026-10-10 at e89d28b: all pass. All use mocked Bluesky responses.
 
 ## Not tested / unknown
 - Behavior against real Bluesky and the Railway deployment: not recorded in the repo.

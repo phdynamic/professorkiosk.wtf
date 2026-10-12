@@ -71,3 +71,8 @@
 - what: the First web / Second web steps set which web the boxes add to, the other web fades in those steps and ignores taps, and on the free board tapping a bubble in a web makes it the active one
 - why: developer found the tabs duplicated the step buttons and could disagree with them
 - source: developer request, 2026-10-12
+
+### 2026-10-12 · Each double-web idea is saved with the full pairing it was written for · active
+- what: nodes carry `ap`, a list kept in step with `jokes`, holding the "to books → biographies" side of each idea; the Joke ideas list reads "fish → salmon to books → biographies"; ideas saved before this fall back to the other web's subject
+- why: developer asked for the full pairing to be saved with each idea
+- source: developer request, 2026-10-12

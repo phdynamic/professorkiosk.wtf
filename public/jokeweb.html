@@ -269,8 +269,11 @@ function parseNodes(arr) {
   var nodes = [], ids = {};
   arr.slice(0, MAX_NODES).forEach(function (n, i) {
     if (!n || typeof n.id !== 'number' || ids[n.id]) return;
-    var node = { id: n.id, t: clean(n.t, MAX_TEXT), p: (typeof n.p === 'number' ? n.p : null), x: (typeof n.x === 'number' && isFinite(n.x) ? n.x : null), y: (typeof n.y === 'number' && isFinite(n.y) ? n.y : null), jokes: [] };
-    if (Array.isArray(n.jokes)) node.jokes = n.jokes.slice(0, MAX_JOKES).map(function (j) { return clean(j, MAX_JOKE); }).filter(Boolean);
+    var node = { id: n.id, t: clean(n.t, MAX_TEXT), p: (typeof n.p === 'number' ? n.p : null), x: (typeof n.x === 'number' && isFinite(n.x) ? n.x : null), y: (typeof n.y === 'number' && isFinite(n.y) ? n.y : null), jokes: [], ap: [] };
+    if (Array.isArray(n.jokes)) n.jokes.slice(0, MAX_JOKES).forEach(function (j, k) {   // ap[k] is what idea k was applied to (double webs); kept in step with jokes
+      var t = clean(j, MAX_JOKE); if (!t) return;
+      node.jokes.push(t); node.ap.push(clean(Array.isArray(n.ap) ? n.ap[k] : '', MAX_PAIR));
+    });
     if (i === 0) { node.id = 0; node.p = null; }
     ids[node.id] = true; nodes.push(node);
   });
@@ -342,12 +345,15 @@ function removeBranch(id) {
   S.nodes = S.nodes.filter(function (n) { return !gone[n.id]; });
   if (gone[S.sel]) S.sel = parent === null ? 0 : parent;
 }
+var MAX_PAIR = 160;
+function addIdea(node, text, pair) { node.ap = node.ap || []; while (node.ap.length < node.jokes.length) node.ap.push(''); node.jokes.push(text); node.ap.push(clean(pair || '', MAX_PAIR)); }
+function removeIdea(node, k) { node.jokes.splice(k, 1); if (node.ap) node.ap.splice(k, 1); }
 function pathIn(list, n) { var out = []; while (n) { out.push(n.t || '…'); var par = n.p; n = par === null ? null : list.filter(function (x) { return x.id === par; })[0]; } return out.reverse(); }
 function allIdeas() {
   var out = [];
   [0, 1].slice(0, isDouble() ? 2 : 1).forEach(function (i) {
     var list = isDouble() ? nodesOf(i) : S.nodes, there = isDouble() ? subjectOf(1 - i) : '';
-    list.forEach(function (n) { n.jokes.forEach(function (j, k) { out.push({ node: n, i: k, text: j, label: pathIn(list, n).join(' → ') + (there && n.id !== 0 ? '  (applied to ' + there + ')' : '') }); }); });
+    list.forEach(function (n) { n.jokes.forEach(function (j, k) { out.push({ node: n, i: k, text: j, label: pathIn(list, n).join(' → ') + (there && n.id !== 0 ? ' to ' + ((n.ap && n.ap[k]) || there) : '') }); }); });
   });
   return out;
 }
@@ -692,7 +698,7 @@ function renderDoubleGuided(c) {
       var hit = nodesOf(1 - i).filter(function (n) { return n.id === selOf(1 - i); })[0], hitPath = hit && hit.id !== 0 ? pathIn(nodesOf(1 - i), hit).join(' → ') : target;
       if (node && node.id !== 0) {
         c.appendChild(h('div', { class: 'crumbs', id: 'applying' + sfx }, 'Applying: ', h('b', { text: pathIn(nodesOf(i), node).join(' → ') }), ' to ', h('b', { text: hitPath })));
-        c.appendChild(jokeInput(node, hit && hit.id !== 0 ? hit.t : target, sfx));
+        c.appendChild(jokeInput(node, hit && hit.id !== 0 ? hit.t : target, sfx, hitPath));
       } else c.appendChild(h('p', { class: 'hint', text: 'Pick an idea above to apply to “' + target + '”.' }));
     });
   }
@@ -769,10 +775,10 @@ function crumbs(label, sel, forget) {
   });
   return d;
 }
-function jokeInput(sel, target, sfx) {
+function jokeInput(sel, target, sfx, pairPath) {
   sfx = sfx || '';
   var inp = h('input', { type: 'text', id: 'joke-input' + sfx, maxlength: MAX_JOKE, placeholder: target ? '“' + sel.t + '” applied to “' + target + '”…' : 'Joke idea for “' + (sel.t || 'the subject') + '”…', autocomplete: 'off', 'aria-label': 'Joke idea' });
-  function go() { var v = clean(inp.value, MAX_JOKE); if (!v) { inp.focus(); return; } if (allIdeas().length < MAX_JOKES) sel.jokes.push(v); focusId = 'joke-input' + sfx; render(); save(); }
+  function go() { var v = clean(inp.value, MAX_JOKE); if (!v) { inp.focus(); return; } if (allIdeas().length < MAX_JOKES) addIdea(sel, v, pairPath); focusId = 'joke-input' + sfx; render(); save(); }
   inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); go(); } });
   return h('div', { class: 'row' }, inp, h('button', { class: 'k-btn primary', type: 'button', id: 'joke-go' + sfx, text: 'Save idea', on: { click: go } }));
 }
@@ -805,7 +811,7 @@ function renderIdeas(c) {
       h('small', { text: it.label }),
       h('div', { class: 'acts' },
         h('button', { class: 'k-btn', type: 'button', 'data-use': '1', text: 'Use in draft', on: { click: function () { useInDraft(it.text); } } }),
-        h('button', { class: 'k-btn', type: 'button', text: 'Remove', 'aria-label': 'Remove idea', on: { click: function () { it.node.jokes.splice(it.i, 1); render(); save(); } } }))));
+        h('button', { class: 'k-btn', type: 'button', text: 'Remove', 'aria-label': 'Remove idea', on: { click: function () { removeIdea(it.node, it.i); render(); save(); } } }))));
   });
   c.appendChild(ul);
 }

@@ -93,3 +93,8 @@
 - note: saved ideas are still labeled with the other web's subject only
 - built: one more jokeweb check (O8b)
 - live-tested: no
+
+## 2026-10-12 · Ideas keep their pairing
+- built: `ap` saved with each idea (`addIdea`, `removeIdea`, sanitized in `parseNodes`); Joke ideas list shows the full pairing; later picks do not change it
+- built: jokeweb checks O9b, O9c (now 107)
+- live-tested: no

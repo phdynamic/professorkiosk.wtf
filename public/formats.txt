@@ -34,6 +34,12 @@ how: Two lines around one small event that changed how you see ordinary things. 
 template: Before {the event}: {how things used to be}
 template: After {the event}: {how things are now}
 
+## Then and Now
+category: Contrast
+how: Put a year from the past next to this year. The first line says how things were then. The second is a surprising way they have changed, or stayed exactly the same.
+template: {a year in the past}: {what things were like then}
+template: {this year}: {a surprising change, or a surprising lack of one}
+
 ## Translation Guide
 category: Contrast
 how: Take something polite people say and translate it into what they actually mean. It works best when the real meaning is petty and not mean.
@@ -68,26 +74,6 @@ template: ★☆☆☆☆ {the thing being reviewed}
 template: "{a review title}"
 template: {the complaint}
 
-## Official Notice
-category: Fake documents
-how: A posted sign with a mild rule that hints at a bigger history. The reader fills in the backstory.
-template: NOTICE: {the rule}.
-template: {the hint of a larger history}
-
-## Error Message
-category: Fake documents
-how: A fake system message that describes a human problem. The code lends credibility and the plain line underneath carries the joke.
-template: Error {a code}: {what the system says}
-template: {what it means for you}
-
-## Patch Notes
-category: Fake documents
-how: Describe your life, a person, or an object as software being updated. Start with technical-sounding changes and end with personal ones.
-template: Patch notes v{a version number}:
-template: - {a believable change}
-template: - {a petty change}
-template: - Fixed a bug where {an absurd bug}
-
 ## Customer Service
 category: Dialogue
 how: A short exchange where a representative answers a normal complaint with total calm and zero help.
@@ -105,6 +91,13 @@ category: Dialogue
 how: A job interview where your answer is honest, strange, or both. A fixed question with a fresh answer is an old trick for a reason.
 template: Interviewer: {the question}
 template: Me: {my answer}
+
+## Professor X Asks
+category: Dialogue
+how: Professor X asks what your superpower is. You name a power, and his reply twists his own name, puns on the power, or does something else you did not see coming.
+template: Professor X: What's your superpower?
+template: Me: {a superpower}
+template: Professor X: {a surprising reply, such as a pun on the power}
 
 ## Brain Dialogue
 category: Dialogue
@@ -176,6 +169,11 @@ template: Renaming {the thing} to "{the new name}" because {the reason}.
 category: Wordplay
 how: Compare two unlike things by naming the specific version of the second. The specific answer is the whole joke.
 template: If {the thing} were a {a kind of thing}, it would be {the specific version}.
+
+## Is Just
+category: Wordplay
+how: Define one thing as another thing that is surprising but, once you think about it, fits. The fit is the joke, so keep it short.
+template: {the first thing} is just {a surprising but fitting second thing}.
 
 ## Rule of Three
 category: Escalation

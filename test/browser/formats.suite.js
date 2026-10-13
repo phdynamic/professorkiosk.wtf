@@ -106,8 +106,8 @@ const TXT = fs.readFileSync(path.join(ROOT, 'public', 'formats.txt'), 'utf8');
   // ---- browse: filter, search, pick ----
   await page.goto('about:blank'); await page.goto(BASE); await ready(page);
   await page.click('#cats button:has-text("Wordplay")');
-  const wp = await page.evaluate(() => ({ n: document.querySelectorAll('#tiles .tile').length, cats: [...new Set([...document.querySelectorAll('#tiles .tile .cat')].map(c => c.textContent))], found: document.getElementById('found').textContent, pressed: document.querySelector('#cats button[aria-pressed="true"]').textContent }));
-  ok('F21 a category chip narrows the list to that category (5 formats), says so, and shows which chip is on', wp.n === 5 && wp.cats.length === 1 && wp.cats[0] === 'Wordplay' && wp.found === '5 formats match' && wp.pressed === 'Wordplay', JSON.stringify(wp));
+  const wp = await page.evaluate(() => ({ expect: window.__formats.formats().filter(f => f.cat === 'Wordplay').length, n: document.querySelectorAll('#tiles .tile').length, cats: [...new Set([...document.querySelectorAll('#tiles .tile .cat')].map(c => c.textContent))], found: document.getElementById('found').textContent, pressed: document.querySelector('#cats button[aria-pressed="true"]').textContent }));
+  ok('F21 a category chip narrows the list to that category (every format in it), says so, and shows which chip is on', wp.n === wp.expect && wp.n >= 2 && wp.cats.length === 1 && wp.cats[0] === 'Wordplay' && wp.found === wp.n + ' formats match' && wp.pressed === 'Wordplay', JSON.stringify(wp));
   await page.click('#cats button:has-text("All")'); await page.fill('#q', 'headline');
   const sr = await page.evaluate(() => ({ n: document.querySelectorAll('#tiles .tile').length, nm: document.querySelector('#tiles .nm').textContent, found: document.getElementById('found').textContent }));
   ok('F22 search finds a format by a word in its name or how-line', sr.n === 1 && sr.nm === 'Fake Headline' && sr.found === '1 format matches', JSON.stringify(sr));

@@ -181,3 +181,10 @@
 - changed: deleted Ranking, Tier List and Bingo Card; the Format Deck now has 37 formats (Lists keeps Award Ceremony and Pros and Cons); suite and hub card ("Over 30 formats") updated
 - note: the review continues with category 3 (Fake documents)
 - live-tested: no
+
+## 2026-10-13 · Format Deck review, category 3 (Fake documents) and three new formats
+- changed: deleted Official Notice, Error Message and Patch Notes
+- built: three new formats from the developer's descriptions: Then and Now (Contrast, after Before / After), Is Just (Wordplay, after If It Were) and Professor X Asks (Dialogue, after Interview Question); the deck is still 37 formats
+- note: each overlaps an existing format (Before / After, If It Were, Interview Question); the developer may replace those
+- changed: the category chip check no longer hard-codes the Wordplay count
+- live-tested: no

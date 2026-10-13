@@ -42,7 +42,7 @@ const TXT = fs.readFileSync(path.join(ROOT, 'public', 'formats.txt'), 'utf8');
   // ---- the page, loaded fresh ----
   const page = await mk(); await page.goto(BASE); await ready(page);
   const info = await page.evaluate(() => ({ tag: document.querySelector('.k-hero .k-tag').textContent, tiles: document.querySelectorAll('#tiles .tile').length, chips: document.querySelectorAll('#cats button').length, found: document.getElementById('found').textContent, fmts: window.__formats.formats().length, hash: location.hash, footer: !!document.querySelector('footer.k-foot .kofi'), night: !!document.getElementById('themeToggle'), help: !!document.getElementById('helpBtn') }));
-  ok('F2 the page opens with a card on the table, 30 tiles, 8 filter chips, the hero tag, footer, Help and Night mode', /Tool 08/.test(info.tag) && info.tiles === 30 && info.chips === 8 && info.found === '30 formats' && info.fmts === 30 && /^#f=/.test(info.hash) && info.footer && info.night && info.help, JSON.stringify(info));
+  ok('F2 the page opens with a card on the table, 30 tiles, 8 filter chips, the hero tag, footer, Help and Night mode', /Tool 04/.test(info.tag) && info.tiles === 30 && info.chips === 8 && info.found === '30 formats' && info.fmts === 30 && /^#f=/.test(info.hash) && info.footer && info.night && info.help, JSON.stringify(info));
   const allOk = await page.evaluate(() => { const bad = []; window.__formats.formats().forEach(f => { const fill = f.labels.map(() => 'x'.repeat(40)); const b = window.__formats.build(f, fill); const n = window.__formats.glen(b.text); if (b.empty.length) bad.push(f.name + ' has an empty blank'); if (n > 300) bad.push(f.name + ' is ' + n); if (/\{[^}]*\}/.test(b.text)) bad.push(f.name + ' still shows a brace'); }); const slugs = window.__formats.formats().map(f => f.slug); return { bad, unique: new Set(slugs).size === slugs.length }; });
   ok('F3 every format fits in 300 characters with 40 characters in each blank, fills every blank, and has its own address', !allOk.bad.length && allOk.unique, JSON.stringify(allOk));
 
@@ -179,7 +179,7 @@ const TXT = fs.readFileSync(path.join(ROOT, 'public', 'formats.txt'), 'utf8');
   // ---- the hub and the server ----
   const hub = await mk(); await hub.goto('http://localhost:3988/');
   const hb = await hub.evaluate(() => ({ nums: [...document.querySelectorAll('.tool .num')].map(n => n.textContent + ' ' + n.nextElementSibling.textContent), href: [...document.querySelectorAll('a.k-btn')].map(a => a.getAttribute('href')).includes('/formats') }));
-  ok('F34 the hub has Format Deck as card 08 linking to /formats, and the four separate sites are now 11 to 14', hb.href && hb.nums.length === 14 && hb.nums[7] === '08 Format Deck' && hb.nums[10] === '11 Shitsky38.com' && hb.nums[13] === '14 My Twitter Archive', JSON.stringify(hb.nums));
+  ok('F34 the hub has Format Deck as card 04 linking to /formats, and the four separate sites are now 11 to 14', hb.href && hb.nums.length === 14 && hb.nums[3] === '04 Format Deck' && hb.nums[10] === '11 Shitsky38.com' && hb.nums[13] === '14 My Twitter Archive', JSON.stringify(hb.nums));
   await hub.close();
   const hubTxt = await (async () => { const h2 = await mk(); await h2.goto('http://localhost:3988/'); const t = await h2.evaluate(() => { const c = [...document.querySelectorAll('.tool')].find(x => /Format Deck/.test(x.textContent)); return c.querySelector('.tool-body p').textContent; }); await h2.close(); return t; })();
   const named = ['Nobody / Me', 'Professor X Asks', 'Fake Headline'];

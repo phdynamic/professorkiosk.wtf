@@ -20,7 +20,7 @@
 </script>
 <link rel="stylesheet" href="/kiosk.css" />
 <style>
-:root { --hero: var(--teal); --rink: #1d1b4f; }
+:root { --hero: var(--yellow); --rink: #1d1b4f; }
 h1, h2, h3, p, ul, ol { margin: 0; }
 button, input { font: inherit; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -122,7 +122,7 @@ html[data-theme="dark"] .slot .bar { background: var(--line); }
 <header class="k-hero">
   <div class="k-wrap">
     <div class="copy">
-      <span class="k-tag navy">Level 1 &middot; Tool 09</span>
+      <span class="k-tag navy">Level 1 &middot; Tool 07</span>
       <h1>Transit Pass</h1>
       <p>Type a Bluesky handle and get a transit pass for the account: member since, posts, followers and a route color. Save it, share it.</p>
     </div>
@@ -175,7 +175,6 @@ html[data-theme="dark"] .slot .bar { background: var(--line); }
           </div>
           <p class="status" id="status" role="status" aria-live="polite"></p>
           <p class="hint">Numbers are as of the time printed. They keep changing on Bluesky.</p>
-          <p class="hint" id="diag" hidden></p>
         </section>
 
         <section class="privacy" aria-labelledby="priv">
@@ -464,7 +463,6 @@ function renderPass() {
   paint($('pass'), false);
   $('pass').setAttribute('aria-label', altText());
   $('labelnote').hidden = !m.labeled;
-  $('diag').hidden = false; $('diag').textContent = 'What Bluesky sent: display name ' + (m.name ? '"' + m.name + '"' : (m.rawName === null ? 'missing' : 'empty')) + '; profile picture ' + m.avatarHow + '.';
   if (m.labeled) $('labelnote').textContent = m.hitLabels.indexOf('!no-unauthenticated') !== -1
     ? 'This account has asked not to be shown to people who aren\'t logged in to Bluesky (label "!no-unauthenticated"), so its photo and name are left off.'
     : 'Photo and name hidden because this account carries the label "' + m.hitLabels.join('", "') + '".';
@@ -574,7 +572,7 @@ $('copyalt').addEventListener('click', function () {
 $('another').addEventListener('click', function () {
   state.model = null;
   $('pwrap').hidden = true; $('slot').hidden = false;
-  $('diag').hidden = true; $('labelnote').hidden = true; $('o-photo').disabled = $('o-name').disabled = false;
+  $('labelnote').hidden = true; $('o-photo').disabled = $('o-name').disabled = false;
   setActions(false); showErr(''); say('');
   $('handle').value = ''; $('handle').focus();
   if (location.hash) history.replaceState(null, '', location.pathname);

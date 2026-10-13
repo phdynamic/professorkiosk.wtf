@@ -230,3 +230,9 @@
 - changed: the developer reported no profile picture on any pass and no display name for burritozen.net, after the first fix; the cause is still not confirmed (no live access from the build environment). The pass now tries the picture three ways (direct, small version, `/api/avatar` same-site pass-through added in `src/index.ts`) and shows a line "What Bluesky sent: display name … ; profile picture …" so the real cause is visible
 - tests: `transitpass` 38 checks (pass-through, empty display name readout)
 - live-tested: no
+
+## 2026-10-13 · Hub reordered; Rush Hour pop-up; Transit Pass readout removed
+- changed: hub order is now Tutorials, Joke-Web, Mashup, Format Deck, Top Skeets, Rush Hour, Transit Pass, Skeet Receipt, Tracer, Saga (01 to 10); card colors reassigned so neighbors differ (Top Skeets teal, Rush Hour purple, Transit Pass yellow; the page hero colors and "Tool NN" tags follow); hub and page tests updated
+- built: Rush Hour heatmap squares open a pop-up listing that hour's non-reply posts (most liked first, text, likes, time, Open on Bluesky), keyboard-reachable with arrow keys; posts now keep their text in memory for this; privacy text changed from "no post text is shown" to "text appears only in the pop-up"
+- removed: the "What Bluesky sent" debugging line on Transit Pass (the picture fallback stays)
+- live-tested: no (Rush Hour itself was confirmed by the developer on their account)

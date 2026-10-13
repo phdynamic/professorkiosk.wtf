@@ -50,7 +50,7 @@ const pix = (page, x, y) => page.evaluate(([x, y]) => { const c = document.getEl
   // ---- the empty page ----
   const { page, log } = await mk(browser); await page.goto(BASE); await setNow(page);
   const e0 = await page.evaluate(() => ({ tag: document.querySelector('.k-hero .k-tag').textContent, slot: !document.getElementById('slot').hidden, pwrap: document.getElementById('pwrap').hidden, btns: ['save', 'copyimg', 'copyalt', 'another'].map(i => document.getElementById(i).disabled), help: !!document.getElementById('helpBtn'), theme: !!document.getElementById('themeToggle'), foot: !!document.querySelector('footer.k-foot .kofi') }));
-  ok('T1 the page opens empty: Tool 09 tag, "your pass prints here", the action buttons off, Help, Night mode and footer', /Tool 09/.test(e0.tag) && e0.slot && e0.pwrap && e0.btns.every(Boolean) && e0.help && e0.theme && e0.foot, JSON.stringify(e0));
+  ok('T1 the page opens empty: Tool 07 tag, "your pass prints here", the action buttons off, Help, Night mode and footer', /Tool 07/.test(e0.tag) && e0.slot && e0.pwrap && e0.btns.every(Boolean) && e0.help && e0.theme && e0.foot, JSON.stringify(e0));
 
   // ---- parsing what was typed ----
   const pa = await page.evaluate(() => { const f = window.__transit.parseActor; return { a: f('@Cool.Example'), b: f('  professorkiosk.wtf  '), c: f('https://bsky.app/profile/cool.example'), d: f('https://bsky.app/profile/did:plc:abc123/post/3k'), e: f('did:plc:abc123'), f: f('did:plc:abc123?x'), g: f('hello'), h: f('a b.example'), i: f(''), j: f('x.'), k: f('a'.repeat(260) + '.com'), l: f('@@two.example'), m: f('javascript:alert(1)'), n: f('cool.example/extra') }; });
@@ -119,9 +119,7 @@ const pix = (page, x, y) => page.evaluate(([x, y]) => { const c = document.getEl
   // ---- Bluesky's image server refuses everything: this site's pass-through is the last resort ----
   const pf = await mk(browser, { avatarFail: ['/img/avatar'] }); await pf.page.route('**/api/avatar**', r => r.fulfill({ status: 200, contentType: 'image/png', body: PNG }));
   await pf.page.goto(BASE); await setNow(pf.page); await P(pf.page, 'cool.example'); await shown(pf.page);
-  ok('T15e if both direct loads fail, the picture comes through this site\'s pass-through, and the page says what Bluesky sent', (await pf.page.evaluate(() => !!window.__transit.state().model.avatar)) && /display name "Cool Person"; profile picture loaded through this site/.test(await txt(pf.page, '#diag')), await txt(pf.page, '#diag'));
-  await pf.page.click('#another'); await P(pf.page, 'newbie.example'); await shown(pf.page);
-  ok('T15f an account with an empty display name says so in plain words', /display name empty/.test(await txt(pf.page, '#diag')), await txt(pf.page, '#diag'));
+  ok('T15e if both direct loads fail, the picture comes through this site\'s pass-through', await pf.page.evaluate(() => !!window.__transit.state().model.avatar) && !!(await pf.page.evaluate(() => window.__transit.state().model.avatarHow)).match(/through this site/));
   await pf.ctx.close();
 
   // ---- an account with no join date ----

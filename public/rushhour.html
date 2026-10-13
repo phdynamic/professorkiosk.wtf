@@ -20,7 +20,7 @@
 </script>
 <link rel="stylesheet" href="/kiosk.css" />
 <style>
-:root { --hero: var(--coral); --rink: #1d1b4f; }
+:root { --hero: var(--purple); --rink: #1d1b4f; }
 h1, h2, h3, p, ul, ol, dl, dd { margin: 0; }
 button, input { font: inherit; }
 [hidden] { display: none !important; }
@@ -92,6 +92,20 @@ html[data-theme="dark"] .seg button[aria-pressed="true"] { background: var(--yel
 .pick dd { font-weight: 800; font-size: 17px; margin-top: 2px; }
 .pick dd small { display: block; font-weight: 400; font-size: 13px; color: var(--ink2); }
 
+/* the popup with the posts from one square */
+dialog.k-help.slot { width: min(640px, calc(100% - 24px)); }
+.plist { list-style: none; margin: 0; padding: 0; }
+.plist li { padding: 12px 0; border-top: 2px dotted var(--ink2); }
+.plist li:first-child { border-top: 0; }
+.plist .meta { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font: 500 12px var(--mono); color: var(--ink2); }
+.plist .likes { font-weight: 800; color: var(--ink); }
+.plist .txt { margin-top: 6px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 15px; line-height: 1.5; }
+.plist .txt.dim { color: var(--ink2); font-style: italic; }
+.plist a { font-weight: 700; text-underline-offset: 3px; min-height: 44px; display: inline-flex; align-items: center; }
+.heat td[tabindex] { cursor: pointer; }
+.heat td:focus-visible { outline: 3px solid var(--navy); outline-offset: 1px; }
+html[data-theme="dark"] .heat td:focus-visible { outline-color: var(--yellow); }
+
 /* What Lands */
 .cmp { border-top: 2px dotted var(--ink2); padding: 12px 0; }
 .cmp:first-of-type { border-top: 0; padding-top: 0; }
@@ -143,7 +157,7 @@ html[data-theme="dark"] .seg button[aria-pressed="true"] { background: var(--yel
     <ol>
       <li><b>Type a handle.</b> With or without the @, or paste a link to the profile. It works on any public account, not only your own.</li>
       <li><b>Wait a moment.</b> It reads the newest 500 posts first. Press "Load 500 more" to go further back, up to 5,000.</li>
-      <li><b>Look around.</b> Switch the grid between how many posts and the average likes, and between your own time and UTC.</li>
+      <li><b>Look around.</b> Switch the grid between how many posts and the average likes, and between your own time and UTC. Click a square (or move to it with the arrow keys and press Enter) to see the posts from that hour.</li>
     </ol>
 
     <h3>What it counts</h3>
@@ -165,10 +179,15 @@ html[data-theme="dark"] .seg button[aria-pressed="true"] { background: var(--yel
   </div>
 </dialog>
 
+<dialog class="k-help slot" id="slotdlg" aria-labelledby="slot-t">
+  <div class="hh"><h2 id="slot-t">Posts</h2><button class="k-btn" id="slotX" type="button" aria-label="Close">&#x2715;</button></div>
+  <div class="hb" id="slotbody"></div>
+</dialog>
+
 <header class="k-hero">
   <div class="k-wrap">
     <div class="copy">
-      <span class="k-tag navy">Level 1 &middot; Tool 10</span>
+      <span class="k-tag navy">Level 1 &middot; Tool 06</span>
       <h1>Rush Hour</h1>
       <p>Type a Bluesky handle and see when its posts go up, when they get the most likes, and what the biggest hits have in common.</p>
     </div>
@@ -230,7 +249,7 @@ html[data-theme="dark"] .seg button[aria-pressed="true"] { background: var(--yel
             </div>
             <div class="heatbox"><table class="heat" id="heat" aria-label="Posts by day of the week and hour"></table></div>
             <div class="legend" id="legend"></div>
-            <p class="readout" id="readout" aria-live="polite">Tap or hover a square to read it.</p>
+            <p class="readout" id="readout" aria-live="polite">Hover a square to read it, or click it to see its posts.</p>
             <dl class="picks" id="picks"></dl>
           </section>
 
@@ -257,7 +276,7 @@ html[data-theme="dark"] .seg button[aria-pressed="true"] { background: var(--yel
           <li><b>Reads:</b> one public profile and the account's public posts, the same as someone who isn't logged in.</li>
           <li><b>Stored:</b> nothing. Your browser reads the posts and does the counting here.</li>
         </ul>
-        <p>Only dates, like counts, post length, and each post's first word are used. No post text is shown or kept.</p>
+        <p>The posts are only read here, in your browser. Post text appears only in the pop-up when you open a square, and nothing is kept or sent anywhere.</p>
       </section>
     </div>
   </div>
@@ -383,7 +402,7 @@ function toPost(p) {
   if (isNaN(t)) return null;
   var text = typeof rec.text === 'string' ? rec.text : '';
   var likes = Number(p.likeCount); if (!isFinite(likes) || likes < 0) likes = 0;
-  return { t: t, likes: Math.floor(likes), len: Array.from(text).length, pic: hasPicture(p.embed), reply: !!rec.reply, first: openingOf(text) };
+  return { t: t, likes: Math.floor(likes), len: Array.from(text).length, pic: hasPicture(p.embed), reply: !!rec.reply, first: openingOf(text), key: String(p.uri).split('/').pop(), text: text.length > 400 ? text.slice(0, 400) + '…' : text };
 }
 
 // ---- The numbers ----
@@ -481,7 +500,7 @@ function renderHeat(grid) {
       var text = slotLabel(d, h) + ': ' + c + (c === 1 ? ' post' : ' posts') + (c ? ', ' + fmtAvg(a) + ' average likes' : '');
       var thin = likesMode && c > 0 && c < MIN_CELL;
       var style = c > 0 && max > 0 ? ' style="background:rgba(61,209,181,' + (0.12 + 0.88 * (val / max)).toFixed(2) + ')"' : '';
-      html += '<td data-d="' + d + '" data-h="' + h + '" data-t="' + esc(text) + '"' + (thin ? ' class="thin"' : '') + style + '><span class="v">' + esc(text) + '</span></td>';
+      html += '<td data-d="' + d + '" data-h="' + h + '" data-t="' + esc(text) + '" tabindex="' + (d === 0 && h === 0 ? '0' : '-1') + '"' + (thin ? ' class="thin"' : '') + style + '><span class="v">' + esc(text) + '</span></td>';
     }
     html += '</tr>';
   }
@@ -528,7 +547,7 @@ function render() {
   $('heat-sub').textContent = 'The account\'s own posts and quote posts, by the hour they went up, in ' + (state.utc ? 'UTC' : zoneName()) + ' time.';
   renderStats(run.posts, grid); renderHeat(grid); run.picks = renderPicks(grid); run.lands = renderLands(run.posts);
   [['m-count', state.metric === 'count'], ['m-likes', state.metric === 'likes'], ['z-local', !state.utc], ['z-utc', state.utc]].forEach(function (p) { $(p[0]).setAttribute('aria-pressed', String(p[1])); });
-  $('readout').textContent = 'Tap or hover a square to read it.';
+  $('readout').textContent = 'Hover a square to read it, or click it to see its posts.';
 }
 
 // ---- Summary for copying ----
@@ -653,7 +672,45 @@ $('m-count').addEventListener('click', function () { state.metric = 'count'; ren
 $('m-likes').addEventListener('click', function () { state.metric = 'likes'; render(); });
 $('z-local').addEventListener('click', function () { state.utc = false; render(); });
 $('z-utc').addEventListener('click', function () { state.utc = true; render(); });
-$('heat').addEventListener('click', function (e) { var td = e.target.closest ? e.target.closest('td[data-t]') : null; if (td) $('readout').textContent = td.getAttribute('data-t') + '.'; });
+function cellOf(e) { return e.target.closest ? e.target.closest('td[data-t]') : null; }
+function slotPosts(day, hour) {
+  return state.run.posts.filter(function (p) { if (p.reply) return false; var z = zoneParts(p.t, state.utc); return z.day === day && z.hour === hour; })
+    .sort(function (a, b) { return b.likes - a.likes || b.t - a.t; });
+}
+var SHOW_MAX = 100, slotFrom = null;
+function openSlot(td) {
+  var day = +td.dataset.d, hour = +td.dataset.h, list = slotPosts(day, hour), run = state.run;
+  $('readout').textContent = td.getAttribute('data-t') + '.';
+  if (!list.length) return;
+  var fmt = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: state.utc ? 'UTC' : undefined });
+  var who = encodeURIComponent(run.handle || run.did);
+  $('slot-t').textContent = DAYS_LONG[day].replace(/s$/, '') + ' ' + hourLabel(hour) + ' · ' + list.length + (list.length === 1 ? ' post' : ' posts');
+  $('slotbody').innerHTML = '<p class="muted" style="margin:10px 0 0">Most liked first. Replies are not in the grid, so they are not here. Times are in ' + esc(state.utc ? 'UTC' : zoneName()) + '.</p><ul class="plist">' +
+    list.slice(0, SHOW_MAX).map(function (p) {
+      return '<li><div class="meta"><span class="likes">' + fmtN(p.likes) + (p.likes === 1 ? ' like' : ' likes') + '</span><span>' + esc(fmt.format(new Date(p.t))) + '</span></div>' +
+        (p.text ? '<p class="txt">' + esc(p.text) + '</p>' : '<p class="txt dim">(a picture or no text)</p>') +
+        '<a href="https://bsky.app/profile/' + who + '/post/' + encodeURIComponent(p.key) + '" target="_blank" rel="noopener">Open on Bluesky &#8599;</a></li>';
+    }).join('') + '</ul>' + (list.length > SHOW_MAX ? '<p class="muted">And ' + (list.length - SHOW_MAX) + ' more, with fewer likes.</p>' : '');
+  slotFrom = td;
+  var dlg = $('slotdlg'); if (typeof dlg.showModal === 'function') { if (!dlg.open) dlg.showModal(); } else dlg.setAttribute('open', '');
+  $('slotbody').scrollTop = 0;
+}
+function closeSlot() { var dlg = $('slotdlg'); if (typeof dlg.close === 'function') dlg.close(); else dlg.removeAttribute('open'); }
+$('slotX').addEventListener('click', closeSlot);
+$('slotdlg').addEventListener('click', function (e) { if (e.target === $('slotdlg')) closeSlot(); });
+$('slotdlg').addEventListener('close', function () { if (slotFrom && document.contains(slotFrom)) slotFrom.focus(); });
+$('heat').addEventListener('click', function (e) { var td = cellOf(e); if (td) openSlot(td); });
+$('heat').addEventListener('keydown', function (e) {
+  var td = cellOf(e); if (!td) return;
+  var d = +td.dataset.d, h = +td.dataset.h;
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSlot(td); return; }
+  var moves = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] }, m = moves[e.key];
+  if (!m) return;
+  e.preventDefault();
+  var nd = Math.min(6, Math.max(0, d + m[0])), nh = Math.min(23, Math.max(0, h + m[1])), next = $('heat').querySelector('td[data-d="' + nd + '"][data-h="' + nh + '"]');
+  if (next) { [].forEach.call($('heat').querySelectorAll('td[tabindex="0"]'), function (c) { c.tabIndex = -1; }); next.tabIndex = 0; next.focus(); $('readout').textContent = next.getAttribute('data-t') + '.'; }
+});
+$('heat').addEventListener('focusin', function (e) { var td = cellOf(e); if (td) $('readout').textContent = td.getAttribute('data-t') + '.'; });
 $('heat').addEventListener('mouseover', function (e) { var td = e.target.closest ? e.target.closest('td[data-t]') : null; if (td) $('readout').textContent = td.getAttribute('data-t') + '.'; });
 $('copysum').addEventListener('click', function () {
   var text = summaryText();

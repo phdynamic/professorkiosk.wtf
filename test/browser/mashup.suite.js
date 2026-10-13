@@ -34,7 +34,7 @@ const many = (page, set, n = 80) => page.evaluate(([set, n]) => { const S = wind
   ok('B3 back to Mashup shows two cards again', (await cards(page)).length >= 2 && await page.locator('#dials').isVisible());
 
   // C. dials
-  const stat = async set => page.evaluate(([set]) => { const S = window.__mashup.state(), M = window.__mashup; Object.assign(S, set); let same = 0, total = 0, sum = 0, three = 0, rep = 0, odd = 0; const N = 150;
+  const stat = async set => page.evaluate(([set]) => { const S = window.__mashup.state(), M = window.__mashup; Object.assign(S, set); let same = 0, total = 0, sum = 0, three = 0, rep = 0, odd = 0; const N = 600;
     for (let i = 0; i < N; i++) { S.cards = []; const r = M.roll(); if (r.length === 3) three++; if (new Set(r.map(c => c.text.toLowerCase())).size !== r.length) rep++; if (r.length > 1) { total++; const dd = M.cdist(r[0].cat, r[1].cat); sum += dd; if (r[0].cat === r[1].cat) same++; if (M.data.ODD[r[0].cat] && M.data.ODD[r[0].cat][r[1].cat]) odd++; } }
     return { same: same / total, avg: sum / total, three: three / N, rep, odd: odd / total }; }, [set]);
   const close = await stat({ mode: 'mashup', dist: 0, weird: 0, spicy: true, mine: true });

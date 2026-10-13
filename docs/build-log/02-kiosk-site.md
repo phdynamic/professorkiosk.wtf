@@ -175,3 +175,9 @@
 - changed: kept all five formats (Nobody / Me, Expectation / Reality, Before / After, Translation Guide, Two Types of People) and removed their tips at the developer's request; a tip is now optional in the suite (the page already hid an empty one)
 - note: the review of the other seven categories is in progress
 - live-tested: no
+
+## 2026-10-13 · Format Deck review, category 2 (Lists) and all tips
+- changed: removed every `tip:` line from every format, at the developer's request; the page and suite still allow an optional tip
+- changed: deleted Ranking, Tier List and Bingo Card; the Format Deck now has 37 formats (Lists keeps Award Ceremony and Pros and Cons); suite and hub card ("Over 30 formats") updated
+- note: the review continues with category 3 (Fake documents)
+- live-tested: no

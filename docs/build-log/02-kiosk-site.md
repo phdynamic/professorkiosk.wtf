@@ -113,3 +113,7 @@
 - built: `#credit` panel with `#book` link in `jokeweb.html`, a Help sentence, a Tutorials sentence, a hub card clause; jokeweb suite section Q (118 checks)
 - note: the book facts (title, subtitle, ISBN 9781907498374, Rethink Press) come from web search results, not from the book; the link target was not opened from here
 - live-tested: no
+
+## 2026-10-13 · Book link switched to Amazon
+- changed: the three book links (`jokeweb.html` panel and Help, `tutorials.txt`) and the jokeweb Q1/Q2 checks now use the Amazon listing
+- live-tested: no

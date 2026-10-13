@@ -88,7 +88,13 @@
 - why: developer asked for a warning that both webs will be erased and no switch-back button afterward (I read "both webs" as the current and previous web, and for a double web both A and B)
 - source: developer request, 2026-10-12
 
-### 2026-10-13 · Credit Sally Holloway and link to her book wherever the joke-web is described · active
+### 2026-10-13 · Credit Sally Holloway and link to her book wherever the joke-web is described · partly superseded
 - what: a credit panel and Get the book link on `/jokeweb`, a line in its Help, a sentence in `tutorials.txt` and a clause on the hub card; the link goes to the publisher's page for the book
 - why: developer asked to credit her with the technique and to plug the book with a purchase link; the publisher page was chosen because I could not open any shop page from the sandbox to confirm it sells the book (the developer may prefer a bookshop or affiliate link)
+- source: developer request, 2026-10-13
+> Partly superseded 2026-10-13: the link target is now the Amazon listing, see the next entry.
+
+### 2026-10-13 · The book link is the developer's Amazon listing, without the search-tracking parts · active
+- what: all book links point to `https://www.amazon.com/Serious-Guide-Joke-Writing-Something/dp/1907498370`
+- why: the developer supplied an Amazon address; the `crid`, `dib`, `qid`, `sprefix` and `sr` parts of the pasted address are tied to their own search session, so only the product path was kept (same product)
 - source: developer request, 2026-10-13

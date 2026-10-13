@@ -153,3 +153,7 @@
 - note: third real run found 184 candidates; only Before / After (4 fit, best 14 likes) and Customer Service (1 of 1,134 fit) came up empty
 - changed: wider `search:` and `match:` lines for both and a `likes:` bar of 3, so the developer has something to consider; if nothing usable turns up the worked example stays
 - live-tested: no
+
+## 2026-10-13 · Finder writes a new file each run
+- changed: output goes to `scripts/candidates-DATE-TIME.txt` (ignored by git) instead of overwriting `candidates.txt`, after a one-format run overwrote a full run
+- live-tested: no

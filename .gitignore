@@ -3,3 +3,4 @@ dist/
 data/
 .env
 *.db
+scripts/candidates*.txt

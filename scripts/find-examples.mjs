@@ -6,7 +6,7 @@
 //   2. keeps only posts whose text matches EVERY `match:` line of the format (a regular expression, so a post that
 //      merely contains the words "me" and "nobody" does not count as a Nobody / Me post),
 //   3. throws out replies, anything with a moderation label, posts over 300 characters, and posts under --min-likes,
-//   4. sorts what is left by like count and writes the best ones to scripts/candidates.txt for YOU to read.
+//   4. sorts what is left by like count and writes the best ones to a new file, scripts/candidates-DATE-TIME.txt, for YOU to read (every run makes its own file).
 // Nothing is added to the site automatically. You copy the `post:` lines you like into public/formats.txt.
 //
 // Searching on Bluesky needs you to be signed in, so give the script an app password (Settings > App Passwords):
@@ -29,7 +29,9 @@ import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const FORMATS = process.env.FORMATS_FILE || path.join(here, '..', 'public', 'formats.txt');
-const OUT = process.env.CANDIDATES_FILE || path.join(here, 'candidates.txt');
+// every run writes its own file (candidates-YYYY-MM-DD-HHMM.txt), so a later run, or a run for one format, never overwrites an earlier one
+const stamp = new Date().toISOString().slice(0, 16).replace('T', '-').replace(':', '');
+const OUT = process.env.CANDIDATES_FILE || path.join(here, `candidates-${stamp}.txt`);
 const HANDLE = process.env.BSKY_HANDLE || '';
 const PASSWORD = process.env.BSKY_APP_PASSWORD || '';
 const TOKEN = process.env.BSKY_TOKEN || '';

@@ -193,3 +193,7 @@
 - changed: deleted Before / After and Customer Service; kept Is Just and Professor X Asks; replaced Interview Question with Interview Detour ("Me: a long, rambling answer... / Interviewer: I meant questions about {the interview topic}."); the deck has 35 formats
 - note: If It Were was kept alongside Is Just (the developer did not ask to remove it)
 - live-tested: no
+
+## 2026-10-13 · Format Deck review, category 5 (Questions)
+- changed: deleted If It Were and the whole Questions category (Which One of You, Be Honest, Rate It, Fill in the Blank, Quote Post Game Starter); Interview Detour now has Me asking a long, rambling question (was answer); the deck has 29 formats in 7 categories; hub card says "Nearly 30 formats"
+- live-tested: no

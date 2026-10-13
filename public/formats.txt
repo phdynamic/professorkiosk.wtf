@@ -76,8 +76,8 @@ template: "{a line out of context}"
 
 ## Interview Detour
 category: Dialogue
-how: Answer an interview question with a long, rambling reply about a very weird or very specific subject. The interviewer gently steers you back.
-template: Me: {a long, rambling answer about a very weird or specific subject}
+how: In a job interview, ask a long, rambling question about a very weird or very specific subject. The interviewer gently steers you back.
+template: Me: {a long, rambling question about a very weird or specific subject}
 template: Interviewer: I meant questions about {the interview topic}.
 
 ## Professor X Asks
@@ -99,36 +99,6 @@ category: Dialogue
 how: Say something to an object and let it answer back. Give the object a human flaw such as pride, laziness, or passive aggression.
 template: Me: {what I say to the object}
 template: {the object}: {what it says back}
-
-## Which One of You
-category: Questions
-how: Call out a small, unnamed crime to a group. Everyone feels vaguely guilty.
-template: Which one of you {did the small crime}? {a worrying detail}
-
-## Be Honest
-category: Questions
-how: Ask the whole timeline an honest question about a shared small shame. The answers in the replies are the second half of the joke.
-template: Be honest: {an everyday question}
-
-## Rate It
-category: Questions
-how: Offer something for rating, then give details that make a fair rating impossible. The replies do the rest.
-template: Rate my {the thing} out of 10:
-template: {the details}
-
-## Fill in the Blank
-category: Questions
-how: Give people the start of a sentence and let them finish it. Leave room for answers better than any you would write.
-template: {the start of a sentence} ___.
-template: {where to answer}
-
-## Quote Post Game Starter
-category: Questions
-how: Open a quote post game with a topic, one clear rule, and your own first entry so people know the tone.
-template: QUOTE POST GAME
-template: Topic: {the topic}
-template: Rule: {one clear rule}
-template: First entry: {your first entry}
 
 ## Pun With a Question
 category: Wordplay
@@ -152,11 +122,6 @@ template: (n.) {what it means}
 category: Wordplay
 how: Give something ordinary a new, more honest name. The reason is optional, but it is often where the joke lives.
 template: Renaming {the thing} to "{the new name}" because {the reason}.
-
-## If It Were
-category: Wordplay
-how: Compare two unlike things by naming the specific version of the second. The specific answer is the whole joke.
-template: If {the thing} were a {a kind of thing}, it would be {the specific version}.
 
 ## Is Just
 category: Wordplay

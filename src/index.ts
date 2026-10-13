@@ -390,9 +390,9 @@ app.get('/receipt', (_req, res) => {
   res.set('Cache-Control', 'no-cache');
   res.sendFile(path.join(__dirname, '..', 'public', 'receipt.html'));
 });
+// The Imagine Flagons saga is now just an example in the Tracer; the old address still works.
 app.get('/imagine-flagons', (_req, res) => {
-  res.set('Cache-Control', 'no-cache');
-  res.sendFile(path.join(__dirname, '..', 'public', 'imagine-flagons.html'));
+  res.redirect(302, '/tracer?post=' + encodeURIComponent('https://bsky.app/profile/professorkiosk.wtf/post/3ma4vpkdvwk26'));
 });
 app.get('*', (_req, res) => {
   res.set('Cache-Control', 'no-cache');

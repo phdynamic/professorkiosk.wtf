@@ -31,6 +31,9 @@ const errors = [];
       await page.goto(BASE); await page.fill('#postInput', input); await page.click('#go');
       await page.waitForSelector('#rootcard .card', { timeout: 5000 }).then(() => ok('A2 parses ' + label, true), () => ok('A2 parses ' + label, false));
     }
+    await page.goto(BASE);
+    const ex = await page.evaluate(() => ({ small: document.getElementById('ex-small').getAttribute('href'), saga: document.getElementById('ex-saga').getAttribute('href'), tag: document.querySelector('.k-hero .k-tag').textContent, text: document.querySelector('.hint').textContent }));
+    ok('A2b the Tracer shows two example links, a small game and the Imagine Flagons Saga (the post that started it), as /tracer?post= links; the page carries the Tool 07 tag', ex.small === '/tracer?post=https%3A%2F%2Fbsky.app%2Fprofile%2Fprofessorkiosk.wtf%2Fpost%2F3mx6fzdyx3k2s' && ex.saga === '/tracer?post=https%3A%2F%2Fbsky.app%2Fprofile%2Fprofessorkiosk.wtf%2Fpost%2F3ma4vpkdvwk26' && /Tool 07/.test(ex.tag) && /Imagine Flagons Saga/.test(ex.text) && /1,200 people/.test(ex.text), JSON.stringify(ex));
     await go(page, 'https://bsky.app/profile/nobody.example/post/r0'); await page.waitForSelector('#error:not([hidden])');
     ok('A3 unknown handle -> clear error', /find an account/i.test(await page.locator('#error').innerText()));
     await go(page, 'https://bsky.app/profile/root.bsky.social/post/r99999'); await page.waitForSelector('#error:not([hidden])');

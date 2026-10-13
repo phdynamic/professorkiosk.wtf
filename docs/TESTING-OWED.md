@@ -89,19 +89,11 @@ Source: the Help text in `public/tracer.html`.
 - Card links. How: click the link on a card, including an author with an unusual handle. Expect: it opens that post on Bluesky without an error (links use the handle, not an encoded ID).
 - Nothing stored. How: Network tab during a trace. Expect: requests only to Bluesky's public API and the footer avatar lookup.
 
-## The Imagine Flagons Saga: claims in its Help dialog (live site, real Bluesky)
-Source: the Help text in `public/imagine-flagons.html`.
-- Live trace. How: open the page. Expect: a progress bar, then the whole tree; how long it takes is not recorded yet (note it here).
-- Size. How: read the post count. Expect: well over a thousand posts (the page text says more than a thousand people took part).
-- Search. How: search a band name, a word and a handle. Expect: matching cards stay and the rest fold away.
-- Expanded and Compact. How: toggle them. Expect: Expanded shows full posts with pictures; Compact is a short overview.
-- Depth, Expand all, Collapse all, thread lines. How: use each. Expect: depth opens that many levels; the buttons do what they say; clicking a thread line folds that branch.
-- Order. How: switch between oldest first and biggest branch. Expect: the tree reorders.
-- Random band, Deepest dive, Leaderboards. How: use each. Expect: each jumps to something sensible.
-- Shortcuts. How: press `/`, `e`, `c`, `r` (not while typing in the search box). Expect: search focus, expand all, collapse all, a random band.
-- Failure. How: block Bluesky in the browser (offline) and reload. Expect: "Try again", or the part that did load.
-- Nothing stored. How: Network tab. Expect: requests only to Bluesky's public API and the footer avatar lookup.
-
+## The Imagine Flagons Saga as a Tracer example (live site, real Bluesky)
+Source: the example links in `public/tracer.html`; the old separate saga page was removed on 2026-10-13.
+- Big trace. How: open /tracer and press "The Imagine Flagons Saga". Expect: the trace starts, loads the first couple of thousand quotes (the saga is about 1,200), and the tree, search, depth, Leaderboards and Lineage all work; note how long it takes here.
+- Old address. How: open /imagine-flagons. Expect: it lands on the Tracer and starts the same trace.
+- Missing features. The old saga page had a random-quote key (r) and showed locked posts with a note; the Tracer does neither (it counts the missing ones instead). Tell the assistant if you want them added to the Tracer.
 
 ## Format Deck (live site, real browser, real phone)
 Source: `public/formats.html`, `public/formats.txt`. The automated suite covers the logic with mocks; these are the by-hand confirmations.

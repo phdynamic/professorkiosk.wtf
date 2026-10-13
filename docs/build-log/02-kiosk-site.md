@@ -268,3 +268,8 @@
 - built: `public/tightener.html` (route `/tightener`, hub card 05), `test/browser/tightener.suite.js` (21 checks); added to the help, icon, footer and hub checks; the Tutorials Posting section now mentions it
 - changed: hub order is now Tutorials, Joke-Web, Mashup, Format Deck, Joke Tightener, Mutual Match, Top Skeets, Rush Hour, Transit Pass, Skeet Receipt, Tracer, Saga (01 to 12); separate sites 13 to 16; Joke Tightener is sky blue, the other card colors did not change; the "Tool NN" tags follow
 - live-tested: no
+
+## 2026-10-13 · Saga folded into the Tracer; Tracer moved after Mutual Match
+- removed: `public/imagine-flagons.html`, `test/browser/imagine.suite.js` (7 checks), the Saga hub card and its entries in the help, icon and footer checks
+- changed: `/imagine-flagons` redirects to the Tracer with the saga post; the Tracer shows two example links and its Help mentions them; hub order is now Tutorials, Joke-Web, Mashup, Format Deck, Joke Tightener, Mutual Match, Tracer, Top Skeets, Rush Hour, Transit Pass, Skeet Receipt (01 to 11), separate sites 12 to 15; card colors reassigned (Tracer coral, Top Skeets purple, Rush Hour yellow, Transit Pass teal, Skeet Receipt sky); "Tool NN" tags follow
+- live-tested: no

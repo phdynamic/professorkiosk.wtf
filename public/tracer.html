@@ -190,6 +190,7 @@ dialog::backdrop{background:rgba(20,18,60,.6)}
       <li>A trace loads a couple of thousand quotes at a time. Press "Load more" to keep going, up to 20,000 in one trace. If Bluesky slows down, the Tracer waits and picks up again, and you can resume if it stops.</li>
       <li>Some quotes can't be seen without logging in (locked, blocked or deleted posts). The Tracer tells you how many are missing, and anything quoted under them is missing too.</li>
       <li>Links on cards open the post on Bluesky.</li>
+      <li>Not sure where to start? The example links under the box trace a small quote post game and a very big one, the Imagine Flagons Saga (about 1,200 quotes, so give it a minute).</li>
     </ul>
   </div>
 </dialog>
@@ -197,7 +198,7 @@ dialog::backdrop{background:rgba(20,18,60,.6)}
 <header class="k-hero">
   <div class="k-wrap" style="padding-bottom:64px">
     <div>
-      <span class="k-tag navy">Level 1 · Tool 11</span>
+      <span class="k-tag navy">Level 1 · Tool 07</span>
       <h1>Quote Post Game Tracer</h1>
       <p>Paste a link to the post that started a quote post game and watch every quote of it unfold as a browsable tree.</p>
     </div>
@@ -211,7 +212,7 @@ dialog::backdrop{background:rgba(20,18,60,.6)}
       <input id="postInput" type="text" placeholder="https://bsky.app/profile/…/post/…" autocomplete="off" spellcheck="false" />
       <button class="k-btn primary" id="go" type="submit">Trace it →</button>
     </form>
-    <p class="hint"><b>Public posts only.</b> Only quotes visible to logged-out Bluesky viewers can be traced. Want an example? <a href="/tracer?post=https%3A%2F%2Fbsky.app%2Fprofile%2Fprofessorkiosk.wtf%2Fpost%2F3mx6fzdyx3k2s">Try this quote post game</a>.</p>
+    <p class="hint"><b>Public posts only.</b> Only quotes visible to logged-out Bluesky viewers can be traced. Want an example? <a href="/tracer?post=https%3A%2F%2Fbsky.app%2Fprofile%2Fprofessorkiosk.wtf%2Fpost%2F3mx6fzdyx3k2s" id="ex-small">Try this quote post game</a>, or the big one: <a href="/tracer?post=https%3A%2F%2Fbsky.app%2Fprofile%2Fprofessorkiosk.wtf%2Fpost%2F3ma4vpkdvwk26" id="ex-saga">The Imagine Flagons Saga</a>. It started with a post about a Lord of the Rings cover band, and then 1,200 people could not stop. Tracing it takes a while.</p>
     <div class="errbox" id="error" hidden></div>
   </div>
 </div>

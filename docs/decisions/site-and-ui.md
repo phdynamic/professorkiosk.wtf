@@ -161,3 +161,9 @@
 - why: the developer asked for it (replaced replies); the 500-like limit and the reposts-only fallback are my choices
 - source: developer request, 2026-10-13
 - live-tested: no (the likes route is the riskiest part: some servers may not allow reads from a web page)
+
+### 2026-10-13 · The Imagine Flagons Saga page is folded into the Tracer as an example link · active
+- what: `public/imagine-flagons.html` and its test suite were removed; the Tracer's example line now offers a small game and "The Imagine Flagons Saga" (a `/tracer?post=` link to the post that started it); the server redirects `/imagine-flagons` (302) to that link so old links keep working; the hub lost the Saga card and the Tracer card moved to 07, after Mutual Match (everything below moved up, separate sites now 12 to 15); the Tracer card mentions the saga
+- why: the developer asked for it; keeping both example links, the 302 (not 301, so it can be changed) and what the saga page did that the Tracer does not (a random-quote key, showing locked posts with a note) were my calls and are listed in TESTING-OWED
+- source: developer request, 2026-10-13
+- live-tested: no

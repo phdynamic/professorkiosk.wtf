@@ -2,7 +2,7 @@
 const { chromium } = require('playwright-core');
 const out = [], errors = [];
 const ok = (n, c, x = '') => out.push((c ? 'PASS' : 'FAIL') + ': ' + n + (x ? ' — ' + x : ''));
-const PAGES = [['/feeds', 'Top Skeets'], ['/tracer', 'Tracer'], ['/imagine-flagons', 'Saga'], ['/receipt', 'Skeet Receipt'], ['/jokeweb', 'Joke-Web Maker'], ['/mashup', 'Mashup Machine'], ['/formats', 'Format Deck'], ['/transitpass', 'Transit Pass'], ['/rushhour', 'Rush Hour'], ['/mutualmatch', 'Mutual Match'], ['/tightener', 'Joke Tightener']];
+const PAGES = [['/feeds', 'Top Skeets'], ['/tracer', 'Tracer'], ['/receipt', 'Skeet Receipt'], ['/jokeweb', 'Joke-Web Maker'], ['/mashup', 'Mashup Machine'], ['/formats', 'Format Deck'], ['/transitpass', 'Transit Pass'], ['/rushhour', 'Rush Hour'], ['/mutualmatch', 'Mutual Match'], ['/tightener', 'Joke Tightener']];
 const look = page => page.evaluate(() => { const d = document.getElementById('help'), h = d.querySelector('.hh'), cs = getComputedStyle(d), hs = getComputedStyle(h); return { border: cs.borderTopWidth, radius: cs.borderTopLeftRadius, bg: cs.backgroundColor, shadow: cs.boxShadow, head: hs.backgroundColor, headFont: getComputedStyle(h.querySelector('h2')).fontSize, close: h.querySelector('button').getBoundingClientRect().width, sections: d.querySelectorAll('h3').length, title: h.querySelector('h2').textContent }; });
 (async () => {
   const browser = await chromium.launch({ executablePath: require('./env').CHROME });

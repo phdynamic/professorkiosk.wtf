@@ -163,3 +163,10 @@
 - changed: the finder retries 5xx answers twice (waits 2 s, then 4 s) and lists any formats it could not search at the end
 - built: unit test for the retry (now 24)
 - live-tested: no
+
+## 2026-10-13 · Worked examples and Seen in the wild removed
+- built: removed the worked example box, Use this example, the "Seen in the wild" box and its Bluesky lookups from `formats.html`; removed `example:`, `post:`, `search:`, `match:` and `likes:` lines from `formats.txt` (the page and the suite now accept only category, how, template and tip)
+- built: removed `scripts/find-examples.mjs` and `test/find-examples.test.js`
+- changed: hub card and Help text no longer mention examples; `formats` suite reworked (48 checks); F3 now fills every blank with 40 characters and checks the post fits in 300
+- note: the one `post:` line the developer added went with the rest
+- live-tested: no

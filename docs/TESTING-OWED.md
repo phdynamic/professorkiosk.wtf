@@ -109,10 +109,4 @@ Source: `public/formats.html`, `public/formats.txt`. The automated suite covers 
 - Copy on phones. How: tap Copy post on iPhone Safari and Android Chrome, paste into the Bluesky composer. Expect: exact text with line breaks. The older-browser fallback copy path was not exercised on a real phone.
 - Character limit. How: put a post of exactly 300 and then 301 characters, with an emoji in it, into the composer. Expect: the page's counter and Bluesky agree.
 - Phone layout. How: open /formats on a real phone, deal several cards, type in a blank with the keyboard open. Expect: readable card, reachable blanks, no sideways scroll. The post sits below the blanks, so with many blanks you scroll to see it while typing; decide whether that is acceptable.
-- The formats text. How: read `public/formats.txt`. Expect: you are happy with each how-line, example and tip. It is a first draft by the assistant, not yet read by you; edit or delete freely.
-
-## Format Deck: Seen in the wild (real Bluesky)
-Source: `public/formats.html` (`renderWild`), `scripts/find-examples.mjs`. The suite covers the page with a mocked API only.
-- Live lookup. How: put one real `post:` line under a format, open that card on the live site. Expect: the post's text, name, date and a working link to the original. Then try a bogus rkey. Expect: the box does not appear and the worked example stays.
-- Handle links. How: use a `post:` link copied from bsky.app (handle form) and one from Blacksky or Northsky. Expect: both show.
-- The finder script. How: `BSKY_HANDLE=you.bsky.social BSKY_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx node scripts/find-examples.mjs --only "Overheard"` (app password from Bluesky Settings). Expect: candidates, most-liked first, in a new `scripts/candidates-DATE-TIME.txt` (one file per run, not committed), each really using the format and with at least 30 likes. Then run it for all formats and read the candidates. Check that the `match:` lines let good posts through (if a format finds nothing, loosen its `match:` or lower `--min-likes`) and keep out look-alikes. It was only tested against a fake Bluesky. If it fails, try `--print-queries` and tell the assistant what it printed.
+- The formats text. How: read `public/formats.txt`. Expect: you are happy with each how-line and tip. It is a first draft by the assistant, not yet read by you; edit or delete freely.

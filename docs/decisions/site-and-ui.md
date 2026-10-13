@@ -104,17 +104,25 @@
 - why: the developer wanted a public tool for people writing jokes, and no moderation work (Game Preserver "was starting to require moderation", developer's statement); a text file like `tutorials.txt` and `topics.js` so the developer can edit formats (my choice, not stated)
 - source: developer request, 2026-10-13
 
-### 2026-10-13 · Each Format Deck card is reference plus a small workbench · active
+### 2026-10-13 · Each Format Deck card is reference plus a small workbench · superseded
 - what: how-line, worked example (built from the example words), a blank per `{label}`, the post as it builds, a counter against 300 graphemes, Copy post, Open in Bluesky (`https://bsky.app/intent/compose?text=`), Use this example, Clear blanks, a tip; a blank left empty is copied as its `{label}`; no dice button that drops in random Mashup topics
 - why: the developer asked for "some combination of reference and" typing and copying, wanted a worked example, and suggested opening in Bluesky; they chose the option without the dice; copying empty blanks as `{label}` and bsky.app only for Open are my choices, not stated (Blacksky and Northsky users use Copy)
 - source: developer request, 2026-10-13
+> Partly superseded 2026-10-13: the worked example was removed from the cards, see the last entry below.
 
-### 2026-10-13 · Format Deck shows real posts by live lookup, picked by the developer · active
+### 2026-10-13 · Format Deck shows real posts by live lookup, picked by the developer · superseded
 - what: `post:` lines hold links only; the page asks the public AppView when a card opens and hides a post that is gone, labeled, or a reply; the worked example stays as the backup; candidates come from `scripts/find-examples.mjs`, and the developer copies chosen `post:` lines in by hand
 - why: the developer asked for real Bluesky posts as embedded examples, "live lookup with a backup example if the post disappears" (their words). They picked automatic search for finding matches; my choice, not stated: the search runs as a script they read through before anything goes on the site, instead of on every visitor's page, because search results can't be vetted and there is no moderation capacity (standing rule)
 - source: developer request, 2026-10-13
+> Superseded 2026-10-13: "Seen in the wild" was removed, see the last entry below.
 
-### 2026-10-13 · The finder ranks by likes and checks each post against the format's `match:` regexes; "Seen in the wild" belongs only to the Format Deck · active
+### 2026-10-13 · The finder ranks by likes and checks each post against the format's `match:` regexes; "Seen in the wild" belongs only to the Format Deck · superseded
 - what: `match:` lines (JS regular expressions, case-insensitive) in `formats.txt`; the finder signs in with an app password, reads three pages of top results per search, keeps posts that pass every `match:` line and `--min-likes` (30), one per author, most-liked first; the Joke-Web Maker does not use "Seen in the wild" (a README sentence that said it did was wrong and was removed)
 - why: developer wants real, well-liked posts that actually use each format; unauthenticated search is likely refused by Bluesky, so signing in is the working path (not confirmed from here)
 - source: developer request, 2026-10-13; `scripts/find-examples.mjs`
+> Superseded 2026-10-13: the finder and its `search:`, `match:` and `likes:` lines were removed, see the last entry below.
+
+### 2026-10-13 · Worked examples and "Seen in the wild" removed from the Format Deck, with the finder script · active
+- what: no `example:` or `post:` lines, no worked example box or Use this example button, no live post lookups (the Format Deck makes no Bluesky requests); the finder (`scripts/find-examples.mjs`, `test/find-examples.test.js`) and the `search:`, `match:` and `likes:` lines are gone; a card is the how-line, the blanks, the post, the counter, Copy and Open in Bluesky, and the tip
+- why: the developer asked to take both out altogether; I removed the finder as well because it existed only to find posts for "Seen in the wild" (it is in git history if wanted back)
+- source: developer request, 2026-10-13

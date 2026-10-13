@@ -225,3 +225,8 @@
 - fixed: Transit Pass printed only the handle for an account with no display name (the handle now takes the headline spot); the profile picture is retried with the small version if the full size will not load; the label note now names the label that hid the photo and name (an account carrying `!no-unauthenticated` prints without photo or name)
 - not confirmed: why burritozen.net's pass lacked a name; no live access from the build environment. The likely causes are no display name or a hide-list label on that profile
 - live-tested: no
+
+## 2026-10-13 · Transit Pass: picture fallback and a readout
+- changed: the developer reported no profile picture on any pass and no display name for burritozen.net, after the first fix; the cause is still not confirmed (no live access from the build environment). The pass now tries the picture three ways (direct, small version, `/api/avatar` same-site pass-through added in `src/index.ts`) and shows a line "What Bluesky sent: display name … ; profile picture …" so the real cause is visible
+- tests: `transitpass` 38 checks (pass-through, empty display name readout)
+- live-tested: no

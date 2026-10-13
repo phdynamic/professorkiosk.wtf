@@ -175,6 +175,7 @@ html[data-theme="dark"] .slot .bar { background: var(--line); }
           </div>
           <p class="status" id="status" role="status" aria-live="polite"></p>
           <p class="hint">Numbers are as of the time printed. They keep changing on Bluesky.</p>
+          <p class="hint" id="diag" hidden></p>
         </section>
 
         <section class="privacy" aria-labelledby="priv">
@@ -276,10 +277,18 @@ function loadAvatar(url) {
       img.src = u;
     });
   }
-  if (typeof url !== 'string' || !/^https:\/\/cdn\.bsky\.app\//.test(url)) return Promise.resolve(null);
-  // if the full size fails, try the small version Bluesky also serves
+  if (typeof url !== 'string' || !/^https:\/\/cdn\.bsky\.app\//.test(url)) return Promise.resolve({ img: null, how: 'no picture address in the profile' });
   var alt = url.replace('/img/avatar/', '/img/avatar_thumbnail/');
-  return one(url).then(function (img) { return img || (alt !== url ? one(alt) : null); });
+  // 1) straight from Bluesky's image server, 2) its small version, 3) through this site's pass-through (same origin, so the canvas stays clean)
+  return one(url).then(function (img) {
+    if (img) return { img: img, how: 'loaded from Bluesky' };
+    return (alt !== url ? one(alt) : Promise.resolve(null)).then(function (img2) {
+      if (img2) return { img: img2, how: 'loaded from Bluesky (small version)' };
+      return one('/api/avatar?u=' + encodeURIComponent(url)).then(function (img3) {
+        return img3 ? { img: img3, how: 'loaded through this site' } : { img: null, how: 'could not be loaded' };
+      });
+    });
+  });
 }
 
 // ---- Model ----
@@ -309,7 +318,7 @@ function typeOf(days) {
   if (days < 1095) return 'COMMUTER';
   return 'LIFER';
 }
-function buildModel(p, avatar) {
+function buildModel(p, avatar, avatarHow) {
   var h = fnv(p.did), line = LINES[h % LINES.length];
   var created = p.createdAt ? new Date(p.createdAt) : null;
   if (created && isNaN(created)) created = null;
@@ -325,7 +334,7 @@ function buildModel(p, avatar) {
     pace: days != null ? paceOf(posts, days) : null, type: typeOf(days),
     labeled: labelVals(p).some(function (v) { return HIDE_LABELS.indexOf(v) !== -1; }),
     hitLabels: labelVals(p).filter(function (v) { return HIDE_LABELS.indexOf(v) !== -1; }),
-    avatar: avatar
+    avatar: avatar, avatarHow: avatarHow || '', hasAvatarUrl: !!p.avatar, rawName: p.displayName == null ? null : String(p.displayName)
   };
 }
 
@@ -455,6 +464,7 @@ function renderPass() {
   paint($('pass'), false);
   $('pass').setAttribute('aria-label', altText());
   $('labelnote').hidden = !m.labeled;
+  $('diag').hidden = false; $('diag').textContent = 'What Bluesky sent: display name ' + (m.name ? '"' + m.name + '"' : (m.rawName === null ? 'missing' : 'empty')) + '; profile picture ' + m.avatarHow + '.';
   if (m.labeled) $('labelnote').textContent = 'Photo and name hidden because this account carries the label "' + m.hitLabels.join('", "') + '".';
   $('o-photo').disabled = $('o-name').disabled = m.labeled;
 }
@@ -492,7 +502,7 @@ function print(input) {
   busy = true; setBusy(true); say('Printing…');
   fetchProfile(actor).then(function (p) {
     var labeled = labelVals(p).some(function (v) { return HIDE_LABELS.indexOf(v) !== -1; });
-    return (labeled ? Promise.resolve(null) : loadAvatar(p.avatar)).then(function (img) { return buildModel(p, img); });
+    return (labeled ? Promise.resolve({ img: null, how: 'left off (content label)' }) : loadAvatar(p.avatar)).then(function (r) { return buildModel(p, r.img, r.how); });
   }).then(function (model) {
     state.model = model; state.photo = $('o-photo').checked || model.labeled; state.name = $('o-name').checked; state.handle = $('o-handle').checked;
     $('slot').hidden = true; $('pwrap').hidden = false;
@@ -562,7 +572,7 @@ $('copyalt').addEventListener('click', function () {
 $('another').addEventListener('click', function () {
   state.model = null;
   $('pwrap').hidden = true; $('slot').hidden = false;
-  $('labelnote').hidden = true; $('o-photo').disabled = $('o-name').disabled = false;
+  $('diag').hidden = true; $('labelnote').hidden = true; $('o-photo').disabled = $('o-name').disabled = false;
   setActions(false); showErr(''); say('');
   $('handle').value = ''; $('handle').focus();
   if (location.hash) history.replaceState(null, '', location.pathname);

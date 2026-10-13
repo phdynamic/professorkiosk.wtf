@@ -40,6 +40,7 @@ async function mk(browser, { mode = 'ok', scheme = 'light', vp = { width: 1100, 
 }
 const P = async (page, h) => { await page.fill('#handle', h); await page.click('#go'); };
 const shown = page => page.waitForSelector('#pwrap:not([hidden])');
+const txt = (page, sel) => page.evaluate(s => (document.querySelector(s) || {}).textContent || '', sel);
 const alt = page => page.getAttribute('#pass', 'aria-label');
 const pix = (page, x, y) => page.evaluate(([x, y]) => { const c = document.getElementById('pass'), d = c.getContext('2d').getImageData(Math.round(x * 3), Math.round(y * 3), 1, 1).data; return [d[0], d[1], d[2], d[3]]; }, [x, y]);
 (async () => {
@@ -114,6 +115,14 @@ const pix = (page, x, y) => page.evaluate(([x, y]) => { const c = document.getEl
   const tf = await mk(browser, { avatarFail: ['/img/avatar/'] }); await tf.page.goto(BASE); await setNow(tf.page); await P(tf.page, 'cool.example'); await shown(tf.page);
   ok('T15d if the full-size picture will not load, the small version is tried and the photo still prints', (await tf.page.evaluate(() => !!window.__transit.state().model.avatar)) && tf.log.images.some(u => u.includes('/img/avatar_thumbnail/')), JSON.stringify(tf.log.images));
   await tf.ctx.close();
+
+  // ---- Bluesky's image server refuses everything: this site's pass-through is the last resort ----
+  const pf = await mk(browser, { avatarFail: ['/img/avatar'] }); await pf.page.route('**/api/avatar**', r => r.fulfill({ status: 200, contentType: 'image/png', body: PNG }));
+  await pf.page.goto(BASE); await setNow(pf.page); await P(pf.page, 'cool.example'); await shown(pf.page);
+  ok('T15e if both direct loads fail, the picture comes through this site\'s pass-through, and the page says what Bluesky sent', (await pf.page.evaluate(() => !!window.__transit.state().model.avatar)) && /display name "Cool Person"; profile picture loaded through this site/.test(await txt(pf.page, '#diag')), await txt(pf.page, '#diag'));
+  await pf.page.click('#another'); await P(pf.page, 'newbie.example'); await shown(pf.page);
+  ok('T15f an account with an empty display name says so in plain words', /display name empty/.test(await txt(pf.page, '#diag')), await txt(pf.page, '#diag'));
+  await pf.ctx.close();
 
   // ---- an account with no join date ----
   await page.click('#another'); await P(page, 'undated.example'); await shown(page);

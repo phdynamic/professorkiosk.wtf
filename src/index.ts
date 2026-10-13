@@ -345,6 +345,23 @@ app.get('/mashup', (_req, res) => {
   res.set('Cache-Control', 'no-cache');
   res.sendFile(path.join(__dirname, '..', 'public', 'mashup.html'));
 });
+// Pass-through for a profile picture, used only if the browser cannot load it straight from Bluesky's image
+// server with the headers a canvas needs. Only cdn.bsky.app avatar images, small, nothing is kept.
+app.get('/api/avatar', rateLimitMiddleware, async (req, res) => {
+  const raw = typeof req.query.u === 'string' ? req.query.u : '';
+  let u: URL;
+  try { u = new URL(raw); } catch { res.status(400).end(); return; }
+  if (u.protocol !== 'https:' || u.hostname !== 'cdn.bsky.app' || !/^\/img\/avatar(_thumbnail)?\//.test(u.pathname)) { res.status(400).end(); return; }
+  try {
+    const r = await fetch(u.toString(), { signal: AbortSignal.timeout(8000) });
+    const type = r.headers.get('content-type') || '';
+    if (!r.ok || !/^image\/(jpeg|png|webp|gif)/.test(type)) { res.status(502).end(); return; }
+    const buf = Buffer.from(await r.arrayBuffer());
+    if (buf.length > 3 * 1024 * 1024) { res.status(502).end(); return; }
+    res.set({ 'Content-Type': type, 'Cache-Control': 'public, max-age=3600', 'X-Content-Type-Options': 'nosniff' });
+    res.send(buf);
+  } catch { res.status(502).end(); }
+});
 app.get('/transitpass', (_req, res) => {
   res.set('Cache-Control', 'no-cache');
   res.sendFile(path.join(__dirname, '..', 'public', 'transitpass.html'));

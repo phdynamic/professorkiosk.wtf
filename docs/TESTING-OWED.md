@@ -124,6 +124,7 @@ Source: `public/rushhour.html`. The automated suite uses a mocked Bluesky; these
 Source: `public/transitpass.html`. The automated suite covers it with a mocked Bluesky; these are the by-hand confirmations.
 - Member since. How: print passes for accounts whose join dates you know (yours, an old one, a new one). Expect: the date matches when the account really joined (within a day; it is shown in UTC). If the profile has no `createdAt` the pass says Unknown; tell the assistant if that happens often, since the page has no other source for the date.
 - Pace. How: print a busy account and a quiet one. Expect: the pace reads sensibly. Remember it is posts divided by days since joining, an average over the whole life, not a recent rate.
+- Diagnosis owed (2026-10-13): no picture on any pass and no display name for burritozen.net were reported live. How: print @burritozen.net and read the line "What Bluesky sent" under the switches; send the developer's reading of it to the assistant.
 - Picture. How: print an account with a picture and one without. Expect: the picture shows in the circle and in the saved PNG; if the picture can't load the pass still prints without it.
 - Label. How: print an account that has a content label. Expect: no photo and no name, with the note.
 - Save, copy and share. How: Share or save image on a phone and on a computer; Copy image; Copy alt text. Expect: a 1440 x 900 PNG that looks like the page; the share sheet on phones; the alt text pastes.

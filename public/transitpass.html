@@ -465,7 +465,9 @@ function renderPass() {
   $('pass').setAttribute('aria-label', altText());
   $('labelnote').hidden = !m.labeled;
   $('diag').hidden = false; $('diag').textContent = 'What Bluesky sent: display name ' + (m.name ? '"' + m.name + '"' : (m.rawName === null ? 'missing' : 'empty')) + '; profile picture ' + m.avatarHow + '.';
-  if (m.labeled) $('labelnote').textContent = 'Photo and name hidden because this account carries the label "' + m.hitLabels.join('", "') + '".';
+  if (m.labeled) $('labelnote').textContent = m.hitLabels.indexOf('!no-unauthenticated') !== -1
+    ? 'This account has asked not to be shown to people who aren\'t logged in to Bluesky (label "!no-unauthenticated"), so its photo and name are left off.'
+    : 'Photo and name hidden because this account carries the label "' + m.hitLabels.join('", "') + '".';
   $('o-photo').disabled = $('o-name').disabled = m.labeled;
 }
 function canvasBlob() {

@@ -109,7 +109,7 @@ const pix = (page, x, y) => page.evaluate(([x, y]) => { const c = document.getEl
   ok('T15b the label note names the label that hid the photo and name', /"porn"/.test(nt), nt);
   await page.click('#another'); await P(page, 'private.example'); await shown(page);
   const nt2 = await page.evaluate(() => ({ t: document.getElementById('labelnote').textContent, hidden: document.getElementById('labelnote').hidden }));
-  ok('T15c an account that opted out of logged-out viewing says so in the note', !nt2.hidden && /!no-unauthenticated/.test(nt2.t), JSON.stringify(nt2));
+  ok('T15c an account that opted out of logged-out viewing says so in the note', !nt2.hidden && /asked not to be shown to people who aren't logged in/.test(nt2.t) && /!no-unauthenticated/.test(nt2.t), JSON.stringify(nt2));
 
   // ---- the full-size picture fails, the small one is tried ----
   const tf = await mk(browser, { avatarFail: ['/img/avatar/'] }); await tf.page.goto(BASE); await setNow(tf.page); await P(tf.page, 'cool.example'); await shown(tf.page);

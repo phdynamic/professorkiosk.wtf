@@ -34,6 +34,7 @@ template: Nobody:
 template: Me: {an oddly specific thing you do}
 example: *still rehearsing a comeback for a gas station cashier who was rude to me in 2017*
 tip: If the detail would fit anyone, cut it. "Overthinking" is a mood. "Rehearsing a rebuttal for a stranger" is a person.
+post: https://bsky.app/profile/niccymarten.bsky.social/post/3mvncdtvuas2p
 likes: 15
 search: "Nobody:" "Me:"
 match: \bnobody( at all)?:

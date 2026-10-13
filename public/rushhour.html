@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rush Hour</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<meta name="description" content="Type a Bluesky handle to see when its posts go up and when they get the most likes, and what the biggest hits have in common." />
+<link rel="preload" href="/fonts/dm-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/dm-sans-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<script>
+  // Apply the theme before first paint to avoid a light flash
+  (function() {
+    var saved = null;
+    try { saved = localStorage.getItem('theme'); } catch (e) {}
+    var dark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+  })();
+</script>
+<link rel="stylesheet" href="/kiosk.css" />
+<style>
+:root { --hero: var(--coral); --rink: #1d1b4f; }
+h1, h2, h3, p, ul, ol, dl, dd { margin: 0; }
+button, input { font: inherit; }
+[hidden] { display: none !important; }
+
+/* hero with the input card */
+.k-hero .k-wrap { flex-wrap: wrap; align-items: flex-start; }
+.k-hero .copy { flex: 1 1 420px; min-width: 0; }
+.sticker { flex: 0 0 auto; display: none; }
+@media (min-width: 640px) { .sticker { display: block; margin-right: 8px; } }
+.find { flex: 1 1 100%; background: #fffcf3; color: var(--rink); border: 3px solid var(--rink); border-radius: 20px; box-shadow: 6px 6px 0 var(--rink); padding: 18px; }
+.find label { display: block; font-weight: 800; font-size: 17px; line-height: 1.2; margin-bottom: 8px; }
+.find .row { display: flex; gap: 12px; flex-wrap: wrap; }
+.find input { flex: 1 1 260px; min-width: 0; min-height: 52px; border: 3px solid var(--rink); border-radius: 14px; padding: 0 14px; background: #fff; color: var(--rink); font: 400 14px/1 var(--mono); }
+.find input::placeholder { color: #565c86; opacity: 1; }
+.find .k-btn { min-height: 52px; font-size: 16px; background: var(--rink); color: #fff6e0; border-color: var(--rink); box-shadow: 3px 3px 0 var(--rink); }
+.find .k-btn .arr { color: var(--yellow); }
+.find .note { margin: 12px 0 0; font-size: 14px; }
+.find .note a { font-weight: 700; text-underline-offset: 3px; }
+.find :focus-visible { outline-color: var(--rink); }
+.find .err { margin: 12px 0 0; padding: 10px 14px; border: 2px solid #b91c1c; border-radius: 12px; background: #fff1f0; color: #8f1111; font-weight: 700; font-size: 14px; }
+
+main.k-main { padding: 32px 0 0; }
+.stack { display: grid; gap: 24px; }
+.panel { background: var(--surface); border: 3px solid var(--line); border-radius: 20px; box-shadow: 5px 5px 0 var(--shadow-c); padding: 20px; min-width: 0; }
+.panel h2 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+.panel .sub { font-size: 14px; color: var(--ink2); margin-bottom: 14px; }
+.yellow { background: var(--tint-yellow); }
+
+/* progress and the "load more" bar */
+.row2 { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font-weight: 500; font-size: 15px; }
+.row2 .k-btn { min-height: 44px; }
+.pbar { height: 12px; background: var(--surface); border: 2px solid var(--line); border-radius: 999px; overflow: hidden; margin-top: 10px; }
+.pbar i { display: block; height: 100%; width: 0; background: var(--teal); transition: width .4s; }
+.notice { margin-top: 8px; font-size: 14px; font-weight: 700; }
+
+/* numbers across the top */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.stat { background: var(--surface); border: 3px solid var(--line); border-radius: 14px; padding: 10px 8px; text-align: center; box-shadow: var(--hard-sm); }
+.stat b { display: block; font-size: 24px; font-weight: 800; overflow-wrap: anywhere; }
+.stat span { font: 500 11px var(--mono); color: var(--ink2); text-transform: uppercase; letter-spacing: .06em; }
+
+/* the two panels side by side when there is room */
+.twin { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 980px) { .twin { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: start; } }
+
+.controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+.seg { display: inline-flex; border: 2px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: none; color: var(--ink); min-height: 44px; padding: 0 14px; font-weight: 700; font-size: 14px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--navy); color: var(--yellow); }
+html[data-theme="dark"] .seg button[aria-pressed="true"] { background: var(--yellow); color: var(--navy); }
+
+/* the heatmap */
+.heatbox { overflow-x: auto; }
+.heat { width: 100%; min-width: 300px; border-collapse: separate; border-spacing: 2px; table-layout: fixed; }
+.heat th { font: 400 11px var(--mono); color: var(--ink2); padding: 0; }
+.heat thead th { text-align: left; height: 18px; }
+.heat tbody th { width: 34px; text-align: right; padding-right: 4px; }
+.heat td { height: 26px; padding: 0; border-radius: 4px; background: var(--surface2); }
+.heat td.thin { outline: 1.5px dotted var(--ink2); outline-offset: -2px; }
+.heat td .v { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.heat td { position: relative; }
+.readout { font: 500 13px/1.4 var(--mono); min-height: 20px; margin-top: 10px; }
+.legend { display: flex; align-items: center; gap: 8px; font: 400 12px var(--mono); color: var(--ink2); margin-top: 8px; flex-wrap: wrap; }
+.legend .ramp { width: 90px; height: 12px; border-radius: 6px; border: 2px solid var(--line); background: linear-gradient(90deg, rgba(61,209,181,.12), rgba(61,209,181,1)); }
+.legend .dots { width: 14px; height: 14px; border-radius: 3px; outline: 1.5px dotted var(--ink2); outline-offset: -2px; }
+.picks { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-top: 16px; }
+.pick { border: 2px solid var(--line); border-radius: 12px; padding: 8px 12px; background: var(--surface2); }
+.pick dt { font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink2); }
+.pick dd { font-weight: 800; font-size: 17px; margin-top: 2px; }
+.pick dd small { display: block; font-weight: 400; font-size: 13px; color: var(--ink2); }
+
+/* What Lands */
+.cmp { border-top: 2px dotted var(--ink2); padding: 12px 0; }
+.cmp:first-of-type { border-top: 0; padding-top: 0; }
+.cmp h3 { font-size: 16px; font-weight: 800; margin-bottom: 8px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pair > div { border: 2px solid var(--line); border-radius: 12px; padding: 8px 10px; }
+.pair .hit { background: var(--tint-yellow); }
+.pair .lab { display: block; font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink2); }
+.pair b { font-size: 22px; font-weight: 800; }
+.pair small { font-size: 13px; color: var(--ink2); }
+.words { width: 100%; border-collapse: collapse; font-size: 15px; }
+.words th { font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink2); text-align: left; padding: 4px 6px; font-weight: 500; }
+.words td { padding: 6px; border-top: 1px solid var(--line); }
+.words td:first-child { font-weight: 800; }
+.learned { margin: 14px 0 0; padding: 12px 14px 12px 32px; border: 3px dashed var(--line); border-radius: 14px; background: var(--tint-teal); }
+.learned li { margin: 4px 0; }
+.learned .t { margin-left: -18px; font-weight: 800; list-style: none; }
+.muted { font-size: 14px; color: var(--ink2); }
+
+.actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.actions .k-btn { min-height: 44px; font-size: 15px; }
+.status { min-height: 24px; font: 500 13px/1.4 var(--mono); margin-top: 10px; }
+.privacy { background: var(--tint-teal); border: 3px dashed var(--line); border-radius: 20px; padding: 16px 18px; }
+.privacy h2 { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+.privacy ul { padding-left: 20px; margin: 0; }
+.privacy li { margin: 4px 0; }
+.privacy p { margin-top: 10px; font-size: 14px; }
+.slot { border: 3px dashed var(--line); border-radius: 18px; padding: 48px 24px; text-align: center; background: var(--surface2); }
+.slot b { display: block; font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+.slot span { font: 400 13px var(--mono); color: var(--ink2); }
+</style>
+</head>
+<body>
+<div class="k-top">
+  <a class="k-btn" href="/">&larr; Professor Kiosk</a>
+  <div class="right">
+    <button class="k-btn" id="helpBtn" type="button" aria-haspopup="dialog">? Help</button>
+    <button class="k-btn night" id="themeToggle" type="button" aria-label="Toggle night mode">🌙 Night mode</button>
+  </div>
+</div>
+
+<dialog class="k-help" id="help" aria-labelledby="help-t">
+  <div class="hh"><h2 id="help-t">How Rush Hour works</h2><button class="k-btn" id="helpX" type="button" aria-label="Close help">&#x2715;</button></div>
+  <div class="hb">
+    <h3>The idea</h3>
+    <p>Type a Bluesky handle and Rush Hour reads that account's recent posts. It draws a grid of the hours of the week, showing when the posts go up and when they get the most likes. A second panel, "What Lands," compares the top 10% of posts against the rest.</p>
+
+    <h3>The three steps</h3>
+    <ol>
+      <li><b>Type a handle.</b> With or without the @, or paste a link to the profile. It works on any public account, not only your own.</li>
+      <li><b>Wait a moment.</b> It reads the newest 500 posts first. Press "Load 500 more" to go further back, up to 5,000.</li>
+      <li><b>Look around.</b> Switch the grid between how many posts and the average likes, and between your own time and UTC.</li>
+    </ol>
+
+    <h3>What it counts</h3>
+    <ul>
+      <li><b>The grid</b> counts the account's own posts and quote posts. Replies and reposts are left out, so a night of chatting doesn't hide when the real posts go up.</li>
+      <li><b>"Does best"</b> means likes. Reposts, quotes and replies are not added in.</li>
+      <li><b>Average likes</b> for a square needs at least 3 posts in it to count toward the "best time" line. Squares with fewer are drawn with a dotted edge. A few posts in a square can be luck, not a pattern.</li>
+      <li><b>What Lands</b> looks at replies too, so it can tell you if replies do better or worse. It needs at least 20 posts. The top 10% is the 10% with the most likes, and the rest is everything else.</li>
+      <li>A picture means an image, a video or a GIF. A post's opening word is the first word of its text.</li>
+    </ul>
+
+    <h3>Good to know</h3>
+    <ul>
+      <li>Public posts only, read straight from Bluesky by your browser. Nothing is sent to our server or stored.</li>
+      <li>Like counts are as of the moment the posts were read. New posts haven't had time to collect likes yet, so very recent posts look weaker than they will.</li>
+      <li>The newest posts come first. If an account has more posts than were read, the picture is of its recent past, not its whole life.</li>
+      <li>Hours are in your own time zone unless you switch to UTC.</li>
+    </ul>
+  </div>
+</dialog>
+
+<header class="k-hero">
+  <div class="k-wrap">
+    <div class="copy">
+      <span class="k-tag navy">Level 1 &middot; Tool 10</span>
+      <h1>Rush Hour</h1>
+      <p>Type a Bluesky handle and see when its posts go up, when they get the most likes, and what the biggest hits have in common.</p>
+    </div>
+    <svg class="sticker" width="180" height="140" viewBox="0 0 180 140" aria-hidden="true" focusable="false">
+      <circle cx="96" cy="76" r="54" fill="#1B2150"/>
+      <circle cx="88" cy="68" r="54" fill="#FFFDF6" stroke="#1B2150" stroke-width="3"/>
+      <path d="M88 32 V68 L112 82" fill="none" stroke="#1B2150" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="88" cy="68" r="5" fill="#FF7A66" stroke="#1B2150" stroke-width="3"/>
+      <rect x="22" y="104" width="22" height="22" rx="4" fill="#3DD1B5" stroke="#1B2150" stroke-width="3"/>
+      <rect x="48" y="104" width="22" height="22" rx="4" fill="#FFD23F" stroke="#1B2150" stroke-width="3"/>
+      <rect x="74" y="104" width="22" height="22" rx="4" fill="#FF7A66" stroke="#1B2150" stroke-width="3"/>
+    </svg>
+    <form class="find" id="find" novalidate>
+      <label for="handle">Bluesky handle</label>
+      <div class="row">
+        <input id="handle" name="handle" type="text" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@professorkiosk.wtf" aria-describedby="find-note find-err" />
+        <button class="k-btn" id="go" type="submit">Read posts <span class="arr" aria-hidden="true">&rarr;</span></button>
+      </div>
+      <p class="err" id="find-err" hidden></p>
+      <p class="note" id="find-note"><b>Public posts only.</b> Works with any handle or profile link. Want an example? <a href="/rushhour#handle=professorkiosk.wtf">Try @professorkiosk.wtf</a></p>
+    </form>
+  </div>
+</header>
+
+<main class="k-main">
+  <div class="k-wrap">
+    <div class="stack">
+      <section class="panel yellow" id="progress" hidden aria-live="polite">
+        <div class="row2"><span id="ptext">Starting&hellip;</span><button class="k-btn" id="stopBtn" type="button">Stop</button></div>
+        <div class="pbar"><i id="pfill"></i></div>
+        <div class="notice" id="pnotice" hidden></div>
+      </section>
+
+      <section class="panel yellow" id="capbar" hidden>
+        <div class="row2"><span id="captext"></span><button class="k-btn primary" id="more" type="button"></button></div>
+      </section>
+
+      <div class="slot" id="slot">
+        <b>Your grid draws here</b>
+        <span>Type a handle above.</span>
+      </div>
+
+      <div id="result" class="stack" hidden>
+        <div class="stats" id="stats"></div>
+
+        <div class="twin">
+          <section class="panel" aria-labelledby="heat-h">
+            <h2 id="heat-h">When the posts land</h2>
+            <p class="sub" id="heat-sub"></p>
+            <div class="controls">
+              <div class="seg" role="group" aria-label="What the colors show">
+                <button type="button" id="m-count" aria-pressed="true">Number of posts</button>
+                <button type="button" id="m-likes" aria-pressed="false">Average likes</button>
+              </div>
+              <div class="seg" role="group" aria-label="Which time zone">
+                <button type="button" id="z-local" aria-pressed="true">My time</button>
+                <button type="button" id="z-utc" aria-pressed="false">UTC</button>
+              </div>
+            </div>
+            <div class="heatbox"><table class="heat" id="heat" aria-label="Posts by day of the week and hour"></table></div>
+            <div class="legend" id="legend"></div>
+            <p class="readout" id="readout" aria-live="polite">Tap or hover a square to read it.</p>
+            <dl class="picks" id="picks"></dl>
+          </section>
+
+          <section class="panel" aria-labelledby="lands-h">
+            <h2 id="lands-h">What Lands</h2>
+            <p class="sub" id="lands-sub"></p>
+            <div id="lands"></div>
+          </section>
+        </div>
+
+        <div>
+          <div class="actions">
+            <button class="k-btn primary" id="copysum" type="button">Copy summary</button>
+            <button class="k-btn" id="another" type="button">Read another account</button>
+          </div>
+          <p class="status" id="status" role="status" aria-live="polite"></p>
+        </div>
+      </div>
+
+      <section class="privacy" aria-labelledby="priv">
+        <h2 id="priv">What this asks for</h2>
+        <ul>
+          <li><b>Sign-in:</b> none. No password, no permissions.</li>
+          <li><b>Reads:</b> one public profile and the account's public posts, the same as someone who isn't logged in.</li>
+          <li><b>Stored:</b> nothing. Your browser reads the posts and does the counting here.</li>
+        </ul>
+        <p>Only dates, like counts, post length, and each post's first word are used. No post text is shown or kept.</p>
+      </section>
+    </div>
+  </div>
+</main>
+
+<footer class="k-foot">
+  <div class="k-wrap">
+    <strong>Thank you for using Professor Kiosk.<br />Please take your receipt.</strong>
+    <div class="links">
+      <a class="by" href="https://bsky.app/profile/professorkiosk.wtf" target="_blank" rel="noopener"><img class="footer-avatar" data-pk-avatar src="" alt="" hidden />Made by @professorkiosk.wtf</a>
+      <a class="kofi" href="https://ko-fi.com/professorkiosk" target="_blank" rel="noopener">&#9749; Support these projects on Ko-fi</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/kiosk-help.js" defer></script>
+<script>
+(function () {
+'use strict';
+
+// ---- Config (the test hook only changes these in tests) ----
+var CFG = Object.assign({ cap: 500, more: 500, ceiling: 5000, gapMs: 150, timeoutMs: 15000 }, window.RUSH_TEST || {});
+var APPVIEW = 'https://public.api.bsky.app/xrpc/';
+var MIN_CELL = 3;      // posts a square needs before its average likes can be called "best"
+var MIN_GROUP = 5;     // posts a whole weekday or hour needs for the same
+var MIN_LANDS = 20;    // posts needed before What Lands compares anything
+var DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+var DAYS_LONG = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'];
+
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+function fmtN(n) { return Number(n).toLocaleString('en-US'); }
+
+// ---- Night mode (shared 'theme' key) ----
+function applyThemeLabel() {
+  var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  $('themeToggle').textContent = dark ? '☀️ Day mode' : '🌙 Night mode';
+}
+$('themeToggle').addEventListener('click', function () {
+  var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (dark) document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', 'dark');
+  try { localStorage.setItem('theme', dark ? 'light' : 'dark'); } catch (e) {}
+  applyThemeLabel();
+});
+applyThemeLabel();
+
+// ---- What was typed: a handle, an @handle, a profile link or a DID ----
+function parseActor(raw) {
+  var s = String(raw || '').trim(), m;
+  if ((m = /^https?:\/\/[^\/\s]+\/profile\/([^\/?#\s]+)/i.exec(s))) s = m[1];
+  s = s.replace(/^@+/, '');
+  try { s = decodeURIComponent(s); } catch (e) {}
+  if (/^did:[a-z]+:[A-Za-z0-9._:%-]+$/.test(s)) return s;
+  s = s.toLowerCase();
+  if (s.length > 253) return null;
+  return /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]([a-z0-9-]{0,61}[a-z0-9])?$/.test(s) ? s : null;
+}
+
+// ---- Talking to Bluesky: paced, retrying, and polite about rate limits ----
+function BskyError(kind, msg) { this.kind = kind; this.message = msg || ''; }
+function setNotice(t) { var el = $('pnotice'); if (t) { el.textContent = t; el.hidden = false; } else el.hidden = true; }
+function api(method, params, run) {
+  var qs = new URLSearchParams();
+  Object.keys(params).forEach(function (k) { if (params[k] != null && params[k] !== '') qs.set(k, params[k]); });
+  var attempt = 0;
+  function go() {
+    attempt++;
+    if (run.stopped) return Promise.reject(new BskyError('stopped'));
+    var at = Math.max(Date.now(), run.nextStart || 0, run.pauseUntil || 0);
+    run.nextStart = at + CFG.gapMs;
+    return sleep(Math.max(0, at - Date.now())).then(function () {
+      if (run.stopped) throw new BskyError('stopped');
+      var ac = new AbortController(), t = setTimeout(function () { ac.abort(); }, CFG.timeoutMs);
+      run.ac = ac;
+      return fetch(APPVIEW + method + '?' + qs.toString(), { signal: ac.signal }).then(function (res) {
+        clearTimeout(t);
+        if (res.ok) { if (Date.now() >= (run.pauseUntil || 0)) setNotice(''); return res.json(); }
+        if (res.status === 429) {
+          var sec = parseInt(res.headers.get('retry-after') || '', 10);
+          var ms = Math.min(Math.max(sec > 0 ? sec * 1000 : 15000, CFG.minPause || 5000), 60000);
+          run.pauseUntil = Date.now() + ms; setNotice('Bluesky is rate-limiting requests. Waiting ' + Math.round(ms / 1000) + 's, then continuing…');
+          if (attempt < 5) return go();
+          throw new BskyError('rate');
+        }
+        if (res.status >= 500 && attempt < 3) return sleep(CFG.retryMs || 1000 * attempt).then(go);
+        throw new BskyError(res.status >= 500 ? 'net' : 'http' + res.status);
+      }, function () {
+        clearTimeout(t);
+        if (run.stopped) throw new BskyError('stopped');
+        if (attempt < 3) return sleep(CFG.retryMs || 1000 * attempt).then(go);
+        throw new BskyError('net');
+      });
+    });
+  }
+  return go();
+}
+
+// ---- One post becomes a few numbers ----
+var GIF = /^https:\/\/(media\.tenor\.com\/|[^\/]*giphy\.com\/)|\.gif(\?|$)/i;
+function hasPicture(embed) {
+  var e = embed;
+  if (e && typeof e.$type === 'string' && e.$type.indexOf('app.bsky.embed.recordWithMedia') === 0) e = e.media;
+  if (!e || typeof e.$type !== 'string') return false;
+  if (e.$type.indexOf('app.bsky.embed.images') === 0) return true;
+  if (e.$type.indexOf('app.bsky.embed.video') === 0) return true;
+  if (e.$type.indexOf('app.bsky.embed.external') === 0 && e.external && typeof e.external.uri === 'string') return GIF.test(e.external.uri);
+  return false;
+}
+// the first word of the text, lower case and without punctuation; links, @mentions and emoji get a label
+function openingOf(text) {
+  var s = String(text || '').trim();
+  if (!s) return '';
+  var tok = s.split(/\s+/)[0];
+  if (/^https?:\/\//i.test(tok)) return '(a link)';
+  if (tok.charAt(0) === '@') return '(an @mention)';
+  var w = tok.toLowerCase().replace(/^[^\p{L}\p{N}]+/u, '').replace(/[^\p{L}\p{N}'’]+$/u, '');
+  return w || '(a symbol or emoji)';
+}
+function toPost(p) {
+  var rec = p.record || {}, t = Date.parse(rec.createdAt || p.indexedAt || '');
+  if (isNaN(t)) return null;
+  var text = typeof rec.text === 'string' ? rec.text : '';
+  var likes = Number(p.likeCount); if (!isFinite(likes) || likes < 0) likes = 0;
+  return { t: t, likes: Math.floor(likes), len: Array.from(text).length, pic: hasPicture(p.embed), reply: !!rec.reply, first: openingOf(text) };
+}
+
+// ---- The numbers ----
+function zoneParts(t, utc) { var d = new Date(t); return utc ? { day: d.getUTCDay(), hour: d.getUTCHours() } : { day: d.getDay(), hour: d.getHours() }; }
+function hourLabel(h) { return (h % 12 || 12) + (h < 12 ? ' AM' : ' PM'); }
+function newGrid() { var g = { count: [], likes: [], n: 0 }; for (var d = 0; d < 7; d++) { g.count.push(new Array(24).fill(0)); g.likes.push(new Array(24).fill(0)); } return g; }
+function buildGrid(posts, utc) {
+  var g = newGrid();
+  posts.forEach(function (p) { if (p.reply) return; var z = zoneParts(p.t, utc); g.count[z.day][z.hour]++; g.likes[z.day][z.hour] += p.likes; g.n++; });
+  return g;
+}
+function avg(sum, n) { return n ? sum / n : 0; }
+function fmtAvg(x) { return x >= 10 ? String(Math.round(x)) : (Math.round(x * 10) / 10).toString(); }
+function picksOf(g) {
+  var busiest = null, best = null, d, h;
+  for (d = 0; d < 7; d++) for (h = 0; h < 24; h++) {
+    var c = g.count[d][h];
+    if (c > 0 && (!busiest || c > busiest.n)) busiest = { day: d, hour: h, n: c };
+    if (c >= MIN_CELL) { var a = avg(g.likes[d][h], c); if (!best || a > best.avg) best = { day: d, hour: h, n: c, avg: a }; }
+  }
+  var bestDay = null, bestHour = null;
+  for (d = 0; d < 7; d++) {
+    var n = 0, s = 0; for (h = 0; h < 24; h++) { n += g.count[d][h]; s += g.likes[d][h]; }
+    if (n >= MIN_GROUP && (!bestDay || avg(s, n) > bestDay.avg)) bestDay = { day: d, n: n, avg: avg(s, n) };
+  }
+  for (h = 0; h < 24; h++) {
+    var n2 = 0, s2 = 0; for (d = 0; d < 7; d++) { n2 += g.count[d][h]; s2 += g.likes[d][h]; }
+    if (n2 >= MIN_GROUP && (!bestHour || avg(s2, n2) > bestHour.avg)) bestHour = { hour: h, n: n2, avg: avg(s2, n2) };
+  }
+  return { busiest: busiest, best: best, bestDay: bestDay, bestHour: bestHour };
+}
+function median(a) { if (!a.length) return 0; var s = a.slice().sort(function (x, y) { return x - y; }), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
+function share(list, f) { return list.length ? list.filter(f).length / list.length : 0; }
+function pct(x) { return Math.round(x * 100); }
+function landsOf(posts) {
+  var n = posts.length;
+  if (n < MIN_LANDS) return { enough: false, n: n };
+  var sorted = posts.slice().sort(function (a, b) { return b.likes - a.likes || b.t - a.t; });
+  if (!sorted[0].likes) return { enough: true, n: n, nolikes: true };
+  var k = Math.max(1, Math.floor(n * 0.1)), top = sorted.slice(0, k), rest = sorted.slice(k);
+  function words(list) { var m = {}, tot = 0; list.forEach(function (p) { if (p.first) { m[p.first] = (m[p.first] || 0) + 1; tot++; } }); return { m: m, tot: tot }; }
+  var wt = words(top), wr = words(rest);
+  var opening = Object.keys(wt.m).filter(function (w) { return wt.m[w] >= 2; }).sort(function (a, b) { return wt.m[b] - wt.m[a] || (a < b ? -1 : 1); }).slice(0, 5).map(function (w) {
+    return { word: w, top: wt.tot ? wt.m[w] / wt.tot : 0, rest: wr.tot ? (wr.m[w] || 0) / wr.tot : 0, topN: wt.m[w] };
+  });
+  return {
+    enough: true, n: n, k: k, floor: top[top.length - 1].likes,
+    len: { top: median(top.map(function (p) { return p.len; })), rest: median(rest.map(function (p) { return p.len; })) },
+    pic: { top: share(top, function (p) { return p.pic; }), rest: share(rest, function (p) { return p.pic; }) },
+    reply: { top: share(top, function (p) { return p.reply; }), rest: share(rest, function (p) { return p.reply; }) },
+    opening: opening
+  };
+}
+// plain-language lines about what stands out
+function learnedFrom(L) {
+  var out = [];
+  if (!L.enough || L.nolikes) return out;
+  if (L.len.rest > 0 && L.len.top >= L.len.rest * 1.25) out.push('Your top posts run longer: about ' + Math.round(L.len.top) + ' characters, against ' + Math.round(L.len.rest) + ' for the rest.');
+  else if (L.len.top > 0 && L.len.top <= L.len.rest * 0.8) out.push('Your top posts run shorter: about ' + Math.round(L.len.top) + ' characters, against ' + Math.round(L.len.rest) + ' for the rest.');
+  if (L.pic.top - L.pic.rest >= 0.15) out.push('Pictures help: ' + pct(L.pic.top) + '% of your top posts have one, against ' + pct(L.pic.rest) + '% of the rest.');
+  else if (L.pic.rest - L.pic.top >= 0.15) out.push('Pictures don\'t seem to help: ' + pct(L.pic.top) + '% of your top posts have one, against ' + pct(L.pic.rest) + '% of the rest.');
+  if (L.reply.top - L.reply.rest >= 0.15) out.push('Replies do well for you: ' + pct(L.reply.top) + '% of your top posts are replies, against ' + pct(L.reply.rest) + '% of the rest.');
+  else if (L.reply.rest - L.reply.top >= 0.15) out.push('Replies rarely make the top: ' + pct(L.reply.top) + '% of your top posts are replies, against ' + pct(L.reply.rest) + '% of the rest.');
+  if (L.opening.length && L.opening[0].top >= L.opening[0].rest * 2 && L.opening[0].topN >= 2) out.push('Your hits like to open with "' + L.opening[0].word + '": ' + pct(L.opening[0].top) + '% of them, against ' + pct(L.opening[0].rest) + '% of the rest.');
+  if (!out.length) out.push('Nothing stands out. Your top posts look a lot like the rest on length, pictures, replies and opening word.');
+  return out;
+}
+
+// ---- State ----
+var state = { run: null, metric: 'count', utc: false };
+var busy = false;
+
+// ---- Drawing the results ----
+var dateFmtLocal = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+var dateFmtUtc = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+function zoneName() { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'your time zone'; } catch (e) { return 'your time zone'; } }
+function slotLabel(day, hour) { return DAYS[day] + ' ' + hourLabel(hour); }
+
+function renderStats(posts, grid) {
+  var oldest = posts.reduce(function (m, p) { return Math.min(m, p.t); }, Infinity);
+  var replies = posts.filter(function (p) { return p.reply; }).length;
+  var cells = [[fmtN(posts.length), 'Posts read'], [fmtN(grid.n), 'In the grid'], [fmtN(replies), 'Replies left out'], [(state.utc ? dateFmtUtc : dateFmtLocal).format(new Date(oldest)), 'Reaching back to']];
+  $('stats').innerHTML = cells.map(function (c) { return '<div class="stat"><b>' + esc(c[0]) + '</b><span>' + esc(c[1]) + '</span></div>'; }).join('');
+}
+function renderHeat(grid) {
+  var likesMode = state.metric === 'likes', max = 0, d, h;
+  for (d = 0; d < 7; d++) for (h = 0; h < 24; h++) { var v = likesMode ? avg(grid.likes[d][h], grid.count[d][h]) : grid.count[d][h]; if (v > max) max = v; }
+  var html = '<thead><tr><td aria-hidden="true" style="background:none;width:34px"></td>';
+  for (h = 0; h < 24; h += 3) html += '<th scope="colgroup" colspan="3">' + (h % 12 || 12) + (h < 12 ? 'a' : 'p') + '</th>';
+  html += '</tr></thead><tbody>';
+  for (d = 0; d < 7; d++) {
+    html += '<tr><th scope="row">' + DAYS[d] + '</th>';
+    for (h = 0; h < 24; h++) {
+      var c = grid.count[d][h], a = avg(grid.likes[d][h], c), val = likesMode ? a : c;
+      var text = slotLabel(d, h) + ': ' + c + (c === 1 ? ' post' : ' posts') + (c ? ', ' + fmtAvg(a) + ' average likes' : '');
+      var thin = likesMode && c > 0 && c < MIN_CELL;
+      var style = c > 0 && max > 0 ? ' style="background:rgba(61,209,181,' + (0.12 + 0.88 * (val / max)).toFixed(2) + ')"' : '';
+      html += '<td data-d="' + d + '" data-h="' + h + '" data-t="' + esc(text) + '"' + (thin ? ' class="thin"' : '') + style + '><span class="v">' + esc(text) + '</span></td>';
+    }
+    html += '</tr>';
+  }
+  $('heat').innerHTML = html + '</tbody>';
+  $('legend').innerHTML = likesMode
+    ? '<span>fewer likes</span><span class="ramp" aria-hidden="true"></span><span>more likes</span><span class="dots" aria-hidden="true"></span><span>under ' + MIN_CELL + ' posts, take with salt</span>'
+    : '<span>fewer posts</span><span class="ramp" aria-hidden="true"></span><span>more posts</span>';
+}
+function pickHTML(label, main, sub) { return '<div class="pick"><dt>' + esc(label) + '</dt><dd>' + esc(main) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</dd></div>'; }
+function renderPicks(grid) {
+  var p = picksOf(grid), none = 'Not enough posts yet';
+  $('picks').innerHTML =
+    pickHTML('Most posts', p.busiest ? slotLabel(p.busiest.day, p.busiest.hour) : none, p.busiest ? p.busiest.n + (p.busiest.n === 1 ? ' post' : ' posts') : '') +
+    pickHTML('Best time', p.best ? slotLabel(p.best.day, p.best.hour) : none, p.best ? fmtAvg(p.best.avg) + ' average likes from ' + p.best.n + ' posts' : 'Needs ' + MIN_CELL + ' posts in one square') +
+    pickHTML('Best day', p.bestDay ? DAYS_LONG[p.bestDay.day] : none, p.bestDay ? fmtAvg(p.bestDay.avg) + ' average likes from ' + p.bestDay.n + ' posts' : 'Needs ' + MIN_GROUP + ' posts in a day') +
+    pickHTML('Best hour', p.bestHour ? hourLabel(p.bestHour.hour) : none, p.bestHour ? fmtAvg(p.bestHour.avg) + ' average likes from ' + p.bestHour.n + ' posts' : 'Needs ' + MIN_GROUP + ' posts in an hour');
+  return p;
+}
+function pairHTML(title, topVal, restVal, unit) {
+  return '<div class="cmp"><h3>' + esc(title) + '</h3><div class="pair"><div class="hit"><span class="lab">Top 10%</span><b>' + esc(topVal) + '</b> <small>' + esc(unit) + '</small></div><div><span class="lab">The rest</span><b>' + esc(restVal) + '</b> <small>' + esc(unit) + '</small></div></div></div>';
+}
+function renderLands(posts) {
+  var L = landsOf(posts), el = $('lands');
+  if (!L.enough) { $('lands-sub').textContent = ''; el.innerHTML = '<p class="muted">What Lands needs at least ' + MIN_LANDS + ' posts to compare, and ' + (L.n === 1 ? 'only 1 was' : 'only ' + L.n + ' were') + ' read.</p>'; return L; }
+  if (L.nolikes) { $('lands-sub').textContent = ''; el.innerHTML = '<p class="muted">None of these ' + fmtN(L.n) + ' posts have a like yet, so there is nothing to compare.</p>'; return L; }
+  $('lands-sub').textContent = 'The ' + fmtN(L.k) + ' posts with the most likes (' + fmtN(L.floor) + ' or more) against the other ' + fmtN(L.n - L.k) + ', replies included.';
+  var html = pairHTML('Length', Math.round(L.len.top), Math.round(L.len.rest), 'characters, typical');
+  html += pairHTML('A picture, video or GIF', pct(L.pic.top) + '%', pct(L.pic.rest) + '%', 'of posts');
+  html += pairHTML('Replies', pct(L.reply.top) + '%', pct(L.reply.rest) + '%', 'of posts');
+  html += '<div class="cmp"><h3>Opening word</h3>';
+  if (L.opening.length) {
+    html += '<table class="words"><thead><tr><th scope="col">First word</th><th scope="col">Top 10%</th><th scope="col">The rest</th></tr></thead><tbody>' +
+      L.opening.map(function (o) { return '<tr><td>' + esc(o.word) + '</td><td>' + pct(o.top) + '%</td><td>' + pct(o.rest) + '%</td></tr>'; }).join('') + '</tbody></table>';
+  } else html += '<p class="muted">No opening word shows up twice among the top posts.</p>';
+  html += '</div>';
+  html += '<ul class="learned"><li class="t">What stands out</li>' + learnedFrom(L).map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>';
+  el.innerHTML = html;
+  return L;
+}
+function render() {
+  var run = state.run; if (!run || !run.posts.length) return;
+  var grid = buildGrid(run.posts, state.utc);
+  $('result').hidden = false; $('slot').hidden = true;
+  $('heat-sub').textContent = 'The account\'s own posts and quote posts, by the hour they went up, in ' + (state.utc ? 'UTC' : zoneName()) + ' time.';
+  renderStats(run.posts, grid); renderHeat(grid); run.picks = renderPicks(grid); run.lands = renderLands(run.posts);
+  [['m-count', state.metric === 'count'], ['m-likes', state.metric === 'likes'], ['z-local', !state.utc], ['z-utc', state.utc]].forEach(function (p) { $(p[0]).setAttribute('aria-pressed', String(p[1])); });
+  $('readout').textContent = 'Tap or hover a square to read it.';
+}
+
+// ---- Summary for copying ----
+function summaryText() {
+  var run = state.run, p = run.picks, L = run.lands, zone = state.utc ? 'UTC' : zoneName();
+  var lines = ['Rush Hour for @' + run.handle + ' (' + fmtN(run.posts.length) + ' posts read, times in ' + zone + ')'];
+  if (p.busiest) lines.push('Most posts: ' + slotLabel(p.busiest.day, p.busiest.hour) + ' (' + p.busiest.n + ')');
+  if (p.best) lines.push('Best time: ' + slotLabel(p.best.day, p.best.hour) + ' (' + fmtAvg(p.best.avg) + ' average likes)');
+  if (p.bestDay) lines.push('Best day: ' + DAYS_LONG[p.bestDay.day]);
+  if (p.bestHour) lines.push('Best hour: ' + hourLabel(p.bestHour.hour));
+  learnedFrom(L).forEach(function (s) { lines.push(s); });
+  lines.push('professorkiosk.wtf/rushhour');
+  return lines.join('\n');
+}
+
+// ---- Reading the posts ----
+var MESSAGES = {
+  empty: 'Type a Bluesky handle first.',
+  badhandle: 'That doesn\'t look like a Bluesky handle. Try something like name.bsky.social or a profile link.',
+  noacct: 'Couldn\'t find that account. Check the spelling, and note that only public accounts can be read.',
+  net: 'Bluesky didn\'t answer. Try again in a minute.',
+  rate: 'Bluesky kept rate-limiting requests. Try again in a minute.'
+};
+function showErr(msg) { var e = $('find-err'); e.textContent = msg; e.hidden = !msg; }
+function say(t) { $('status').textContent = t || ''; }
+function setBusy(b) { busy = b; $('go').disabled = b; $('go').firstChild.nodeValue = b ? 'Reading… ' : 'Read posts '; }
+
+function addPage(run, feed) {
+  var truncated = false;
+  for (var i = 0; i < feed.length; i++) {
+    var item = feed[i], post = item && item.post;
+    if (!post || !post.uri || run.seen[post.uri]) continue;
+    if (item.reason && typeof item.reason.$type === 'string' && item.reason.$type.indexOf('reasonRepost') !== -1) continue;
+    if (post.author && post.author.did && post.author.did !== run.did) continue;
+    if (run.posts.length >= run.cap) { truncated = true; break; }
+    var p = toPost(post); run.seen[post.uri] = 1; if (p) run.posts.push(p);
+  }
+  return truncated;
+}
+function progress(run) {
+  var oldest = run.posts.reduce(function (m, p) { return Math.min(m, p.t); }, Infinity);
+  var back = isFinite(oldest) ? ', back to ' + dateFmtLocal.format(new Date(oldest)) : '';
+  $('ptext').textContent = 'Reading @' + run.handle + '… ' + fmtN(run.posts.length) + ' post' + (run.posts.length === 1 ? '' : 's') + back;
+  var target = Math.min(run.cap, run.total || run.cap) || 1;
+  $('pfill').style.width = Math.min(100, Math.round(run.posts.length / target * 100)) + '%';
+}
+function pump(run) {
+  run.stopped = false; run.failed = ''; run.capped = false;
+  $('progress').hidden = false; $('capbar').hidden = true; $('stopBtn').disabled = false; setBusy(true); progress(run);
+  function step() {
+    if (run.stopped) return;
+    if (run.exhausted) return;
+    if (run.posts.length >= run.cap) { run.capped = true; return; }
+    return api('app.bsky.feed.getAuthorFeed', { actor: run.did, limit: 100, filter: 'posts_with_replies', cursor: run.cursor }, run).then(function (res) {
+      if (state.run !== run) return;
+      var feed = Array.isArray(res.feed) ? res.feed : [];
+      var truncated = addPage(run, feed);
+      progress(run); if (run.posts.length) render();
+      if (truncated) { run.capped = true; return; }     // keep the old cursor: the page is read again on "Load more", repeats are skipped
+      if (!res.cursor || !feed.length || res.cursor === run.cursor) { run.exhausted = true; return; }
+      run.cursor = res.cursor;
+      return step();
+    });
+  }
+  return Promise.resolve().then(step).catch(function (e) {
+    if (e && e.kind === 'stopped') return;
+    run.failed = MESSAGES[e && e.kind] || MESSAGES.net;
+  }).then(function () { if (state.run === run) finish(run); });
+}
+function finish(run) {
+  setBusy(false); $('progress').hidden = true; setNotice('');
+  var n = run.posts.length, btn = $('more');
+  $('capbar').hidden = true;
+  if (n) render(); else { $('result').hidden = true; $('slot').hidden = false; }
+  if (run.failed) {
+    $('captext').textContent = run.failed + (n ? ' Showing the ' + fmtN(n) + ' posts read so far.' : '');
+    btn.textContent = 'Try again'; btn.onclick = function () { pump(run); }; btn.hidden = false; $('capbar').hidden = false; return;
+  }
+  if (run.stopped) {
+    $('captext').textContent = 'Stopped at ' + fmtN(n) + ' posts.';
+    btn.textContent = 'Keep reading'; btn.onclick = function () { pump(run); }; btn.hidden = false; $('capbar').hidden = false; return;
+  }
+  if (run.capped && !run.exhausted) {
+    var atCeiling = run.cap >= CFG.ceiling;
+    $('captext').textContent = 'Showing the newest ' + fmtN(n) + ' posts.' + (atCeiling ? ' That\'s the limit for one run in the browser.' : ' There are more, further back.');
+    btn.textContent = 'Load ' + fmtN(CFG.more) + ' more'; btn.hidden = atCeiling;
+    btn.onclick = function () { run.cap = Math.min(run.cap + CFG.more, CFG.ceiling); pump(run); };
+    $('capbar').hidden = false; return;
+  }
+  if (!n) { $('captext').textContent = '@' + run.handle + ' has no posts of their own to read.'; btn.hidden = true; $('capbar').hidden = false; return; }
+  say('Read all ' + fmtN(n) + ' posts.');
+}
+$('stopBtn').addEventListener('click', function () { var r = state.run; if (!r) return; r.stopped = true; if (r.ac) r.ac.abort(); $('stopBtn').disabled = true; });
+
+function start(input) {
+  if (busy) return;
+  showErr(''); say('');
+  var raw = String(input || '').trim();
+  if (!raw) { showErr(MESSAGES.empty); $('handle').focus(); return; }
+  var actor = parseActor(raw);
+  if (!actor) { showErr(MESSAGES.badhandle); $('handle').focus(); return; }
+  if (state.run) { state.run.stopped = true; if (state.run.ac) state.run.ac.abort(); }
+  var run = { cap: CFG.cap, posts: [], seen: {}, cursor: '', exhausted: false, stopped: false, nextStart: 0, pauseUntil: 0 };
+  state.run = run; $('result').hidden = true; $('capbar').hidden = true; $('slot').hidden = false;
+  setBusy(true); $('progress').hidden = false; $('ptext').textContent = 'Looking up the account…'; $('pfill').style.width = '0'; $('stopBtn').disabled = false;
+  api('app.bsky.actor.getProfile', { actor: actor }, run).then(function (p) {
+    if (!p || !p.did) throw new BskyError('noacct');
+    run.did = p.did; run.handle = p.handle || actor; run.total = Number(p.postsCount) || 0;
+    try { history.replaceState(null, '', '#handle=' + encodeURIComponent(run.handle)); } catch (e) {}
+    return pump(run);
+  }).catch(function (e) {
+    if (state.run !== run) return;
+    setBusy(false); $('progress').hidden = true;
+    var kind = e && e.kind;
+    showErr(kind === 'http400' || kind === 'http404' || kind === 'noacct' ? MESSAGES.noacct : MESSAGES[kind] || MESSAGES.net);
+  });
+}
+$('find').addEventListener('submit', function (e) { e.preventDefault(); start($('handle').value); });
+
+// ---- Buttons ----
+$('m-count').addEventListener('click', function () { state.metric = 'count'; render(); });
+$('m-likes').addEventListener('click', function () { state.metric = 'likes'; render(); });
+$('z-local').addEventListener('click', function () { state.utc = false; render(); });
+$('z-utc').addEventListener('click', function () { state.utc = true; render(); });
+$('heat').addEventListener('click', function (e) { var td = e.target.closest ? e.target.closest('td[data-t]') : null; if (td) $('readout').textContent = td.getAttribute('data-t') + '.'; });
+$('heat').addEventListener('mouseover', function (e) { var td = e.target.closest ? e.target.closest('td[data-t]') : null; if (td) $('readout').textContent = td.getAttribute('data-t') + '.'; });
+$('copysum').addEventListener('click', function () {
+  var text = summaryText();
+  (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () { say('Summary copied.'); }, function () { say('Couldn\'t copy. Your browser blocked it.'); });
+});
+$('another').addEventListener('click', function () {
+  if (state.run) { state.run.stopped = true; if (state.run.ac) state.run.ac.abort(); }
+  state.run = null; setBusy(false); $('result').hidden = true; $('capbar').hidden = true; $('progress').hidden = true; $('slot').hidden = false; say(''); showErr('');
+  $('handle').value = ''; $('handle').focus();
+  try { history.replaceState(null, '', location.pathname); } catch (e) {}
+});
+
+// ---- Test hooks and a link that fills the box ----
+window.__rush = { parseActor: parseActor, openingOf: openingOf, buildGrid: buildGrid, picksOf: picksOf, landsOf: landsOf, learnedFrom: learnedFrom, hourLabel: hourLabel, state: function () { return state; }, cfg: CFG };
+function fromHash() {
+  var m = /^#handle=(.+)$/.exec(location.hash || '');
+  if (m) { var h; try { h = decodeURIComponent(m[1]); } catch (e) { h = m[1]; } $('handle').value = h; start(h); }
+}
+window.addEventListener('hashchange', fromHash);
+fromHash();
+})();
+</script>
+</body>
+</html>

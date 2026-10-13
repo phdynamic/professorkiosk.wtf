@@ -1,6 +1,6 @@
 const http=require('http'),fs=require('fs'),path=require('path');
 const root=path.join(__dirname,'..','..','public');
-const map={'/':'index.html','/feeds':'feeds.html','/tracer':'tracer.html','/imagine-flagons':'imagine-flagons.html','/receipt':'receipt.html','/jokeweb':'jokeweb.html','/mashup':'mashup.html','/formats':'formats.html','/transitpass':'transitpass.html','/tutorials':'tutorials.html'};
+const map={'/':'index.html','/feeds':'feeds.html','/tracer':'tracer.html','/imagine-flagons':'imagine-flagons.html','/receipt':'receipt.html','/jokeweb':'jokeweb.html','/mashup':'mashup.html','/formats':'formats.html','/transitpass':'transitpass.html','/rushhour':'rushhour.html','/tutorials':'tutorials.html'};
 const types={'.html':'text/html','.css':'text/css','.js':'text/javascript','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.txt':'text/plain; charset=utf-8','.woff2':'font/woff2','.mp4':'video/mp4'};
 http.createServer((q,r)=>{const u=q.url.split('?')[0];
  const f=map[u]||u.slice(1);const p=path.join(root,f);

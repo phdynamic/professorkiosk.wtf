@@ -179,7 +179,7 @@ const TXT = fs.readFileSync(path.join(ROOT, 'public', 'formats.txt'), 'utf8');
   // ---- the hub and the server ----
   const hub = await mk(); await hub.goto('http://localhost:3988/');
   const hb = await hub.evaluate(() => ({ nums: [...document.querySelectorAll('.tool .num')].map(n => n.textContent + ' ' + n.nextElementSibling.textContent), href: [...document.querySelectorAll('a.k-btn')].map(a => a.getAttribute('href')).includes('/formats') }));
-  ok('F34 the hub has Format Deck as card 08 linking to /formats, and the four separate sites are now 10 to 13', hb.href && hb.nums.length === 13 && hb.nums[7] === '08 Format Deck' && hb.nums[9] === '10 Shitsky38.com' && hb.nums[12] === '13 My Twitter Archive', JSON.stringify(hb.nums));
+  ok('F34 the hub has Format Deck as card 08 linking to /formats, and the four separate sites are now 11 to 14', hb.href && hb.nums.length === 14 && hb.nums[7] === '08 Format Deck' && hb.nums[10] === '11 Shitsky38.com' && hb.nums[13] === '14 My Twitter Archive', JSON.stringify(hb.nums));
   await hub.close();
   const hubTxt = await (async () => { const h2 = await mk(); await h2.goto('http://localhost:3988/'); const t = await h2.evaluate(() => { const c = [...document.querySelectorAll('.tool')].find(x => /Format Deck/.test(x.textContent)); return c.querySelector('.tool-body p').textContent; }); await h2.close(); return t; })();
   const named = ['Nobody / Me', 'Professor X Asks', 'Fake Headline'];

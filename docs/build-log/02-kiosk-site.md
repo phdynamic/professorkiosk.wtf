@@ -219,3 +219,9 @@
 - fixed: the Format Deck hub card and its Help text still named a "quote post game opener" after that format was removed; the hub card now names Nobody / Me, Professor X Asks and Fake Headline, and a test checks every format it names still exists
 - changed: recorded the Rush Hour description, including the "What Lands" panel, in `NEXT-SESSION.txt`; Tightener and Daily Reps dropped
 - live-tested: no
+
+## 2026-10-13 · Rush Hour built; Transit Pass photo and name fixes
+- built: `public/rushhour.html` (route `/rushhour`, hub card 10, hub externals renumbered 11 to 14), `test/browser/rushhour.suite.js` (34 checks); added to the help, icon, footer and hub checks
+- fixed: Transit Pass printed only the handle for an account with no display name (the handle now takes the headline spot); the profile picture is retried with the small version if the full size will not load; the label note now names the label that hid the photo and name (an account carrying `!no-unauthenticated` prints without photo or name)
+- not confirmed: why burritozen.net's pass lacked a name; no live access from the build environment. The likely causes are no display name or a hide-list label on that profile
+- live-tested: no

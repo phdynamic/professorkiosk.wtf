@@ -111,6 +111,15 @@ Source: `public/formats.html`, `public/formats.txt`. The automated suite covers 
 - Phone layout. How: open /formats on a real phone, deal several cards, type in a blank with the keyboard open. Expect: readable card, reachable blanks, no sideways scroll. The post sits below the blanks, so with many blanks you scroll to see it while typing; decide whether that is acceptable.
 - The formats text. How: read the deck once on the live site. Expect: you are happy with each how-line and the order of the cards. The developer reviewed every format in chat on 2026-10-13, so this is only a last look.
 
+## Rush Hour (live site, real browser, real phone)
+Source: `public/rushhour.html`. The automated suite uses a mocked Bluesky; these are the by-hand confirmations.
+- Real feeds. How: read your own handle and a very busy account. Expect: posts load 100 at a time, reposts are not counted, "Load 500 more" works, and the 5,000 ceiling stops it with a plain line. Tell the assistant if Bluesky rate-limits it before 500.
+- Counts. How: compare "Posts read" and the grid total against what you see on your profile. Expect: replies are left out of the grid and shown in "Replies left out".
+- Time zone. How: post something and find its square. Expect: it sits at your local weekday and hour; UTC moves it.
+- Likes. How: check the "Average likes" squares and the best-time lines against posts you know did well. Expect: they make sense; squares with under 3 posts are dotted.
+- What Lands. How: read the panel for your own account. Expect: the length, picture, reply and opening-word numbers match your sense of your hits.
+- Phone layout. How: open /rushhour on a real phone. Expect: the grid fits, buttons are easy to tap.
+
 ## Transit Pass (live site, real browser, real phone)
 Source: `public/transitpass.html`. The automated suite covers it with a mocked Bluesky; these are the by-hand confirmations.
 - Member since. How: print passes for accounts whose join dates you know (yours, an old one, a new one). Expect: the date matches when the account really joined (within a day; it is shown in UTC). If the profile has no `createdAt` the pass says Unknown; tell the assistant if that happens often, since the page has no other source for the date.

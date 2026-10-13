@@ -146,14 +146,20 @@ async function main() {
     }
     const byUri = new Map(posts.map(p => [p.uri, p])), unique = [...byUri.values()];
     const picks = pick(unique, f, minLikes, perFormat);
-    lines.push(`## ${f.name}`, ...f.searches.map(s => `;; search: ${s}`));
-    if (!picks.length) lines.push(`;; nothing passed the filters (${unique.length} posts read)`);
+    // why a format came up short: how many posts fit its shape at all, and how well liked the best of them was
+    const fit = unique.filter(p => keep(p, f, 0)), best = fit.reduce((m, p) => Math.max(m, p.likeCount || 0), 0);
+    const note = `${fit.length} of ${unique.length} posts read fit the format${fit.length ? `, the best has ${best} likes` : ''}`;
+    lines.push(`## ${f.name}`, ...f.searches.map(s => `;; search: ${s}`), `;; ${note}`);
+    const misses = !fit.length ? unique.slice().sort((x, y) => (y.likeCount || 0) - (x.likeCount || 0)).slice(0, 3) : [];
+    if (misses.length) { lines.push(';; nothing fit the format. The most-liked results were:'); misses.forEach(p => lines.push(`;;   ${p.likeCount || 0} likes: ${(p.record && p.record.text || '').replace(/\s+/g, ' ').slice(0, 120)}`)); }
+    if (!picks.length) lines.push(`;; nothing passed the filters`);
     for (const p of picks) {
       lines.push(`;; ${p.likeCount || 0} likes, ${p.repostCount || 0} reposts, @${p.author.handle}: ${p.record.text.replace(/\s+/g, ' ').slice(0, 200)}`);
       lines.push(`post: https://bsky.app/profile/${p.author.handle}/post/${p.uri.split('/').pop()}`);
     }
     lines.push(''); total += picks.length;
-    console.log(`${f.name}: ${picks.length} candidates from ${unique.length} posts read`);
+    console.log(`${f.name}: ${picks.length} candidates (${note})`);
+    if (misses.length) misses.forEach(p => console.log(`    nothing fit the format; top result: ${p.likeCount || 0} likes: ${(p.record && p.record.text || '').replace(/\s+/g, ' ').slice(0, 90)}`));
     await sleep(500);
   }
   fs.writeFileSync(OUT, lines.join('\n'));

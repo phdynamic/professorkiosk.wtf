@@ -34,8 +34,8 @@ template: Me: {an oddly specific thing you do}
 example: *still rehearsing a comeback for a gas station cashier who was rude to me in 2017*
 tip: If the detail would fit anyone, cut it. "Overthinking" is a mood. "Rehearsing a rebuttal for a stranger" is a person.
 search: "Nobody:" "Me:"
-match: ^nobody:
-match: ^me:
+match: \bnobody( at all)?:
+match: ^\s*me:
 
 ## Expectation / Reality
 category: Contrast
@@ -45,8 +45,8 @@ template: Reality: {the small, exact outcome}
 example: I will wake up at 6 and become a morning person | I woke up at 3:40 and read about lighthouses until sunrise
 tip: Give both lines the same shape so the second one visibly falls over.
 search: "Expectation:" "Reality:"
-match: ^expectation
-match: ^reality
+match: ^\s*expectations?\b
+match: ^\s*reality\b
 
 ## Before / After
 category: Contrast
@@ -56,8 +56,8 @@ template: After {the event}: {how things are now}
 example: I learned what a sconce is | walls were just walls | I judge every hallway for its lack of sconces
 tip: Keep the event tiny. A small trigger with a huge change is the whole engine.
 search: "Before" "After" "I learned"
-match: ^before\b.*:
-match: ^after\b.*:
+match: ^\s*before\b
+match: ^\s*after\b
 
 ## Translation Guide
 category: Contrast
@@ -66,7 +66,7 @@ template: "{a polite phrase}" means "{what it really means}"
 example: No worries! | I will remember this until the sun burns out
 tip: Choose a phrase people really say, so the reader hears it in someone's voice.
 search: "means" "what it really means"
-match: [\"“].{1,60}[\"”] (means|translates to)
+match: [\"“'‘].{1,60}[\"”'’]\s+(means|=|translates to|actually means)
 
 ## Two Types of People
 category: Contrast
@@ -89,7 +89,7 @@ example: ways to leave a party | Saying goodbye to every single person | Announc
 tip: Write the best item first, then build the other three around it.
 search: "worst to best"
 match: worst to best|best to worst
-match: ^\s*1[.)]
+match: ^\s*1\s*[.):\-]
 
 ## Tier List
 category: Lists
@@ -114,7 +114,6 @@ example: Office meeting | Someone unmutes to breathe | "Can everyone see my scre
 tip: Squares should be things everyone in that situation has seen. The free space can be sad or silly.
 search: "bingo" "FREE SPACE"
 match: bingo
-match: free space|\|
 
 ## Award Ceremony
 category: Lists
@@ -154,7 +153,9 @@ template: "{a review title}"
 template: {the complaint}
 example: The moon | Would not visit again | Traveled all that way and it was closed. No staff. Lots of rocks. Poor lighting. One star for the view of my house.
 tip: Include one fair compliment near the end. The generosity makes the rest funnier.
-search: "1 star" "would not visit again"
+search: "1 star" review
+search: "one star review"
+search: ★☆☆☆☆
 match: ★☆☆☆☆|1 star|one star|1/5|⭐
 
 ## Official Notice
@@ -165,7 +166,7 @@ template: {the hint of a larger history}
 example: Please do not microwave fish in the break room | This policy was established after the Incident. We do not discuss the Incident.
 tip: Keep a flat, official tone. The more history you imply, the less you should explain it.
 search: "NOTICE:" "the Incident"
-match: ^(notice|attention|reminder|warning|public service announcement)\b.{0,3}:
+match: ^\s*(notice|attention|reminder|warning|public notice|psa)\b
 
 ## Error Message
 category: Fake documents
@@ -174,8 +175,10 @@ template: Error {a code}: {what the system says}
 template: {what it means for you}
 example: 404 | Motivation not found | Please try again after dinner, or never.
 tip: Use real-sounding codes (404, 418, 500) and keep the system's wording stiff.
-search: "Error 404" "not found" "please try again"
-match: error\s*(code)?\s*\d{3}
+search: "Error 404"
+search: "error" "please try again"
+search: "404" "not found"
+match: \berror\b|\b(4|5)0\d\b
 
 ## Patch Notes
 category: Fake documents
@@ -198,8 +201,8 @@ template: Them: {the calm, unhelpful reply}
 example: My package says it was delivered, but I don't have it. | Our records show it arrived at a better house. No refund is available.
 tip: Make the reply sound like a policy. The agent never apologizes.
 search: "Me:" "Them:" "refund"
-match: ^me:
-match: ^(them|support|customer service|agent|rep):
+match: ^\s*me:
+match: ^\s*(them|they|support|customer service|agent|rep|bot|chatbot):
 
 ## Overheard
 category: Dialogue
@@ -242,7 +245,10 @@ template: {the object}: {what it says back}
 example: Please just work today. | The printer | I respond to fear, not to requests. Show me the fear.
 tip: Let the object stay calm. An object that explains itself is funnier than one that rants.
 search: "Me:" "The printer:"
-match: ^me:[^\n]+\n(?!me:)[a-z][a-z ]{1,24}:
+search: "me:" "the fridge:"
+search: "me:" "my phone:"
+match: ^\s*me:
+match: ^\s*(?!me:)[a-z][a-z ]{1,24}:
 
 ## Which One of You
 category: Questions
@@ -279,7 +285,9 @@ template: {the start of a sentence} ___.
 template: {where to answer}
 example: My most dangerous personality trait is | Quote post with yours.
 tip: The best prompts are specific enough to be funny and open enough to reward the weird answer.
+search: "my toxic trait is"
 search: "my most dangerous personality trait"
+search: "my villain origin story"
 match: _{3,}
 
 ## Quote Post Game Starter
@@ -292,7 +300,8 @@ template: First entry: {your first entry}
 example: Worst names for a lighthouse | Quote the post above you with your own. No repeats. | Lights Out
 tip: Keep the rule to one sentence and check it for loopholes. Afterward, the [Quote Post Game Tracer](/tracer) shows every quote as a tree.
 search: "quote post game"
-match: quote post game|qp game|quote game
+search: "qp game"
+match: quote post game|qp game|quote game|quote post
 
 ## Pun With a Question
 category: Wordplay
@@ -321,7 +330,9 @@ template: {word one} + {word two} = {the blend}
 template: (n.) {what it means}
 example: nap | appointment | nappointment | a rest you have been looking forward to since breakfast
 tip: Say the blend out loud. If you stumble on it, so will the reader.
-search: "portmanteau" "(n.)"
+search: portmanteau
+search: "new word" "portmanteau"
+search: "(n.)" "new word"
 match: portmanteau|\w+\s*\+\s*\w+\s*=\s*\w+
 
 ## Rename It
@@ -368,9 +379,9 @@ template: Day 1: {a small problem}. I said "{the repeated phrase}."
 template: Day 9: {a much worse problem}. I said "{the repeated phrase}."
 example: a pigeon takes half my sandwich | I am choosing peace | the pigeon returns with a friend and a plan
 tip: The phrase should never change. The situation does all the escalating.
-search: "I said" "Day 1" "Day 9"
+search: "day 1" "day 2" "day 3"
+search: "day 1" "I said"
 match: \bday \d+\b
-match: \bI said\b
 
 ## Hill to Die On
 category: Escalation
@@ -394,8 +405,8 @@ template: 3. {a step that makes no sense}
 example: make friends | Smile and ask a question | Remember their name | Hold eye contact until it becomes a pact
 tip: Keep step 3 in the same calm voice as step 1.
 search: "how to" "step 1" "step 2" "step 3"
-match: ^how to\b
-match: ^\s*[12][.)]
+match: ^\s*how to\b
+match: ^\s*(1|step 1)\s*[.):]
 
 ## Nature Documentary
 category: Tiny scenes

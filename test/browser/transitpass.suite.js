@@ -12,6 +12,7 @@ const PROFILES = {
   'spicy.example': { did: 'did:plc:spicy1', handle: 'spicy.example', displayName: 'Secret Name', avatar: 'https://cdn.bsky.app/img/avatar/plain/did:plc:spicy1/x@jpeg', createdAt: '2024-01-01T00:00:00.000Z', postsCount: 50, followersCount: 10, followsCount: 10, labels: [{ val: 'porn' }] },
   'nopic.example': { did: 'did:plc:nopic1', handle: 'nopic.example', displayName: 'No Picture', avatar: 'https://cdn.bsky.app/img/avatar/plain/did:plc:nopic1/x@jpeg', createdAt: '2022-05-05T00:00:00.000Z', postsCount: 900, followersCount: 1, followsCount: 1, labels: [] },
   'undated.example': { did: 'did:plc:undat1', handle: 'undated.example', displayName: 'Undated', createdAt: undefined, postsCount: 5, followersCount: 1, followsCount: 1, labels: [] },
+  'private.example': { did: 'did:plc:priv11', handle: 'private.example', displayName: 'Private Person', avatar: 'https://cdn.bsky.app/img/avatar/plain/did:plc:priv11/x@jpeg', createdAt: '2021-01-01T00:00:00.000Z', postsCount: 5, followersCount: 1, followsCount: 1, labels: [{ val: '!no-unauthenticated' }] },
   'mild.example': { did: 'did:plc:mild11', handle: 'mild.example', displayName: 'Mild Label', createdAt: '2020-01-01T00:00:00.000Z', postsCount: 5, followersCount: 1, followsCount: 1, labels: [{ val: 'some-harmless-label' }] }
 };
 async function mk(browser, { mode = 'ok', scheme = 'light', vp = { width: 1100, height: 900 }, avatarFail = [] } = {}) {
@@ -102,6 +103,17 @@ const pix = (page, x, y) => page.evaluate(([x, y]) => { const c = document.getEl
   ok('T14 an account with a content label prints without its photo or name, says why, and those switches are off', lab.note && lab.photo && lab.name && !lab.avatar && !a5.includes('Secret Name') && /^Transit pass for @spicy\.example\./.test(a5), JSON.stringify([lab, a5.slice(0, 50)]));
   await page.click('#another'); await P(page, 'mild.example'); await shown(page);
   ok('T15 a label that is not on the hide list does not hide anything', !(await page.evaluate(() => window.__transit.state().model.labeled)) && (await alt(page)).includes('Mild Label'));
+
+  const nt = await page.evaluate(() => document.getElementById('labelnote').textContent);
+  ok('T15b the label note names the label that hid the photo and name', /"porn"/.test(nt), nt);
+  await page.click('#another'); await P(page, 'private.example'); await shown(page);
+  const nt2 = await page.evaluate(() => ({ t: document.getElementById('labelnote').textContent, hidden: document.getElementById('labelnote').hidden }));
+  ok('T15c an account that opted out of logged-out viewing says so in the note', !nt2.hidden && /!no-unauthenticated/.test(nt2.t), JSON.stringify(nt2));
+
+  // ---- the full-size picture fails, the small one is tried ----
+  const tf = await mk(browser, { avatarFail: ['/img/avatar/'] }); await tf.page.goto(BASE); await setNow(tf.page); await P(tf.page, 'cool.example'); await shown(tf.page);
+  ok('T15d if the full-size picture will not load, the small version is tried and the photo still prints', (await tf.page.evaluate(() => !!window.__transit.state().model.avatar)) && tf.log.images.some(u => u.includes('/img/avatar_thumbnail/')), JSON.stringify(tf.log.images));
+  await tf.ctx.close();
 
   // ---- an account with no join date ----
   await page.click('#another'); await P(page, 'undated.example'); await shown(page);

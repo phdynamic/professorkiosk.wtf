@@ -265,16 +265,21 @@ function fetchProfile(actor) {
 }
 // the picture comes from Bluesky's image server only; any failure just means no photo
 function loadAvatar(url) {
-  return new Promise(function (resolve) {
-    if (typeof url !== 'string' || !/^https:\/\/cdn\.bsky\.app\//.test(url)) return resolve(null);
-    var img = new Image(), done = false;
-    function end(v) { if (!done) { done = true; resolve(v); } }
-    img.crossOrigin = 'anonymous';
-    img.onload = function () { end(img); };
-    img.onerror = function () { end(null); };
-    setTimeout(function () { end(null); }, 6000);
-    img.src = url;
-  });
+  function one(u) {
+    return new Promise(function (resolve) {
+      var img = new Image(), done = false;
+      function end(v) { if (!done) { done = true; resolve(v); } }
+      img.crossOrigin = 'anonymous';
+      img.onload = function () { end(img.naturalWidth ? img : null); };
+      img.onerror = function () { end(null); };
+      setTimeout(function () { end(null); }, 8000);
+      img.src = u;
+    });
+  }
+  if (typeof url !== 'string' || !/^https:\/\/cdn\.bsky\.app\//.test(url)) return Promise.resolve(null);
+  // if the full size fails, try the small version Bluesky also serves
+  var alt = url.replace('/img/avatar/', '/img/avatar_thumbnail/');
+  return one(url).then(function (img) { return img || (alt !== url ? one(alt) : null); });
 }
 
 // ---- Model ----
@@ -319,6 +324,7 @@ function buildModel(p, avatar) {
     posts: posts, followers: toInt(p.followersCount), follows: toInt(p.followsCount),
     pace: days != null ? paceOf(posts, days) : null, type: typeOf(days),
     labeled: labelVals(p).some(function (v) { return HIDE_LABELS.indexOf(v) !== -1; }),
+    hitLabels: labelVals(p).filter(function (v) { return HIDE_LABELS.indexOf(v) !== -1; }),
     avatar: avatar
   };
 }
@@ -422,7 +428,12 @@ function paint(cv, solid) {
       while (size > 15 && g.measureText(v.name).width > maxW) { size--; g.font = '800 ' + size + 'px ' + HEAD; }
       g.fillText(fit(g, v.name, maxW), tx, ny);
     }
-    if (v.handle) { g.font = '400 13px ' + MONO; g.fillText(fit(g, v.handle, maxW), tx, v.name ? 102 : 92); }
+    if (v.handle && v.name) { g.font = '400 13px ' + MONO; g.fillText(fit(g, v.handle, maxW), tx, 102); }
+    else if (v.handle) {   // no display name: the handle takes the headline spot
+      var hs = 20; g.font = '800 ' + hs + 'px ' + HEAD;
+      while (hs > 13 && g.measureText(v.handle).width > maxW) { hs--; g.font = '800 ' + hs + 'px ' + HEAD; }
+      g.fillText(fit(g, v.handle, maxW), tx, 92);
+    }
   }
   rule(124);
   function stat(label, value, x, y) {
@@ -444,6 +455,7 @@ function renderPass() {
   paint($('pass'), false);
   $('pass').setAttribute('aria-label', altText());
   $('labelnote').hidden = !m.labeled;
+  if (m.labeled) $('labelnote').textContent = 'Photo and name hidden because this account carries the label "' + m.hitLabels.join('", "') + '".';
   $('o-photo').disabled = $('o-name').disabled = m.labeled;
 }
 function canvasBlob() {

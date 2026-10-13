@@ -149,3 +149,9 @@
 - why: the developer asked for it because follower lists are slow and Both follow is the quick, useful one; I chose to rank only the shared accounts (not everyone who follows them) because finding other candidates would need follower lists of the shared accounts, which is what made Follow both slow; the 1,000-follow and 60-candidate limits are mine to bound the cost (about 600 requests at most per batch)
 - source: developer request, 2026-10-13
 - live-tested: no
+
+### 2026-10-13 · Mutual Match: They differ uses likes and reposts · active
+- what: the 5 accounts each person likes and reposts most (likes plus reposts) that the other does not follow; reposts come from the posts already read; likes are the newest 500 like records read from the account's own data server (found through plc.directory, since the public AppView does not list likes), then the few shown are looked up with getProfiles; if the server can't be reached it says so and uses reposts only; a new third-party host (plc.directory) and each account's own server are now contacted by this one page
+- why: the developer asked for it (replaced replies); the 500-like limit and the reposts-only fallback are my choices
+- source: developer request, 2026-10-13
+- live-tested: no (the likes route is the riskiest part: some servers may not allow reads from a web page)

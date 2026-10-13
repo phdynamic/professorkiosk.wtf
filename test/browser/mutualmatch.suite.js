@@ -6,24 +6,27 @@ const errors = [];
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');   // 1 x 1 red
 
 // ---- the fake Bluesky ----
+const pidOf = i => i === 'alice' ? 'did:plc:alice1' : i === 'bob' ? 'did:plc:bob1' : pid(i);
 const pid = i => 'did:plc:person' + String(i).padStart(3, '0');
 function person(i) {
   const labels = i === 10 ? [{ val: '!no-unauthenticated' }] : i === 11 ? [{ val: 'porn' }] : [];
   return { did: pid(i), handle: 'p' + String(i).padStart(3, '0') + '.example', displayName: 'Person ' + i, avatar: 'https://cdn.bsky.app/img/avatar/plain/' + pid(i) + '/x@jpeg', labels };
 }
 const range = (a, b) => Array.from({ length: b - a }, (_, i) => a + i);
-function acct(did, handle, name, follows, followers, replies, labels = []) {
+function acct(did, handle, name, follows, followers, replies, labels = [], extra = {}) {
   const feed = [];
   replies.forEach(([i, n]) => { for (let k = 0; k < n; k++) feed.push({ post: { uri: `at://${did}/app.bsky.feed.post/r${i}_${k}`, author: { did }, record: { createdAt: '2026-10-01T00:00:00Z' } }, reply: { parent: { author: i === 'bob' ? { did: 'did:plc:bob1', handle: 'bob.example', displayName: 'Bob' } : i === 'alice' ? { did: 'did:plc:alice1', handle: 'alice.example', displayName: 'Alice' } : person(i) } } }); });
   for (let k = 0; k < 6; k++) feed.push({ post: { uri: `at://${did}/app.bsky.feed.post/n${k}`, author: { did }, record: { createdAt: '2026-10-02T00:00:00Z' } } });
-  feed.push({ post: { uri: 'at://did:plc:other/app.bsky.feed.post/rp', author: { did: 'did:plc:other' }, record: {} }, reason: { $type: 'app.bsky.feed.defs#reasonRepost' }, reply: { parent: { author: person(99) } } });
+  feed.push({ post: { uri: 'at://' + did + '/app.bsky.feed.post/selfrp', author: { did }, record: {} }, reason: { $type: 'app.bsky.feed.defs#reasonRepost' } });   // a repost of its own post: ignored
+  (extra.reposts || []).forEach(([i, n]) => { for (let k = 0; k < n; k++) feed.push({ post: { uri: `at://${pidOf(i)}/app.bsky.feed.post/rp${k}`, author: i === 'alice' ? { did: 'did:plc:alice1', handle: 'alice.example' } : person(i), record: {} }, reason: { $type: 'app.bsky.feed.defs#reasonRepost' } }); });
+  const likes = []; (extra.likes || []).forEach(([i, n]) => { for (let k = 0; k < n; k++) likes.push({ uri: 'at://' + did + '/app.bsky.feed.like/l' + i + '_' + k, value: { subject: { uri: `at://${pidOf(i)}/app.bsky.feed.post/p${k}` } } }); });
   feed.push({ post: { uri: `at://${did}/app.bsky.feed.post/blocked`, author: { did }, record: { createdAt: '2026-10-03T00:00:00Z' } }, reply: { parent: { $type: 'app.bsky.feed.defs#blockedPost' } } });
-  return { did, handle, displayName: name, avatar: 'https://cdn.bsky.app/img/avatar/plain/' + did + '/x@jpeg', labels, follows, followers, feed, postsCount: feed.length };
+  return { likes, did, handle, displayName: name, avatar: 'https://cdn.bsky.app/img/avatar/plain/' + did + '/x@jpeg', labels, follows, followers, feed, postsCount: feed.length };
 }
 const ACCTS = {
   // alice follows 0..19 and bob; bob follows 10..29: both follow 10..19. Followers: alice 0..14, bob 5..24: both 5..14.
-  'alice.example': acct('did:plc:alice1', 'alice.example', 'Alice A', range(0, 20), range(0, 15), [[12, 3], [13, 2], [40, 4], [41, 2], [42, 1], [43, 1], [44, 1], [45, 1], [46, 1], ['bob', 1]]),
-  'bob.example': acct('did:plc:bob1', 'bob.example', 'Bob B', range(10, 30), range(5, 25), [[12, 2], [13, 1], [2, 5], [3, 3], [60, 3], [61, 1], ['alice', 2]]),
+  'alice.example': acct('did:plc:alice1', 'alice.example', 'Alice A', range(0, 20), range(0, 15), [[12, 3], [13, 2], [40, 4], [41, 2], [42, 1], [43, 1], [44, 1], [45, 1], [46, 1], ['bob', 1]], [], { likes: [[12, 3], [13, 2], [40, 4], [41, 2], [42, 1], [43, 1]].concat([['alice', 1]]), reposts: [[41, 2], [44, 3], [45, 1]] }),
+  'bob.example': acct('did:plc:bob1', 'bob.example', 'Bob B', range(10, 30), range(5, 25), [[12, 2], [13, 1], [2, 5], [3, 3], [60, 3], [61, 1], ['alice', 2]], [], { likes: [[60, 3], [61, 1], [3, 5], [12, 2], ['alice', 2]], reposts: [[62, 2], [2, 1]] }),
   'big.example': acct('did:plc:big1', 'big.example', 'Big Account', range(0, 250), range(0, 250), []),
   'quiet.example': acct('did:plc:quiet1', 'quiet.example', 'Quiet', null, range(0, 5), []),
   'spicy.example': acct('did:plc:spicy1', 'spicy.example', 'Secret Name', range(0, 12), range(0, 12), [], [{ val: 'porn' }])
@@ -35,6 +38,18 @@ async function mk(browser, { vp = { width: 1200, height: 900 }, scheme = 'light'
   page.on('pageerror', e => errors.push(e.message));
   page.on('request', r => { const u = new URL(r.url()); if (u.hostname !== 'localhost' && u.protocol.startsWith('http') && !/fonts\.g/.test(r.url())) log.third.push(u.hostname); });
   await page.route(/fonts\.(googleapis|gstatic)/, r => r.abort());
+  await page.route('https://plc.directory/**', r => {
+    log.plc = (log.plc || 0) + 1;
+    if (mode.noPlc) return r.fulfill({ status: 500, headers: { 'access-control-allow-origin': '*' }, body: '{}' });
+    r.fulfill({ headers: { 'access-control-allow-origin': '*' }, contentType: 'application/json', body: JSON.stringify({ service: [{ id: '#atproto_pds', type: 'AtprotoPersonalDataServer', serviceEndpoint: 'https://pds.example' }] }) });
+  });
+  await page.route('https://pds.example/xrpc/**', r => {
+    const u = new URL(r.request().url()), H = { 'access-control-allow-origin': '*' }, a = Object.values(ACCTS).find(x => x.did === u.searchParams.get('repo'));
+    log.likeCalls = (log.likeCalls || 0) + 1;
+    if (!a || u.searchParams.get('collection') !== 'app.bsky.feed.like') return r.fulfill({ status: 400, headers: H, body: '{}' });
+    const off = Number(u.searchParams.get('cursor') || 0), lim = Number(u.searchParams.get('limit') || 50);
+    r.fulfill({ headers: H, contentType: 'application/json', body: JSON.stringify({ records: a.likes.slice(off, off + lim), cursor: off + lim < a.likes.length ? String(off + lim) : undefined }) });
+  });
   await page.route('https://cdn.bsky.app/**', r => r.fulfill({ status: 200, contentType: 'image/png', headers: { 'access-control-allow-origin': '*' }, body: PNG }));
   let n = 0;
   await page.route('https://public.api.bsky.app/xrpc/**', async route => {
@@ -42,6 +57,10 @@ async function mk(browser, { vp = { width: 1200, height: 900 }, scheme = 'light'
     if (actor === 'professorkiosk.wtf') return route.fulfill({ status: 404, headers: H, body: '{}' });
     log.calls.push(method.replace('app.bsky.', '') + ':' + actor);
     const json = o => route.fulfill({ headers: H, contentType: 'application/json', body: JSON.stringify(o) });
+    if (method === 'app.bsky.actor.getProfiles') {
+      const ids = url.searchParams.getAll('actors'); log.profilesAsked = (log.profilesAsked || []).concat(ids);
+      return json({ profiles: ids.map(d => { const m2 = /^did:plc:person(\d+)$/.exec(d); return m2 ? person(Number(m2[1])) : null; }).filter(Boolean) });
+    }
     const pm = /^did:plc:person(\d+)$/.exec(actor || '');
     if (pm && method === 'app.bsky.graph.getFollows') {      // the shared accounts' own follow lists, for the Community tab
       n++; log.person = (log.person || 0) + 1;
@@ -97,7 +116,7 @@ const pix = (page, x, y) => page.evaluate(([x, y]) => { const c = document.getEl
   // ---- a normal pair ----
   await go(page, 'alice.example', 'bob.example'); await done(page);
   const order = log.calls.join(' ');
-  ok('M4 it looks up both profiles, asks whether they follow each other, then reads replies and follows for each', /^actor\.getProfile:alice\.example actor\.getProfile:bob\.example graph\.getRelationships:did:plc:alice1 feed\.getAuthorFeed:did:plc:alice1 feed\.getAuthorFeed:did:plc:bob1 graph\.getFollows:did:plc:alice1 graph\.getFollows:did:plc:bob1$/.test(order), order);
+  ok('M4 it looks up both profiles, asks whether they follow each other, then reads replies and follows for each', /^actor\.getProfile:alice\.example actor\.getProfile:bob\.example graph\.getRelationships:did:plc:alice1 feed\.getAuthorFeed:did:plc:alice1 feed\.getAuthorFeed:did:plc:bob1 graph\.getFollows:did:plc:alice1 graph\.getFollows:did:plc:bob1 actor\.getProfiles:null$/.test(order), order);
   const hd = await txt(page, '#headline'), st = await page.evaluate(() => [...document.querySelectorAll('#stats .stat')].map(s => s.textContent));
   ok('M5 the headline and the three numbers: 10 both follow, 2 both replied to, and no community hub yet', hd === '@alice.example and @bob.example both follow 10 accounts.' && st[0].startsWith('10') && st[1].startsWith('2') && st[2].startsWith('—'), hd + ' ' + JSON.stringify(st));
   ok('M6 it says how the two relate: alice follows bob, bob does not follow back', (await txt(page, '#rel')) === "@alice.example follows @bob.example, but @bob.example doesn't follow back.", await txt(page, '#rel'));
@@ -131,7 +150,8 @@ const pix = (page, x, y) => page.evaluate(([x, y]) => { const c = document.getEl
   await page.evaluate(() => { window.__mm.state().run.comm.scores[0].person.name = 'Person 12'; }); await tab(page, 'follow');
   await tab(page, 'diff'); const df = await items(page);
   const dtxt = df.map(x => x.grp ? '#' + x.t : x.b);
-  ok('M10 "Where they differ": for each account the top 5 it replies to most that the other does not follow (alice: p040 to p044 by replies, never someone bob follows or bob himself; bob: p060, p061), and the search box is hidden', JSON.stringify(dtxt) === JSON.stringify(["#@alice.example talks to, @bob.example doesn't follow", 'Person 40', 'Person 41', 'Person 42', 'Person 43', 'Person 44', "#@bob.example talks to, @alice.example doesn't follow", 'Person 60', 'Person 61']) && (await page.isHidden('#q')) && /4 replies/.test(df[1].t), JSON.stringify(dtxt));
+  ok('M10 "They differ": for each account the top 5 accounts it likes and reposts most that the other does not follow (alice: p040 and p041 tie on 4, then p044 with 3 reposts, then p042 and p043; never someone bob follows, bob himself, or her own posts; bob: p060, p062, p061, never alice or anyone alice follows), with the like and repost counts, and the search box is hidden', JSON.stringify(dtxt) === JSON.stringify(["#@alice.example likes and reposts, @bob.example doesn't follow", 'Person 40', 'Person 41', 'Person 44', 'Person 42', 'Person 43', "#@bob.example likes and reposts, @alice.example doesn't follow", 'Person 60', 'Person 62', 'Person 61']) && (await page.isHidden('#q')) && /4 likes · 0 reposts/.test(df[1].t) && /2 likes · 2 reposts/.test(df[2].t) && /0 likes · 3 reposts/.test(df[3].t), JSON.stringify(dtxt) + ' ' + df.slice(1, 4).map(x => x.t).join(' | '));
+  ok('M10b the likes come from each account\'s own server (found through plc.directory), and only the few accounts that will be shown are looked up for their profiles (none that were only reposted)', (log.plc || 0) === 2 && (log.likeCalls || 0) === 2 && (log.profilesAsked || []).length > 0 && !(log.profilesAsked || []).some(d => /person0(44|45|62)$/.test(d)), JSON.stringify([log.plc, log.likeCalls, log.profilesAsked]));
   await tab(page, 'follow');
 
   // ---- the card ----
@@ -151,7 +171,7 @@ const pix = (page, x, y) => page.evaluate(([x, y]) => { const c = document.getEl
   ok('M14 Share or save image downloads mutual-match.png, a real 1440 x 900 PNG', dl.suggestedFilename() === 'mutual-match.png' && buf.slice(1, 4).toString() === 'PNG' && buf.readUInt32BE(16) === 1440 && buf.readUInt32BE(20) === 900, dl.suggestedFilename());
   await page.click('#copyalt'); await page.waitForTimeout(100);
   ok('M15 Copy alt text puts the alt text on the clipboard', (await page.evaluate(() => navigator.clipboard.readText())) === (await page.evaluate(() => window.__mm.alt())) && (await txt(page, '#status')) === 'Alt text copied.');
-  ok('M16 only Bluesky\'s servers are contacted and nothing but the theme is stored', log.third.every(h => h === 'public.api.bsky.app' || h === 'cdn.bsky.app') && (await page.evaluate(() => Object.keys(localStorage).every(k => k === 'theme'))), JSON.stringify([...new Set(log.third)]));
+  ok('M16 only Bluesky\'s servers are contacted and nothing but the theme is stored', log.third.every(h => ['public.api.bsky.app', 'cdn.bsky.app', 'plc.directory', 'pds.example'].includes(h)) && (await page.evaluate(() => Object.keys(localStorage).every(k => k === 'theme'))), JSON.stringify([...new Set(log.third)]));
   await page.click('#another');
   ok('M17 "Compare another pair" clears the boxes and the results', (await page.isHidden('#result')) && (await page.inputValue('#ha')) === '' && (await page.inputValue('#hb')) === '');
 
@@ -162,6 +182,12 @@ const pix = (page, x, y) => page.evaluate(([x, y]) => { const c = document.getEl
   await tab(page, 'comm');
   ok('M18b with fewer than 3 shared accounts the Community tab says it needs at least 3, with no button', /Needs at least 3 shared accounts.*These two have 2/.test(await txt(page, '#people')) && !(await page.$('#commGo')));
   await page.click('#another');
+
+  // ---- the likes can't be read ----
+  const np = await mk(browser, { mode: { noPlc: true } }); await np.page.goto(BASE); await go(np.page, 'alice.example', 'bob.example'); await done(np.page);
+  await np.page.click('#t-diff'); const npl = await items(np.page), npn = await txt(np.page, '#lists-sub');
+  ok('M18c if an account\'s likes can\'t be read, They differ still works from reposts and says the likes could not be read', /likes of @alice\.example and @bob\.example could not be read, so this uses reposts only/.test(npn) && npl.filter(x => !x.grp).map(x => x.b).join() === 'Person 44,Person 41,Person 45,Person 62', npn + ' ' + JSON.stringify(npl.map(x => x.b)));
+  await np.ctx.close();
 
   // ---- big accounts: the read limit and "Load more" ----
   await go(page, 'big.example', 'bob.example'); await done(page);

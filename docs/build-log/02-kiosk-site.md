@@ -246,3 +246,7 @@
 ## 2026-10-13 · Mutual Match: Community replaces Follow both
 - changed: removed the followers reads and the Follow both tab; added the Community tab (button-triggered, ranks shared accounts by how many other shared accounts each follows); card and alt text name the top hub; suite is 35 checks
 - live-tested: no
+
+## 2026-10-13 · Mutual Match: They differ uses likes and reposts
+- changed: the tab now ranks accounts by likes plus reposts (not replies); likes read through plc.directory and each account's own server; suite is 38 checks
+- live-tested: no

@@ -138,7 +138,7 @@ html[data-theme="dark"] .seg button[aria-pressed="true"] { background: var(--yel
     <h3>The three steps</h3>
     <ol>
       <li><b>Type two handles.</b> With or without the @, or paste links to the profiles. Any public accounts work, not only your own.</li>
-      <li><b>Wait a little.</b> It reads each account's follows and recent replies. Big accounts take longer.</li>
+      <li><b>Wait a little.</b> It reads each account's follows, recent posts and reposts, and recent likes. Big accounts take longer.</li>
       <li><b>Look and share.</b> Switch between the three lists, search them, and save or copy the card.</li>
     </ol>
 
@@ -147,7 +147,7 @@ html[data-theme="dark"] .seg button[aria-pressed="true"] { background: var(--yel
       <li><b>Both follow.</b> Accounts that appear in both accounts' follow lists.</li>
       <li><b>Community.</b> Takes the accounts they both follow and finds which of those follow the most of the others. It's a quick way to see who sits at the middle of the group the two of you share. It reads each candidate's follow list (up to 1,000 follows), so it only runs when you press the button, and it starts with the first 60 shared accounts and offers 60 more at a time.</li>
       <li><b>Both replied to.</b> Accounts that both people have replied to, in their most recent posts. It reads the newest 500 posts of each account first, so it covers recent history, not everything.</li>
-      <li><b>Where they differ.</b> For each account, the five accounts it replies to most (in those same recent posts) that the other account doesn't follow. It's a guess at who each one talks to that the other has never picked up. If a follow list was cut off at the limit, the other account may follow some of them.</li>
+      <li><b>They differ.</b> For each account, the five accounts it likes and reposts most that the other account doesn't follow. Likes are counted from the newest 500 likes and reposts from the newest posts, so it covers recent behavior, not everything. It's a guess at what each one enjoys that the other has never picked up. If a follow list was cut off at the limit, the other account may follow some of them.</li>
     </ul>
 
     <h3>Good to know</h3>
@@ -251,7 +251,7 @@ html[data-theme="dark"] .seg button[aria-pressed="true"] { background: var(--yel
         <h2 id="priv">What this asks for</h2>
         <ul>
           <li><b>Sign-in:</b> none. No password, no permissions.</li>
-          <li><b>Reads:</b> two public profiles, their follows, and their recent public posts (and, if you press Find the community, the follow lists of the shared accounts), the same as someone who isn't logged in.</li>
+          <li><b>Reads:</b> two public profiles, their follows, their recent public posts and reposts, and their public likes (read from the server that hosts each account, which is looked up on plc.directory), plus, if you press Find the community, the follow lists of the shared accounts. It's all public, the same as someone who isn't logged in.</li>
           <li><b>Stored:</b> nothing. Your browser reads the lists and does the matching here.</li>
         </ul>
         <p>Accounts with a content label are shown by handle only and never named on the card.</p>
@@ -276,7 +276,7 @@ html[data-theme="dark"] .seg button[aria-pressed="true"] { background: var(--yel
 'use strict';
 
 // ---- Config (the test hook only changes these in tests) ----
-var CFG = Object.assign({ listCap: 5000, listMore: 5000, listCeiling: 20000, replyCap: 500, replyMore: 500, replyCeiling: 5000, commStart: 60, commMore: 60, commFollowCap: 1000, gapMs: 120, timeoutMs: 15000 }, window.MM_TEST || {});
+var CFG = Object.assign({ listCap: 5000, listMore: 5000, listCeiling: 20000, replyCap: 500, replyMore: 500, replyCeiling: 5000, commStart: 60, commMore: 60, commFollowCap: 1000, likeCap: 500, likeMore: 500, likeCeiling: 2000, gapMs: 120, timeoutMs: 15000 }, window.MM_TEST || {});
 var APPVIEW = 'https://public.api.bsky.app/xrpc/';
 // Label values from @atproto/api's built-in label definitions (same list as Skeet Receipt and Transit Pass).
 var HIDE_LABELS = ['porn', 'sexual', 'nudity', 'graphic-media', 'gore', '!hide', '!warn', '!no-unauthenticated'];
@@ -316,9 +316,9 @@ function parseActor(raw) {
 // ---- Talking to Bluesky: paced, retrying, polite about rate limits ----
 function BskyError(kind, who) { this.kind = kind; this.who = who || ''; }
 function setNotice(t) { var el = $('pnotice'); if (t) { el.textContent = t; el.hidden = false; } else el.hidden = true; }
-function api(method, params, run) {
+function api(method, params, run, base) {
   var qs = new URLSearchParams();
-  Object.keys(params).forEach(function (k) { if (params[k] != null && params[k] !== '') qs.set(k, params[k]); });
+  Object.keys(params).forEach(function (k) { var v = params[k]; if (Array.isArray(v)) v.forEach(function (x) { qs.append(k, x); }); else if (v != null && v !== '') qs.set(k, v); });
   var attempt = 0;
   function go() {
     attempt++;
@@ -329,7 +329,7 @@ function api(method, params, run) {
       if (run.stopped) throw new BskyError('stopped');
       var ac = new AbortController(), t = setTimeout(function () { ac.abort(); }, CFG.timeoutMs);
       run.ac = ac;
-      return fetch(APPVIEW + method + '?' + qs.toString(), { signal: ac.signal }).then(function (res) {
+      return fetch((base || APPVIEW) + method + '?' + qs.toString(), { signal: ac.signal }).then(function (res) {
         clearTimeout(t);
         if (res.ok) { if (Date.now() >= (run.pauseUntil || 0)) setNotice(''); return res.json(); }
         if (res.status === 429) {
@@ -363,7 +363,7 @@ function shown(p) { return p.name || p.handle || p.did; }
 // ---- Reading ----
 // each list is one follows list; the replies are what an account answered in its recent posts
 function newList(kind, who, did, total) { return { kind: kind, who: who, did: did, total: total, map: Object.create(null), n: 0, cursor: '', exhausted: false }; }
-function newReplies(who, did, total) { return { who: who, did: did, total: total, posts: 0, map: Object.create(null), cursor: '', exhausted: false }; }
+function newReplies(who, did, total) { return { who: who, did: did, total: total, posts: 0, map: Object.create(null), cursor: '', exhausted: false, reposts: Object.create(null), likes: Object.create(null), likesRead: 0, likeCursor: '', likesDone: false, likesFailed: false, pds: '' }; }
 function readList(run, L) {
   var method = L.kind === 'follows' ? 'app.bsky.graph.getFollows' : 'app.bsky.graph.getFollowers', key = L.kind;
   function step() {
@@ -388,7 +388,13 @@ function readReplies(run, R) {
       var feed = Array.isArray(res.feed) ? res.feed : [];
       feed.forEach(function (item) {
         var post = item && item.post;
-        if (!post || !post.uri || (item.reason && typeof item.reason.$type === 'string' && item.reason.$type.indexOf('reasonRepost') !== -1)) return;
+        if (!post || !post.uri) return;
+        if (item.reason && typeof item.reason.$type === 'string' && item.reason.$type.indexOf('reasonRepost') !== -1) {
+          // something this account reposted: count it for the account that wrote it
+          var au = post.author, rk = post.uri + '#rp';
+          if (au && au.did && au.did !== R.did && !R.seen[rk]) { R.seen[rk] = 1; var rp = R.reposts[au.did] || (R.reposts[au.did] = { person: personOf(au), n: 0 }); rp.n++; }
+          return;
+        }
         if (post.author && post.author.did && post.author.did !== R.did) return;
         if (R.seen[post.uri]) return; R.seen[post.uri] = 1; R.posts++;
         var par = item.reply && item.reply.parent && item.reply.parent.author;
@@ -403,19 +409,55 @@ function readReplies(run, R) {
   }
   return step();
 }
+// likes live in the account's own data server (a public record per like), so find that server first
+function pdsOf(did) {
+  if (!/^did:plc:/.test(did)) return Promise.resolve('');
+  return fetch('https://plc.directory/' + encodeURIComponent(did)).then(function (r) { return r.ok ? r.json() : null; }, function () { return null; }).then(function (doc) {
+    var s = doc && Array.isArray(doc.service) ? doc.service.find(function (x) { return x && (x.id === '#atproto_pds' || x.type === 'AtprotoPersonalDataServer'); }) : null;
+    return s && typeof s.serviceEndpoint === 'string' && /^https:\/\/[^\/]+\/?$/.test(s.serviceEndpoint) ? s.serviceEndpoint.replace(/\/$/, '') : '';
+  });
+}
+function readLikes(run, R) {
+  if (run.stopped || R.likesDone || R.likesRead >= run.likeCap) return Promise.resolve();
+  var first = R.pds ? Promise.resolve(R.pds) : pdsOf(R.did).then(function (p) { R.pds = p; return p; });
+  function step() {
+    if (run.stopped || R.likesDone || R.likesRead >= run.likeCap) return;
+    return api('/xrpc/com.atproto.repo.listRecords', { repo: R.did, collection: 'app.bsky.feed.like', limit: 100, cursor: R.likeCursor }, run, R.pds).then(function (res) {
+      if (state.run !== run) return;
+      var recs = Array.isArray(res.records) ? res.records : [];
+      recs.forEach(function (rec) {
+        R.likesRead++;
+        var m = rec && rec.value && rec.value.subject && typeof rec.value.subject.uri === 'string' ? /^at:\/\/(did:[^\/]+)\//.exec(rec.value.subject.uri) : null;
+        if (m && m[1] !== R.did) R.likes[m[1]] = (R.likes[m[1]] || 0) + 1;
+      });
+      progress(run);
+      if (!res.cursor || !recs.length || res.cursor === R.likeCursor) { R.likesDone = true; return; }
+      R.likeCursor = res.cursor;
+      return step();
+    });
+  }
+  return first.then(function (p) {
+    if (!p) { R.likesFailed = true; R.likesDone = true; return; }
+    return step();
+  }).catch(function (e) {
+    if (e && e.kind === 'stopped') throw e;
+    R.likesFailed = true; R.likesDone = true;    // the server may not allow reads from a web page, or may be down: carry on without likes
+  });
+}
 function allWork(run) {
   return [
     function () { return readReplies(run, run.ra); }, function () { return readReplies(run, run.rb); },
+    function () { return readLikes(run, run.ra); }, function () { return readLikes(run, run.rb); },
     function () { return readList(run, run.fa); }, function () { return readList(run, run.fb); }
   ];
 }
 function expected(run) {
   var s = 0;
   [run.fa, run.fb].forEach(function (L) { s += L.exhausted ? L.n : Math.max(L.n, Math.min(L.total || run.listCap, run.listCap)); });
-  [run.ra, run.rb].forEach(function (R) { s += R.exhausted ? R.posts : Math.max(R.posts, Math.min(R.total || run.replyCap, run.replyCap)); });
+  [run.ra, run.rb].forEach(function (R) { s += R.exhausted ? R.posts : Math.max(R.posts, Math.min(R.total || run.replyCap, run.replyCap)); s += R.likesDone ? R.likesRead : run.likeCap; });
   return s;
 }
-function readSoFar(run) { return run.fa.n + run.fb.n + run.ra.posts + run.rb.posts; }
+function readSoFar(run) { return run.fa.n + run.fb.n + run.ra.posts + run.rb.posts + run.ra.likesRead + run.rb.likesRead; }
 function progress(run) {
   var done = readSoFar(run), exp = Math.max(1, expected(run));
   $('ptext').textContent = 'Reading @' + run.a.handle + ' and @' + run.b.handle + '… ' + fmtN(done) + ' items read';
@@ -434,13 +476,24 @@ function matches(run) {
   var both = intersect(run.fa.map, run.fb.map).sort(byName), rep = [], k;
   for (k in run.ra.map) if (run.rb.map[k]) rep.push({ person: run.ra.map[k].person, n: run.ra.map[k].n + run.rb.map[k].n, na: run.ra.map[k].n, nb: run.rb.map[k].n });
   rep.sort(function (x, y) { return y.n - x.n || byName(x.person, y.person); });
-  // the accounts each one talks to most that the other one does not follow
-  function differ(R, other, otherDid) {
-    var out = [], d;
-    for (d in R.map) if (!other.map[d] && d !== otherDid) out.push(Object.assign({}, R.map[d].person, { n: R.map[d].n }));
-    return out.sort(function (x, y) { return y.n - x.n || byName(x, y); }).slice(0, 5);
-  }
-  return { both: both, rep: rep.map(function (r) { return Object.assign({}, r.person, { n: r.n, na: r.na, nb: r.nb }); }), diffA: differ(run.ra, run.fb, run.b.did), diffB: differ(run.rb, run.fa, run.a.did) };
+  // the accounts each one likes and reposts most that the other one does not follow
+  return { both: both, rep: rep.map(function (r) { return Object.assign({}, r.person, { n: r.n, na: r.na, nb: r.nb }); }), diffA: differ(run, run.ra, run.fb, run.b.did), diffB: differ(run, run.rb, run.fa, run.a.did) };
+}
+function diffScores(R, other, otherDid) {
+  var score = Object.create(null), d;
+  for (d in R.likes) score[d] = { likes: R.likes[d], reposts: 0 };
+  for (d in R.reposts) (score[d] || (score[d] = { likes: 0, reposts: 0 })).reposts = R.reposts[d].n;
+  var out = [];
+  for (d in score) if (!other.map[d] && d !== otherDid && d !== R.did) out.push({ did: d, likes: score[d].likes, reposts: score[d].reposts, n: score[d].likes + score[d].reposts });
+  return out.sort(function (x, y) { return y.n - x.n || (x.did < y.did ? -1 : 1); });
+}
+function differ(run, R, other, otherDid) {
+  var list = diffScores(R, other, otherDid).map(function (s) {
+    var p = (R.reposts[s.did] && R.reposts[s.did].person) || (run.profiles && run.profiles[s.did]) || { did: s.did, handle: '', name: '', avatar: '', labeled: false, hit: [] };
+    return Object.assign({}, p, { likes: s.likes, reposts: s.reposts, n: s.n });
+  });
+  list.sort(function (x, y) { return y.n - x.n || byName(x, y); });
+  return list.slice(0, 5);
 }
 // a number is "at least" when either side of its comparison was cut off
 function partial(run) {
@@ -484,13 +537,14 @@ function personItem(p, extra) {
 }
 function renderDiff(run) {
   var m = run.m, A = '@' + run.a.handle, B = '@' + run.b.handle;
-  var cutA = !run.fb.exhausted, cutB = !run.fa.exhausted, noRep = run.ra.failed || run.rb.failed;
-  $('lists-sub').textContent = 'The accounts each of them replies to most, in their recent posts, that the other one does not follow.' + (cutA || cutB ? ' One follow list was cut off at the read limit, so they may follow some of these.' : '') + (noRep ? ' One account\'s posts could not be read.' : '');
-  function group(title, list, ab) {
-    return '<li class="grp">' + esc(title) + '</li>' + (list.length ? list.map(function (p) { return personItem(p, p.n + (p.n === 1 ? ' reply' : ' replies')); }).join('') : '<li class="none muted">' + esc(ab) + '</li>');
+  var cutA = !run.fb.exhausted, cutB = !run.fa.exhausted;
+  var noLikes = [run.ra.likesFailed ? A : '', run.rb.likesFailed ? B : ''].filter(Boolean);
+  $('lists-sub').textContent = 'The accounts each of them likes and reposts most, in their recent activity, that the other one does not follow.' + (cutA || cutB ? ' One follow list was cut off at the read limit, so they may follow some of these.' : '') + (noLikes.length ? ' The likes of ' + noLikes.join(' and ') + ' could not be read, so ' + (noLikes.length === 2 ? 'this uses reposts only.' : 'that side uses reposts only.') : '');
+  function group(title, list, empty) {
+    return '<li class="grp">' + esc(title) + '</li>' + (list.length ? list.map(function (p) { return personItem(p, p.likes + (p.likes === 1 ? ' like' : ' likes') + ' · ' + p.reposts + (p.reposts === 1 ? ' repost' : ' reposts')); }).join('') : '<li class="none muted">' + esc(empty) + '</li>');
   }
-  $('people').innerHTML = group(A + ' talks to, ' + B + ' doesn\'t follow', m.diffA, 'No one found. ' + B + ' follows everyone ' + A + ' replied to, or there are no replies to go on.') +
-    group(B + ' talks to, ' + A + ' doesn\'t follow', m.diffB, 'No one found. ' + A + ' follows everyone ' + B + ' replied to, or there are no replies to go on.');
+  $('people').innerHTML = group(A + ' likes and reposts, ' + B + ' doesn\'t follow', m.diffA, 'No one found. ' + B + ' follows everyone ' + A + ' liked or reposted, or there is nothing to go on yet.') +
+    group(B + ' likes and reposts, ' + A + ' doesn\'t follow', m.diffB, 'No one found. ' + A + ' follows everyone ' + B + ' liked or reposted, or there is nothing to go on yet.');
   [].forEach.call($('people').querySelectorAll('img'), function (im) { im.addEventListener('error', function () { im.remove(); }); });
   $('empty').hidden = true; $('showmore').hidden = true;
 }
@@ -734,10 +788,26 @@ function pump(run) {
   run.stopped = false; run.failed = '';
   $('progress').hidden = false; $('capbar').hidden = true; $('stopBtn').disabled = false; setBusy(true); progress(run);
   var work = allWork(run);
-  return work.reduce(function (p, fn) { return p.then(function () { return run.stopped ? null : fn(); }); }, Promise.resolve()).catch(function (e) {
+  return work.reduce(function (p, fn) { return p.then(function () { return run.stopped ? null : fn(); }); }, Promise.resolve()).then(function () { return run.stopped ? null : resolveDiff(run); }).catch(function (e) {
     if (e && e.kind === 'stopped') return;
     run.failed = MESSAGES[e && e.kind] || MESSAGES.net;
   }).then(function () { if (state.run === run) finish(run); });
+}
+// the accounts someone only liked have no profile yet: look up the few that will be shown
+function resolveDiff(run) {
+  var want = [];
+  [[run.ra, run.fb, run.b.did], [run.rb, run.fa, run.a.did]].forEach(function (x) {
+    diffScores(x[0], x[1], x[2]).slice(0, 8).forEach(function (s) { if (!x[0].reposts[s.did] && !run.profiles[s.did] && want.indexOf(s.did) === -1) want.push(s.did); });
+  });
+  var chunks = []; while (want.length) chunks.push(want.splice(0, 25));
+  return chunks.reduce(function (p, ids) {
+    return p.then(function () {
+      if (run.stopped) return;
+      return api('app.bsky.actor.getProfiles', { actors: ids }, run).then(function (res) {
+        (res.profiles || []).forEach(function (v) { if (v && v.did) run.profiles[v.did] = personOf(v); });
+      }, function (e) { if (e && e.kind === 'stopped') throw e; });
+    });
+  }, Promise.resolve());
 }
 function allLists(run) { return [run.fa, run.fb]; }
 function finish(run) {
@@ -752,12 +822,12 @@ function finish(run) {
     $('captext').textContent = 'Stopped. Showing what was read so far.';
     btn.textContent = 'Keep reading'; btn.hidden = false; btn.onclick = function () { pump(run); }; $('capbar').hidden = false; return;
   }
-  var cutL = allLists(run).some(function (L) { return !L.exhausted; }), cutR = !run.ra.exhausted || !run.rb.exhausted;
+  var cutL = allLists(run).some(function (L) { return !L.exhausted; }), cutR = !run.ra.exhausted || !run.rb.exhausted || (!run.ra.likesDone) || (!run.rb.likesDone);
   if (cutL || cutR) {
-    var atCeiling = (!cutL || run.listCap >= CFG.listCeiling) && (!cutR || run.replyCap >= CFG.replyCeiling);
+    var atCeiling = (!cutL || run.listCap >= CFG.listCeiling) && (!cutR || (run.replyCap >= CFG.replyCeiling && run.likeCap >= CFG.likeCeiling));
     $('captext').textContent = 'Read the first ' + fmtN(run.listCap) + ' follows of each account' + (cutR ? ' and the newest ' + fmtN(run.replyCap) + ' posts' : '') + '. The numbers with a plus sign are at least that many.' + (atCeiling ? ' That\'s the limit for one run in the browser.' : '');
     btn.textContent = 'Load more'; btn.hidden = atCeiling;
-    btn.onclick = function () { run.listCap = Math.min(run.listCap + CFG.listMore, CFG.listCeiling); run.replyCap = Math.min(run.replyCap + CFG.replyMore, CFG.replyCeiling); pump(run); };
+    btn.onclick = function () { run.listCap = Math.min(run.listCap + CFG.listMore, CFG.listCeiling); run.replyCap = Math.min(run.replyCap + CFG.replyMore, CFG.replyCeiling); run.likeCap = Math.min(run.likeCap + CFG.likeMore, CFG.likeCeiling); pump(run); };
     $('capbar').hidden = false; return;
   }
   say('Read everything.');
@@ -779,7 +849,7 @@ function start(a, b) {
   if (!pa || !pb) { showErr(MESSAGES.badhandle); (pa ? $('hb') : $('ha')).focus(); return; }
   if (pa === pb) { showErr(MESSAGES.same); return; }
   if (state.run) { state.run.stopped = true; if (state.run.ac) state.run.ac.abort(); }
-  var run = { listCap: CFG.listCap, replyCap: CFG.replyCap, stopped: false, nextStart: 0, pauseUntil: 0 };
+  var run = { listCap: CFG.listCap, replyCap: CFG.replyCap, likeCap: CFG.likeCap, profiles: Object.create(null), stopped: false, nextStart: 0, pauseUntil: 0 };
   state.run = run; state.model = null; state.tab = 'follow'; state.q = ''; $('q').value = ''; state.limit = SHOW;
   $('result').hidden = true; $('capbar').hidden = true; $('slot').hidden = false;
   setBusy(true); $('progress').hidden = false; $('ptext').textContent = 'Looking up the accounts…'; $('pfill').style.width = '0'; $('stopBtn').disabled = false;

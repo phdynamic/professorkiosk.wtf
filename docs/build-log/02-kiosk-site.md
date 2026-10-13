@@ -143,3 +143,8 @@
 - note: first real run read about 290 posts per format and found 114 candidates; 16 formats found 0 (Nobody / Me, Expectation / Reality, Before / After, Translation Guide, Ranking, Bingo Card, Official Notice, Error Message, Customer Service, Talking Object, One-Star Review, Fill in the Blank, Quote Post Game Starter, Portmanteau, Running Bit, How To); three of them read 0 or 1 posts because the search was too narrow
 - changed: the finder now reports, per format, how many posts fit the shape and the best like count, and prints the top three results when none fit; loosened the `match:` lines and added more `search:` lines for those formats
 - live-tested: no (the cause of each empty format was not yet known)
+
+## 2026-10-13 · Finder: per-format likes bar and more tuning
+- note: second real run found 151 candidates; still empty: Nobody / Me (6 fit, best 20 likes), Expectation / Reality (24 fit, best 29), Before / After (1 fit), Translation Guide (0 fit, searches off target), Ranking (3 fit, best 3), Official Notice (3 fit, best 0), Customer Service (1 fit), Fill in the Blank (0 fit: real posts have no underscores)
+- built: `likes:` line in `formats.txt` (per-format minimum likes; `--min-likes` overrides); set for 7 formats; new `search:`/`match:` lines for Translation Guide, Ranking, Official Notice, Customer Service, Before / After, Fill in the Blank
+- live-tested: no (the changes since the second run have not been run)

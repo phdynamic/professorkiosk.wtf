@@ -14,6 +14,7 @@
 ;;   search: "Nobody:" "Me:"   words for scripts/find-examples.mjs to search Bluesky with. The page ignores this line.
 ;;   match: ^nobody:         a regular expression (case-insensitive, ^ and $ work on each line of a post) that a real post in this format
 ;;                             must match, for scripts/find-examples.mjs. One line per test; a post must pass all of them. The page ignores it.
+;;   likes: 15             the fewest likes a candidate needs (default 30), for formats whose real posts are rarely liked. The page ignores it.
 ;;
 ;; The same {label} used twice is one blank that fills in twice (handy for callbacks).
 ;; The post must fit in 300 characters once the example words are in. The test suite checks this.
@@ -33,6 +34,7 @@ template: Nobody:
 template: Me: {an oddly specific thing you do}
 example: *still rehearsing a comeback for a gas station cashier who was rude to me in 2017*
 tip: If the detail would fit anyone, cut it. "Overthinking" is a mood. "Rehearsing a rebuttal for a stranger" is a person.
+likes: 15
 search: "Nobody:" "Me:"
 match: \bnobody( at all)?:
 match: ^\s*me:
@@ -44,6 +46,7 @@ template: Expectation: {the grand plan}
 template: Reality: {the small, exact outcome}
 example: I will wake up at 6 and become a morning person | I woke up at 3:40 and read about lighthouses until sunrise
 tip: Give both lines the same shape so the second one visibly falls over.
+likes: 20
 search: "Expectation:" "Reality:"
 match: ^\s*expectations?\b
 match: ^\s*reality\b
@@ -55,7 +58,9 @@ template: Before {the event}: {how things used to be}
 template: After {the event}: {how things are now}
 example: I learned what a sconce is | walls were just walls | I judge every hallway for its lack of sconces
 tip: Keep the event tiny. A small trigger with a huge change is the whole engine.
-search: "Before" "After" "I learned"
+search: "before I" "after I"
+search: "before" "after" "I learned"
+likes: 15
 match: ^\s*before\b
 match: ^\s*after\b
 
@@ -65,8 +70,12 @@ how: Take something polite people say and translate it into what they actually m
 template: "{a polite phrase}" means "{what it really means}"
 example: No worries! | I will remember this until the sun burns out
 tip: Choose a phrase people really say, so the reader hears it in someone's voice.
+search: "translation:"
+search: "what they really mean"
+search: "is code for"
 search: "means" "what it really means"
-match: [\"“'‘].{1,60}[\"”'’]\s+(means|=|translates to|actually means)
+match: \b(translation:|really means?|is code for|translates to)|[\"“'‘].{1,60}[\"”'’]\s+(means|=|actually means)
+likes: 15
 
 ## Two Types of People
 category: Contrast
@@ -88,8 +97,10 @@ template: 4. {best}
 example: ways to leave a party | Saying goodbye to every single person | Announcing "well, I'm off" | Slipping out unseen | Walking out mid-sentence and never speaking of it again
 tip: Write the best item first, then build the other three around it.
 search: "worst to best"
-match: worst to best|best to worst
-match: ^\s*1\s*[.):\-]
+search: "ranking" "from worst to best"
+search: "ranked" "worst to best"
+match: rank(ed|ing)?\b.{0,60}\b(worst|best)|worst to best|best to worst
+likes: 15
 
 ## Tier List
 category: Lists
@@ -165,8 +176,11 @@ template: NOTICE: {the rule}.
 template: {the hint of a larger history}
 example: Please do not microwave fish in the break room | This policy was established after the Incident. We do not discuss the Incident.
 tip: Keep a flat, official tone. The more history you imply, the less you should explain it.
-search: "NOTICE:" "the Incident"
-match: ^\s*(notice|attention|reminder|warning|public notice|psa)\b
+search: "NOTICE:"
+search: "ATTENTION:" "effective immediately"
+search: "until further notice"
+match: ^\s*(notice|attention|reminder|warning|public notice|psa)\b|effective immediately|until further notice
+likes: 10
 
 ## Error Message
 category: Fake documents
@@ -200,7 +214,11 @@ template: Me: {my complaint}
 template: Them: {the calm, unhelpful reply}
 example: My package says it was delivered, but I don't have it. | Our records show it arrived at a better house. No refund is available.
 tip: Make the reply sound like a policy. The agent never apologizes.
-search: "Me:" "Them:" "refund"
+search: "me:" "customer service"
+search: "customer service" "me:" "them:"
+search: "support:" "me:"
+search: "agent:" "me:"
+likes: 10
 match: ^\s*me:
 match: ^\s*(them|they|support|customer service|agent|rep|bot|chatbot):
 
@@ -285,10 +303,10 @@ template: {the start of a sentence} ___.
 template: {where to answer}
 example: My most dangerous personality trait is | Quote post with yours.
 tip: The best prompts are specific enough to be funny and open enough to reward the weird answer.
+match: \b(my toxic trait|my most dangerous personality trait|my villain origin story|my love language|my red flag)\b.{0,8}\b(is|was)\b|_{3,}
 search: "my toxic trait is"
 search: "my most dangerous personality trait"
 search: "my villain origin story"
-match: _{3,}
 
 ## Quote Post Game Starter
 category: Questions

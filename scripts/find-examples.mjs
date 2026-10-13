@@ -16,7 +16,7 @@
 //
 // Options:
 //   --only "Overheard"    one format (part of the name is enough)
-//   --min-likes 50        only posts with at least this many likes (default 30)
+//   --min-likes 50        only posts with at least this many likes (default 30; a format can set its own with a likes: line, and --min-likes overrides that)
 //   --per-format 8        most candidates written per format (default 8)
 //   --pages 3             how many pages of 100 search results to read per search (default 3)
 //   --print-queries       just print the searches, with links you can open in Bluesky, and sign in to nothing
@@ -38,7 +38,7 @@ const SERVICE = (process.env.BSKY_SERVICE || (HANDLE ? 'https://bsky.social' : p
 const args = process.argv.slice(2);
 const opt = (name, dflt) => { const i = args.indexOf(name); return i >= 0 && args[i + 1] != null ? args[i + 1] : dflt; };
 const only = opt('--only', '').toLowerCase();
-const minLikes = Number(opt('--min-likes', '30'));
+const likesGiven = args.includes('--min-likes'), minLikes = Number(opt('--min-likes', '30'));
 const perFormat = Number(opt('--per-format', '8'));
 const pages = Math.max(1, Number(opt('--pages', '3')));
 const printOnly = args.includes('--print-queries');
@@ -50,13 +50,14 @@ export function parseFormats(src) {
   for (const line of src.replace(/\r\n?/g, '\n').split('\n')) {
     if (line.startsWith(';;')) continue;
     let m = /^##\s+(.+?)\s*$/.exec(line);
-    if (m) { cur = { name: m[1], searches: [], matches: [], matchSrc: [], have: [] }; out.push(cur); continue; }
+    if (m) { cur = { name: m[1], searches: [], matches: [], matchSrc: [], have: [], likes: null }; out.push(cur); continue; }
     if (!cur) continue;
-    m = /^(search|match|post):\s?(.*)$/.exec(line);
+    m = /^(search|match|post|likes):\s?(.*)$/.exec(line);
     if (!m) continue;
     const v = m[2].trim();
     if (m[1] === 'search') { if (v) cur.searches.push(v); }
     else if (m[1] === 'post') cur.have.push(v);
+    else if (m[1] === 'likes') { if (/^\d+$/.test(v)) cur.likes = Number(v); }
     else if (v) { cur.matchSrc.push(v); try { cur.matches.push(new RegExp(v, 'im')); } catch (e) { cur.badMatch = (cur.badMatch || []).concat(v); } }
   }
   return out;
@@ -145,10 +146,11 @@ async function main() {
       console.error(`${f.name}: ${e.message}`); continue;
     }
     const byUri = new Map(posts.map(p => [p.uri, p])), unique = [...byUri.values()];
-    const picks = pick(unique, f, minLikes, perFormat);
+    const need = likesGiven || f.likes == null ? minLikes : f.likes;   // a format whose real posts are rarely liked can lower the bar with a likes: line
+    const picks = pick(unique, f, need, perFormat);
     // why a format came up short: how many posts fit its shape at all, and how well liked the best of them was
     const fit = unique.filter(p => keep(p, f, 0)), best = fit.reduce((m, p) => Math.max(m, p.likeCount || 0), 0);
-    const note = `${fit.length} of ${unique.length} posts read fit the format${fit.length ? `, the best has ${best} likes` : ''}`;
+    const note = `${fit.length} of ${unique.length} posts read fit the format${fit.length ? `, the best has ${best} likes` : ''}${need !== minLikes ? `; this format asks for ${need}+ likes` : ''}`;
     lines.push(`## ${f.name}`, ...f.searches.map(s => `;; search: ${s}`), `;; ${note}`);
     const misses = !fit.length ? unique.slice().sort((x, y) => (y.likeCount || 0) - (x.likeCount || 0)).slice(0, 3) : [];
     if (misses.length) { lines.push(';; nothing fit the format. The most-liked results were:'); misses.forEach(p => lines.push(`;;   ${p.likeCount || 0} likes: ${(p.record && p.record.text || '').replace(/\s+/g, ' ').slice(0, 120)}`)); }

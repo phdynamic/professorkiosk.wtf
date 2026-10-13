@@ -286,10 +286,10 @@ function parse(src) {
     var m = /^##\s+(.+?)\s*$/.exec(line);
     if (m) { cur = { name: m[1], cat: '', how: '', template: [], exampleRaw: '', tip: '', posts: [] }; list.push(cur); return; }
     if (!cur) return;
-    m = /^(category|how|template|example|tip|post|search|match):\s?(.*)$/.exec(line);
+    m = /^(category|how|template|example|tip|post|search|match|likes):\s?(.*)$/.exec(line);
     if (!m) return;
     var k = m[1], v = m[2].replace(/\s+$/, '');
-    if (k === 'search' || k === 'match') return;   // used by scripts/find-examples.mjs, not by the page
+    if (k === 'search' || k === 'match' || k === 'likes') return;   // used by scripts/find-examples.mjs, not by the page
     if (k === 'post') { var ref = postRef(v); if (ref && cur.posts.length < MAX_POSTS) cur.posts.push(ref); return; }
     if (k === 'template') cur.template.push(v);
     else if (k === 'category') cur.cat = v.trim();

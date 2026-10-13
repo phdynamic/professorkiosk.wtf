@@ -37,6 +37,12 @@ test('every format has a search line and valid match lines, and its own worked e
   assert.deepStrictEqual(problems, []);
 });
 
+test('a likes: line sets a format\'s own bar, and bad ones are ignored', async () => {
+  const { parseFormats } = await load();
+  const [a, b, c] = parseFormats('## A\nsearch: "a"\nlikes: 15\n\n## B\nsearch: "b"\n\n## C\nsearch: "c"\nlikes: lots\n');
+  assert.deepStrictEqual([a.likes, b.likes, c.likes], [15, null, null]);
+});
+
 test('keep() and pick() choose real uses of the format with the most likes, one per author', async () => {
   const { parseFormats, keep, pick } = await load();
   const [f] = parseFormats('## Nobody / Me\nsearch: "Nobody:" "Me:"\nmatch: ^nobody:\nmatch: ^me:\npost: https://bsky.app/profile/x.test/post/3old\n');

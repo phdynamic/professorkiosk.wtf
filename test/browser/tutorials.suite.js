@@ -35,7 +35,7 @@ const TXT = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'tutorial
   const info = await page.evaluate(() => ({ cards: document.querySelectorAll('#cards .card').length, toc: document.querySelectorAll('#toc a').length, h2: [...document.querySelectorAll('#cards .card h2')].map(h => h.textContent), intro: document.getElementById('intro').textContent, links: [...document.querySelectorAll('#cards a')].map(a => a.getAttribute('href')), tag: document.querySelector('.k-hero .k-tag').textContent }));
   const wanted = (TXT.match(/^## /gm) || []).length;
   ok('T7 every ## heading in the text file becomes a card with a contents chip', info.cards === wanted && info.toc === wanted && wanted >= 12 && wanted === 13, JSON.stringify([info.cards, info.toc, wanted]));
-  ok('T8 the introduction comes from the text before the first heading', /technical side of Bluesky/.test(info.intro), info.intro.slice(0, 50));
+  ok('T8 the introduction comes from the text before the first heading', /post jokes or other weirdness and be found doing it/.test(info.intro), info.intro.slice(0, 50));
   ok('T9 links work: site pages stay on the site, others open in a new tab', info.links.includes('/tracer') && info.links.includes('/feeds') && info.links.includes('https://skyfeed.app') && await page.locator('#cards a[href^="https://"]').first().getAttribute('target') === '_blank');
   ok('T10 the page has no skeet-style numbering or counters', !(await page.locator('.skeet, [data-count]').count()));
   const lang = await page.evaluate(() => { const c = [...document.querySelectorAll('#cards .card')][0]; return { ul: c.querySelectorAll('ul li').length, bold: c.querySelectorAll('li strong').length }; });

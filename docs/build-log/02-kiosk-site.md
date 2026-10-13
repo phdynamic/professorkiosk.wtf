@@ -254,3 +254,7 @@
 ## 2026-10-13 · Tutorials card and page intro brought in line
 - changed: the hub card for Bluesky Tutorials now describes the whole page (adds growing an audience, hashtags, cleaning up the timeline, and that it is for people who want to post jokes); the page intro in `tutorials.txt`, its hero fallback line and meta description match; the hub's sign-in notice now says every other tool works without signing in (it named only three tools)
 - live-tested: no
+
+## 2026-10-13 · Card fixes; first Tutorials edits from the developer
+- changed: Joke-Web card names full, mini and double web; Tracer and Saga cards say "No sign-in"; Top Skeets card says it needs an app password; Mashup meta description wording; Top Skeets page got a meta description; Tutorials introduction, The language (reskeet and quote skeet terms) and Do's and don'ts edited by the developer's wording; the Tutorials card, hero line and meta description now say "jokes or other weirdness"
+- live-tested: no

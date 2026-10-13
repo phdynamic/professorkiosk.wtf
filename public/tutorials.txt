@@ -11,15 +11,15 @@
 ;;                                       same name and .jpg at the end (some-video.jpg)
 ;; Keep links to https:// addresses or to pages on this site that start with /.
 
-This is a guide to Bluesky for people who want to post jokes and be found doing it. It covers the technical side of Bluesky, like what the words mean, how replies and quotes work, how to set up your profile and your feeds, how to mute and block, and how contests, images and direct messages work. It also has advice on growing an audience, hashtags and how to behave.
+This is a guide to Bluesky for people who want to post jokes or other weirdness and be found doing it. It covers a bunch of stuff, like what the words mean, how replies and quotes work, how to set up your profile and your feeds, how to mute and block, and how contests, images and direct messages work. It also has advice on growing an audience, hashtags and how to behave.
 
 ## The language
 
 Bluesky has its own argot. These are the terms you will see most.
 
 - **skeet:** a post (some people dislike the word, so read the room)
-- **repost:** sharing someone's post with your own followers
-- **quote:** a repost with your own text added (QP is short for quote post)
+- **repost/reskeet:** sharing someone's post with your own followers
+- **quote/quote post/quote skeet:** a repost with your own text added (QP is short for quote post)
 - **TL:** timeline
 - **moots:** mutuals, people you follow who follow you back
 - **OP:** original poster
@@ -31,7 +31,7 @@ Bluesky has its own argot. These are the terms you will see most.
 - **ratio:** when the replies beat the likes. It is not a compliment
 - **quote post game:** a post that people keep quoting, each adding to the last
 
-A few abbreviations you'll see everywhere: af (as fuck), rn (right now), idgaf (I don't give a fuck) and ffs (for fuck's sake).
+A few more abbreviations: af (as fuck), rn (right now), idgaf (I don't give a fuck) and ffs (for fuck's sake).
 
 ## Replies and quote posts
 
@@ -54,7 +54,7 @@ A caution on quote posts. Quoting someone to mock them is common, and it often g
 9. Have fun with it
 10. Laugh always
 
-A few more rules worth keeping. Write alt text. Change the default avatar. Be clever, not stupid, in your replies. Don't pretend you don't care about numbers, because nobody will believe you. And don't be creepy.
+A few more rules worth keeping. Write alt text. Change the default avatar. Be clever, be stupid, but don't be boring in your replies. Don't pretend you don't care about numbers; nobody will believe you. And don't be creepy, ffs.
 
 ## Your profile
 

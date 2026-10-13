@@ -345,6 +345,10 @@ app.get('/mashup', (_req, res) => {
   res.set('Cache-Control', 'no-cache');
   res.sendFile(path.join(__dirname, '..', 'public', 'mashup.html'));
 });
+app.get('/formats', (_req, res) => {
+  res.set('Cache-Control', 'no-cache');
+  res.sendFile(path.join(__dirname, '..', 'public', 'formats.html'));
+});
 app.get('/jokeweb', (_req, res) => {
   res.set('Cache-Control', 'no-cache');
   res.sendFile(path.join(__dirname, '..', 'public', 'jokeweb.html'));

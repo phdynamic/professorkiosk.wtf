@@ -98,3 +98,13 @@
 - what: all book links point to `https://www.amazon.com/Serious-Guide-Joke-Writing-Something/dp/1907498370`
 - why: the developer supplied an Amazon address; the `crid`, `dib`, `qid`, `sprefix` and `sr` parts of the pasted address are tied to their own search session, so only the product path was kept (same product)
 - source: developer request, 2026-10-13
+
+### 2026-10-13 · Format Deck runs in the visitor's browser, with its formats in `public/formats.txt` · active
+- what: `/formats` (hub card 08); no sign-in, no server calls; the file is parsed in the page (format described at the top of the file); blanks typed into each card are kept in localStorage (`pk-formats-v1`), this device only
+- why: the developer wanted a public tool for people writing jokes, and no moderation work (Game Preserver "was starting to require moderation", developer's statement); a text file like `tutorials.txt` and `topics.js` so the developer can edit formats (my choice, not stated)
+- source: developer request, 2026-10-13
+
+### 2026-10-13 · Each Format Deck card is reference plus a small workbench · active
+- what: how-line, worked example (built from the example words), a blank per `{label}`, the post as it builds, a counter against 300 graphemes, Copy post, Open in Bluesky (`https://bsky.app/intent/compose?text=`), Use this example, Clear blanks, a tip; a blank left empty is copied as its `{label}`; no dice button that drops in random Mashup topics
+- why: the developer asked for "some combination of reference and" typing and copying, wanted a worked example, and suggested opening in Bluesky; they chose the option without the dice; copying empty blanks as `{label}` and bsky.app only for Open are my choices, not stated (Blacksky and Northsky users use Copy)
+- source: developer request, 2026-10-13

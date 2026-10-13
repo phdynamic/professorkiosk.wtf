@@ -1,5 +1,6 @@
 NEXT SESSION
 
 Last commit when these docs were created: e89d28b (2026-10-10).
-No other pending work is recorded in the repo.
+Format Deck (2026-10-13) is built but not committed and not live-tested. The developer should read and edit public/formats.txt, which is a first draft.
+Tools the developer said they like, none started: Transit Pass, Rush Hour (with a "What Lands" panel), Tightener, Daily Reps. See decisions/site-and-ui.md for the rule they set: no tool that stores or shares visitor content (moderation).
 Live checks owed: see TESTING-OWED.md.

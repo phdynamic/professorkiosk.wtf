@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Format Deck</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<meta name="description" content="Pick a joke format, see how it works and a worked example, fill in the blanks, check the length and copy it or open it in Bluesky." />
+<link rel="preload" href="/fonts/dm-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/dm-sans-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<script>
+  // Apply the theme before first paint to avoid a light flash
+  (function() {
+    var saved = null;
+    try { saved = localStorage.getItem('theme'); } catch (e) {}
+    var dark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+  })();
+</script>
+<link rel="stylesheet" href="/kiosk.css" />
+<style>
+:root { --hero: var(--coral); }
+h1, h2, h3, p, ul, ol, pre { margin: 0; }
+button, input { font: inherit; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+main.k-main { padding: 32px 0 0; }
+.panel { background: var(--surface); border: 3px solid var(--line); border-radius: 20px; box-shadow: 5px 5px 0 var(--shadow-c); padding: 18px; min-width: 0; }
+.panel h2 { font-size: 21px; font-weight: 800; }
+.hint { font-size: 14px; color: var(--ink2); }
+.msg { text-align: center; font-weight: 700; padding: 32px 18px; }
+.stack { display: grid; gap: 24px; }
+
+/* the workbench: one format at a time */
+.bench { padding: 0; overflow: hidden; }
+.bench .band { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 16px; background: var(--c, var(--coral)); color: var(--navy); border-bottom: 3px solid var(--navy); }
+html[data-theme="dark"] .bench .band { border-color: var(--line); }
+.bench .band .tag { font: 500 11px/1.2 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.bench .inner { padding: 18px; display: grid; gap: 18px; }
+.bench .head { display: flex; gap: 12px 16px; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; }
+.bench .head h2 { font-size: clamp(26px, 5vw, 36px); line-height: 1.1; letter-spacing: -.01em; flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; }
+.bench .head h2:focus { outline: none; }
+.bench .head h2:focus-visible { outline: 3px solid var(--purple); outline-offset: 4px; border-radius: 6px; }
+.how { font-size: 17px; line-height: 1.5; max-width: 46em; }
+.how a, .tip a { font-weight: 700; text-underline-offset: 3px; }
+.bench h3 { font-size: 16px; font-weight: 800; margin-bottom: 8px; }
+
+.ex { border: 2px solid var(--line); border-radius: 16px; background: var(--tint-yellow); padding: 14px; display: grid; gap: 10px; }
+.ex h3 { margin: 0; }
+.ex pre, .post { white-space: pre-wrap; overflow-wrap: anywhere; font: 400 17px/1.45 var(--font); }
+.ex .k-btn { justify-self: start; }
+
+.cols { display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+.field { display: grid; gap: 4px; margin-bottom: 12px; }
+.field label { font-weight: 700; font-size: 15px; }
+.field small { font-size: 13px; color: var(--ink2); }
+.field input { width: 100%; min-height: 48px; border: 2px solid var(--line); border-radius: 14px; padding: 0 12px; background: var(--surface); color: var(--ink); font: 400 16px var(--font); }
+.row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+.k-btn.big { min-height: 48px; font-size: 15px; }
+
+.post { min-height: 96px; border: 2px solid var(--line); border-radius: 16px; background: var(--surface2); padding: 14px; }
+.gap { background: var(--tint-yellow); border-bottom: 2px dashed var(--ink2); border-radius: 4px; padding: 0 3px; }
+.count { margin-top: 10px; font: 500 14px var(--mono); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.count b { font-weight: 500; font-size: 18px; }
+.count.over { color: var(--ink); }
+.count.over b { background: var(--coral); color: var(--navy); border-radius: 8px; padding: 1px 8px; }
+.warn { min-height: 22px; margin-top: 4px; font-size: 14px; font-weight: 700; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+.actions a.k-btn { text-decoration: none; }
+.status { min-height: 22px; margin-top: 8px; font-size: 14px; font-weight: 700; }
+.tip { border-top: 2px dashed var(--line); padding-top: 14px; font-size: 15px; }
+.tip b { font-weight: 800; }
+
+/* the rest of the deck */
+.browse { margin-top: 24px; }
+.browse .tools { margin: 12px 0; }
+.browse input[type=search] { width: 100%; max-width: 420px; min-height: 48px; border: 2px solid var(--line); border-radius: 14px; padding: 0 12px; background: var(--surface); color: var(--ink); font: 400 16px var(--font); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; }
+.chips button { min-height: 44px; border: 2px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); padding: 0 14px; font-weight: 700; font-size: 14px; cursor: pointer; }
+.chips button[aria-pressed="true"] { background: var(--navy); color: var(--yellow); }
+.tiles { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.tile { width: 100%; height: 100%; min-height: 44px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; text-align: left; padding: 12px 14px 14px; background: var(--surface); color: var(--ink); border: 3px solid var(--navy); border-radius: 16px; box-shadow: 4px 4px 0 var(--navy); cursor: pointer; }
+html[data-theme="dark"] .tile { border-color: var(--line); box-shadow: 4px 4px 0 var(--shadow-c); }
+.tiles li:nth-child(odd) .tile { transform: rotate(-.5deg); }
+.tiles li:nth-child(even) .tile { transform: rotate(.4deg); }
+.tile:hover, .tile:focus-visible { transform: rotate(0); }
+.tile .cat { font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; background: var(--c); color: var(--navy); border: 2px solid var(--navy); border-radius: 999px; padding: 5px 10px; }
+.tile .nm { font-size: 18px; font-weight: 800; line-height: 1.2; }
+.tile .th { font-size: 14px; color: var(--ink2); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.tile[aria-current="true"] { background: var(--tint-yellow); }
+.tile .now { font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+@media (max-width: 480px) { .panel { padding: 14px; } .bench .inner { padding: 14px; } }
+</style>
+</head>
+<body>
+
+<div class="k-top">
+  <a class="k-btn" href="/">&larr; Professor Kiosk</a>
+  <div class="right">
+    <button class="k-btn" id="helpBtn" type="button" aria-haspopup="dialog">? Help</button>
+    <button class="k-btn night" id="themeToggle" type="button" aria-label="Toggle night mode">🌙 Night mode</button>
+  </div>
+</div>
+
+<dialog class="k-help" id="help" aria-labelledby="help-t">
+  <div class="hh"><h2 id="help-t">How the Format Deck works</h2><button class="k-btn" id="helpX" type="button" aria-label="Close help">&#x2715;</button></div>
+  <div class="hb">
+    <h3>The idea</h3>
+    <p>A format is the shape of a joke with the jokes taken out: "Nobody: / Me:", a fake headline, a quote post game opener. Pick a shape, put your own idea in the blanks, and the structure does some of the work for you. The Format Deck gives you the shape. The joke is still yours.</p>
+
+    <h3>Pick a format</h3>
+    <ul>
+      <li>The top card is the one on the table. <b>Deal another card</b> (or press the Space bar) swaps it for a random one.</li>
+      <li>Below it, every format is listed. Filter by category or search, then tap one to put it on the table.</li>
+    </ul>
+
+    <h3>Fill it in</h3>
+    <ul>
+      <li>Each card explains how the format works and shows a <b>worked example</b>. <b>Use this example</b> fills the blanks with the example's words so you can see it work, then change them.</li>
+      <li>Type in the blanks and your post builds itself underneath. Empty blanks show up highlighted. If a blank appears twice in the post, you only type it once.</li>
+      <li>The counter shows how many characters the post has so far, out of Bluesky's limit of 300.</li>
+    </ul>
+
+    <h3>Post it</h3>
+    <ul>
+      <li><b>Copy post</b> copies the text. Any blank you left empty is copied as its label in curly brackets, so you can see it.</li>
+      <li><b>Open in Bluesky</b> opens the Bluesky composer on bsky.app with your text already in it. Your text goes to bsky.app only when you tap that button. If you use another app or site, such as Blacksky or Northsky, use Copy post instead.</li>
+    </ul>
+
+    <h3>Good to know</h3>
+    <p>Everything runs in your browser. No sign-in, and nothing is sent to this site. Your blanks are saved on this device only, so you can come back to a half-finished post. Clear blanks wipes them for the card on the table.</p>
+  </div>
+</dialog>
+
+<header class="k-hero">
+  <div class="k-wrap">
+    <div>
+      <span class="k-tag navy">Level 1 &middot; Tool 08</span>
+      <h1>Format Deck</h1>
+      <p>Pick a joke format, see how it works, fill in the blanks, check the length, and post it.</p>
+    </div>
+  </div>
+</header>
+
+<main class="k-main">
+  <div class="k-wrap">
+    <div class="panel msg" id="loadmsg" hidden>The formats could not be loaded. Try reloading the page.</div>
+
+    <section class="panel bench" id="bench" aria-labelledby="fname" hidden>
+      <div class="band" id="band"><span class="tag" id="cat"></span><span class="tag" id="pos"></span></div>
+      <div class="inner">
+        <div class="head">
+          <h2 id="fname" tabindex="-1"></h2>
+          <button class="k-btn primary big" id="deal" type="button">🎲 Deal another card <span class="sr">(or press Space)</span></button>
+        </div>
+        <p class="how" id="how"></p>
+
+        <div class="ex">
+          <h3>Worked example</h3>
+          <pre id="exText"></pre>
+          <button class="k-btn big" id="useEx" type="button">Use this example</button>
+        </div>
+
+        <div class="cols">
+          <section aria-labelledby="fill-h">
+            <h3 id="fill-h">Your blanks</h3>
+            <div id="fields"></div>
+            <div class="row"><button class="k-btn big" id="clear" type="button">Clear blanks</button></div>
+          </section>
+          <section aria-labelledby="post-h">
+            <h3 id="post-h">Your post</h3>
+            <div class="post" id="post"></div>
+            <p class="count" id="count"></p>
+            <p class="warn" id="warn" role="status" aria-live="polite"></p>
+            <div class="actions">
+              <button class="k-btn primary big" id="copy" type="button">Copy post</button>
+              <a class="k-btn big" id="open" href="https://bsky.app/intent/compose" target="_blank" rel="noopener">Open in Bluesky ↗</a>
+            </div>
+            <p class="status" id="status" role="status" aria-live="polite"></p>
+          </section>
+        </div>
+
+        <p class="tip" id="tip"></p>
+      </div>
+    </section>
+
+    <section class="panel browse" id="browse" aria-labelledby="all-h" hidden>
+      <h2 id="all-h">All formats</h2>
+      <div class="tools">
+        <label class="sr" for="q">Search formats</label>
+        <input type="search" id="q" maxlength="60" placeholder="Search formats…" autocomplete="off" enterkeyhint="search" />
+      </div>
+      <div class="chips" id="cats" role="group" aria-label="Filter by category"></div>
+      <p class="hint" id="found" role="status" aria-live="polite"></p>
+      <ul class="tiles" id="tiles"></ul>
+    </section>
+  </div>
+</main>
+
+<footer class="k-foot">
+  <div class="k-wrap">
+    <strong>Thank you for using Professor Kiosk.<br />Please take your receipt.</strong>
+    <div class="links">
+      <a class="by" href="https://bsky.app/profile/professorkiosk.wtf" target="_blank" rel="noopener"><img class="footer-avatar" data-pk-avatar src="" alt="" hidden />Made by @professorkiosk.wtf</a>
+      <a class="kofi" href="https://ko-fi.com/professorkiosk" target="_blank" rel="noopener">&#9749; Support these projects on Ko-fi</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+'use strict';
+var KEY = 'pk-formats-v1', MAX_VAL = 300, LIMIT = 300;
+var COLORS = ['var(--coral)', 'var(--yellow)', 'var(--teal)', 'var(--purple)', 'var(--pink)', 'var(--sky)'];
+function $(id) { return document.getElementById(id); }
+var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var rnd = Math.random;
+
+// ---------- theme (shared 'theme' key) ----------
+function applyThemeLabel() { $('themeToggle').textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️ Day mode' : '🌙 Night mode'; }
+$('themeToggle').addEventListener('click', function () {
+  var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (dark) document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', 'dark');
+  try { localStorage.setItem('theme', dark ? 'light' : 'dark'); } catch (e) {}
+  applyThemeLabel();
+});
+applyThemeLabel();
+
+// ---------- small helpers ----------
+function h(tag, attrs) {
+  var e = document.createElement(tag);
+  for (var k in (attrs || {})) { if (attrs[k] == null) continue; if (k === 'text') e.textContent = attrs[k]; else if (k === 'class') e.className = attrs[k]; else if (k === 'on') { for (var ev in attrs.on) e.addEventListener(ev, attrs.on[ev]); } else e.setAttribute(k, attrs[k]); }
+  for (var i = 2; i < arguments.length; i++) if (arguments[i]) e.appendChild(arguments[i]);
+  return e;
+}
+// how and tip may hold [text](/page) or [text](https://...) links; everything else is plain text
+function inline(parent, text) {
+  var re = /\[([^\]]+)\]\(([^)\s]+)\)/g, last = 0, m;
+  while ((m = re.exec(text))) {
+    if (m.index > last) parent.appendChild(document.createTextNode(text.slice(last, m.index)));
+    var url = m[2];
+    if (/^\/(?!\/)/.test(url) || /^https:\/\//.test(url)) {
+      var a = document.createElement('a'); a.href = url; a.textContent = m[1];
+      if (url.charAt(0) !== '/') { a.target = '_blank'; a.rel = 'noopener'; }
+      parent.appendChild(a);
+    } else parent.appendChild(document.createTextNode(m[1]));
+    last = re.lastIndex;
+  }
+  if (last < text.length) parent.appendChild(document.createTextNode(text.slice(last)));
+}
+function plain(text) { return text.replace(/\[([^\]]+)\]\([^)\s]+\)/g, '$1'); }
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+// Bluesky's limit counts graphemes (a family emoji is one), not code units
+var seg = (window.Intl && Intl.Segmenter) ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
+function glen(s) { return seg ? Array.from(seg.segment(s)).length : Array.from(s).length; }
+
+// ---------- the text file ----------
+function slugify(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'format'; }
+function blanksOf(text) {
+  var out = [], re = /\{([^{}\n]{1,80})\}/g, m;
+  while ((m = re.exec(text))) { var l = m[1].trim(); if (l && out.indexOf(l) < 0) out.push(l); }
+  return out;
+}
+function parse(src) {
+  var list = [], cur = null;
+  String(src).replace(/\r\n?/g, '\n').split('\n').forEach(function (line) {
+    if (/^;;/.test(line)) return;
+    var m = /^##\s+(.+?)\s*$/.exec(line);
+    if (m) { cur = { name: m[1], cat: '', how: '', template: [], exampleRaw: '', tip: '' }; list.push(cur); return; }
+    if (!cur) return;
+    m = /^(category|how|template|example|tip):\s?(.*)$/.exec(line);
+    if (!m) return;
+    var k = m[1], v = m[2].replace(/\s+$/, '');
+    if (k === 'template') cur.template.push(v);
+    else if (k === 'category') cur.cat = v.trim();
+    else if (k === 'example') cur.exampleRaw = v;
+    else cur[k] = cur[k] ? cur[k] + ' ' + v : v;
+  });
+  var seen = Object.create(null), out = [];
+  list.forEach(function (f) {
+    while (f.template.length && !f.template[0].trim()) f.template.shift();
+    while (f.template.length && !f.template[f.template.length - 1].trim()) f.template.pop();
+    if (!f.template.length) return;
+    f.labels = blanksOf(f.template.join('\n'));
+    f.example = f.exampleRaw ? f.exampleRaw.split('|').map(function (x) { return x.trim(); }) : [];
+    while (f.example.length < f.labels.length) f.example.push('');
+    f.example = f.example.slice(0, f.labels.length);
+    if (!f.cat) f.cat = 'More';
+    var base = slugify(f.name), s = base, n = 2;
+    while (seen[s]) s = base + '-' + (n++);
+    seen[s] = true; f.slug = s;
+    out.push(f);
+  });
+  return out;
+}
+// the post for a format and a list of blank values; an empty blank stays as its {label}
+function build(f, vals) {
+  var text = f.template.join('\n'), parts = [], empty = [], last = 0, m, re = /\{([^{}\n]{1,80})\}/g, flat = '';
+  while ((m = re.exec(text))) {
+    if (m.index > last) parts.push({ t: text.slice(last, m.index) });
+    var label = m[1].trim(), i = f.labels.indexOf(label), v = String(vals && vals[i] != null ? vals[i] : '').trim();
+    if (v) parts.push({ t: v });
+    else { parts.push({ gap: '{' + label + '}' }); if (empty.indexOf(label) < 0) empty.push(label); }
+    last = re.lastIndex;
+  }
+  if (last < text.length) parts.push({ t: text.slice(last) });
+  parts.forEach(function (p) { flat += p.t != null ? p.t : p.gap; });
+  return { text: flat, parts: parts, empty: empty };
+}
+
+// ---------- state ----------
+var F = [], bySlug = Object.create(null), CATS = [];
+var S = { sel: null, vals: Object.create(null) };
+var filterCat = '', query = '', lastWarn = null;
+function cleanVal(x) { return String(x == null ? '' : x).replace(/[\u0000-\u001f\u007f]/g, ' ').slice(0, MAX_VAL); }
+function load() {
+  var raw = null; try { raw = localStorage.getItem(KEY); } catch (e) { return; }
+  if (!raw) return;
+  try {
+    var d = JSON.parse(raw);
+    if (typeof d.sel === 'string' && bySlug[d.sel]) S.sel = d.sel;
+    if (d.vals && typeof d.vals === 'object') Object.keys(d.vals).forEach(function (k) {
+      if (bySlug[k] && Array.isArray(d.vals[k])) S.vals[k] = d.vals[k].slice(0, bySlug[k].labels.length).map(cleanVal);
+    });
+  } catch (e) {}
+}
+var saveTimer = null;
+function save() { clearTimeout(saveTimer); saveTimer = setTimeout(flush, 200); }
+function flush() {
+  if (!F.length) return;   // nothing loaded yet (or the file failed): leave what is saved alone
+  var vals = {};
+  Object.keys(S.vals).forEach(function (k) { if (S.vals[k].some(function (x) { return x && x.trim(); })) vals[k] = S.vals[k]; });
+  try { localStorage.setItem(KEY, JSON.stringify({ sel: S.sel, vals: vals })); } catch (e) {}
+}
+window.addEventListener('pagehide', flush);
+function say(t) { var s = $('status'); s.textContent = t; clearTimeout(say.t); say.t = setTimeout(function () { s.textContent = ''; }, 4000); }
+
+// ---------- the workbench ----------
+function catColor(cat) { return COLORS[Math.max(0, CATS.indexOf(cat)) % COLORS.length]; }
+function renderBench(f) {
+  var vals = S.vals[f.slug];
+  $('band').style.setProperty('--c', catColor(f.cat));
+  $('cat').textContent = f.cat;
+  $('pos').textContent = 'Card ' + (F.indexOf(f) + 1) + ' of ' + F.length;
+  $('fname').textContent = f.name;
+  var how = $('how'); how.textContent = ''; inline(how, f.how);
+  $('exText').textContent = build(f, f.example).text;
+  var fields = $('fields'); fields.textContent = '';
+  var text = f.template.join('\n');
+  f.labels.forEach(function (label, i) {
+    var uses = text.split('{' + label + '}').length - 1, id = 'blank' + i;
+    var wrap = h('div', { class: 'field' }, h('label', { for: id, text: cap(label) }));
+    var input = h('input', { type: 'text', id: id, maxlength: String(MAX_VAL), autocomplete: 'off', enterkeyhint: i === f.labels.length - 1 ? 'done' : 'next' });
+    input.value = vals[i] || '';
+    // look the array up each time: Use this example and Clear replace it
+    input.addEventListener('input', function () { (S.vals[f.slug] = S.vals[f.slug] || [])[i] = cleanVal(this.value); updatePost(); save(); });
+    wrap.appendChild(input);
+    if (uses > 1) wrap.appendChild(h('small', { text: 'Used ' + uses + ' times in the post. Type it once.' }));
+    fields.appendChild(wrap);
+  });
+  var tip = $('tip'); tip.textContent = '';
+  if (f.tip) { tip.hidden = false; tip.appendChild(h('b', { text: 'Tip: ' })); inline(tip, f.tip); } else tip.hidden = true;
+  lastWarn = null;
+  updatePost();
+}
+function updatePost() {
+  var f = bySlug[S.sel]; if (!f) return;
+  var b = build(f, S.vals[f.slug]), post = $('post');
+  post.textContent = '';
+  b.parts.forEach(function (p) { post.appendChild(p.gap != null ? h('span', { class: 'gap', text: p.gap }) : document.createTextNode(p.t)); });
+  var n = glen(b.text), over = n > LIMIT, c = $('count');
+  c.className = 'count' + (over ? ' over' : '');
+  c.textContent = ''; c.appendChild(h('b', { text: String(n) })); c.appendChild(document.createTextNode(' / ' + LIMIT + ' characters'));
+  var msgs = [];
+  if (over) msgs.push('Over the limit by ' + (n - LIMIT) + '. Bluesky stops at ' + LIMIT + '.');
+  if (b.empty.length) msgs.push(b.empty.length + (b.empty.length === 1 ? ' blank is' : ' blanks are') + ' still empty.');
+  var m = msgs.join(' ');
+  if (m !== lastWarn) { $('warn').textContent = m; lastWarn = m; }
+  $('open').setAttribute('href', 'https://bsky.app/intent/compose?text=' + encodeURIComponent(b.text));
+}
+function show(slug) {
+  var f = bySlug[slug]; if (!f) return;
+  S.sel = slug; if (!S.vals[slug]) S.vals[slug] = [];
+  renderBench(f); markTiles();
+  try { history.replaceState(null, '', '#f=' + slug); } catch (e) {}
+  save();
+}
+function deal() {
+  var pool = F.filter(function (f) { return f.slug !== S.sel; });
+  if (!pool.length) return;
+  var f = pool[Math.floor(rnd() * pool.length)];
+  show(f.slug); say('Dealt: ' + f.name + '.');
+}
+
+// ---------- the rest of the deck ----------
+function matches(f) {
+  if (filterCat && f.cat !== filterCat) return false;
+  var words = query.toLowerCase().split(/\s+/).filter(Boolean), hay = (f.name + ' ' + f.cat + ' ' + plain(f.how)).toLowerCase();
+  return words.every(function (w) { return hay.indexOf(w) >= 0; });
+}
+function renderChips() {
+  var box = $('cats'); box.textContent = '';
+  function chip(label, value) {
+    box.appendChild(h('button', { type: 'button', 'aria-pressed': String(filterCat === value), text: label, on: { click: function () { filterCat = value; renderChips(); renderTiles(); } } }));
+  }
+  chip('All', '');
+  CATS.forEach(function (c) { chip(c, c); });
+}
+function firstSentence(t) { t = plain(t); var m = /^.*?[.!?](?=\s|$)/.exec(t); return m ? m[0] : t; }
+function renderTiles() {
+  var ul = $('tiles'); ul.textContent = '';
+  var shown = F.filter(matches);
+  shown.forEach(function (f) {
+    var b = h('button', { type: 'button', class: 'tile', 'data-slug': f.slug, 'aria-current': f.slug === S.sel ? 'true' : null, style: '--c:' + catColor(f.cat), on: { click: function () { pick(f.slug); } } },
+      h('span', { class: 'cat', text: f.cat }), h('span', { class: 'nm', text: f.name }), h('span', { class: 'th', text: firstSentence(f.how) }));
+    if (f.slug === S.sel) b.appendChild(h('span', { class: 'now', text: 'On the table' }));
+    ul.appendChild(h('li', {}, b));
+  });
+  $('found').textContent = !shown.length ? 'No formats match. Clear the search or pick All.' : shown.length === F.length ? F.length + ' formats' : shown.length + (shown.length === 1 ? ' format matches' : ' formats match');
+}
+function markTiles() {
+  Array.prototype.forEach.call($('tiles').querySelectorAll('.tile'), function (b) {
+    var on = b.getAttribute('data-slug') === S.sel;
+    if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
+    var now = b.querySelector('.now');
+    if (on && !now) b.appendChild(h('span', { class: 'now', text: 'On the table' }));
+    if (!on && now) now.remove();
+  });
+}
+function pick(slug) {
+  show(slug);
+  var bench = $('bench');
+  if (bench.scrollIntoView) bench.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  $('fname').focus({ preventScroll: true });
+}
+
+// ---------- actions ----------
+$('deal').onclick = deal;
+$('useEx').onclick = function () {
+  var f = bySlug[S.sel]; if (!f) return;
+  S.vals[f.slug] = f.example.map(cleanVal);
+  Array.prototype.forEach.call($('fields').querySelectorAll('input'), function (inp, i) { inp.value = S.vals[f.slug][i] || ''; });
+  updatePost(); save(); say('Example words filled in. Change them to make it yours.');
+};
+$('clear').onclick = function () {
+  var f = bySlug[S.sel]; if (!f) return;
+  S.vals[f.slug] = [];
+  var inputs = $('fields').querySelectorAll('input');
+  Array.prototype.forEach.call(inputs, function (inp) { inp.value = ''; });
+  updatePost(); save(); say('Blanks cleared.');
+  if (inputs[0]) inputs[0].focus();
+};
+$('copy').onclick = function () {
+  var f = bySlug[S.sel]; if (!f) return;
+  var b = build(f, S.vals[f.slug]), t = b.text;
+  var note = b.empty.length ? ' ' + b.empty.length + (b.empty.length === 1 ? ' blank was' : ' blanks were') + ' still empty and copied as {labels}.' : '';
+  function fallback() { var ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); var ok = false; try { ok = document.execCommand('copy'); } catch (e) {} ta.remove(); say(ok ? 'Copied.' + note : "Couldn't copy."); }
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { say('Copied.' + note); }, fallback); else fallback();
+};
+$('q').addEventListener('input', function () { query = this.value; renderTiles(); });
+document.addEventListener('keydown', function (e) {
+  if (e.key !== ' ' || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (document.querySelector('dialog[open]')) return;
+  var t = e.target, tag = t && t.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'A' || tag === 'SELECT') return;
+  if (!F.length) return;
+  e.preventDefault(); deal();
+});
+function fromHash() { var m = /[#&]f=([^&]+)/.exec(location.hash); if (!m) return null; try { var s = decodeURIComponent(m[1]); return bySlug[s] ? s : null; } catch (e) { return null; } }
+window.addEventListener('hashchange', function () { var s = fromHash(); if (s && s !== S.sel) show(s); });
+
+// ---------- go ----------
+function failed() { $('bench').hidden = true; $('browse').hidden = true; $('loadmsg').hidden = false; }
+function init(list) {
+  if (!list.length) { failed(); return; }
+  F = list;
+  F.forEach(function (f) { bySlug[f.slug] = f; if (CATS.indexOf(f.cat) < 0) CATS.push(f.cat); });
+  load();
+  renderChips();
+  var start = fromHash() || S.sel;
+  $('bench').hidden = false; $('browse').hidden = false;
+  if (start) { show(start); renderTiles(); }
+  else { renderTiles(); show(F[Math.floor(rnd() * F.length)].slug); }
+}
+fetch('/formats.txt', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.text(); }).then(function (t) { init(parse(t)); }).catch(failed);
+window.__formats = { parse: parse, build: build, glen: glen, state: function () { return S; }, formats: function () { return F; }, seed: function (fn) { rnd = fn || Math.random; } };
+})();
+</script>
+<script src="/kiosk.js" defer></script>
+<script src="/kiosk-help.js" defer></script>
+</body>
+</html>

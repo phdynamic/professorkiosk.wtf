@@ -117,3 +117,11 @@
 ## 2026-10-13 · Book link switched to Amazon
 - changed: the three book links (`jokeweb.html` panel and Help, `tutorials.txt`) and the jokeweb Q1/Q2 checks now use the Amazon listing
 - live-tested: no
+
+## 2026-10-13 · Format Deck
+- built: `public/formats.html` (`/formats`), `public/formats.txt` (40 formats, 8 categories), `/formats` route in `src/index.ts`, hub card 08 (the four separate sites are now 09 to 12), `test/browser/formats.suite.js` (48 checks)
+- changed: `help.suite.js` also covers `/formats` (52 checks, H7 label reworded); `mashup.suite.js` hub checks G4, G6, G6c now expect 12 cards; `run.js` and the test static server list the page
+- note: `formats.txt` is a first draft by the assistant for the developer to edit; examples are meant to be original
+- note: fixed during build: Use this example and Clear replaced the values array while the inputs still pointed at the old one; the saved blanks could be overwritten by a visit where the formats had not loaded
+- note: in the build sandbox the receipt, jokeweb, mashup, icon, help and footer suites print "A network error occurred." JS errors on the unmodified files too; cause not found
+- live-tested: no

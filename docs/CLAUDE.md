@@ -21,13 +21,13 @@ Project: Professor Kiosk site (professorkiosk.wtf). Two parts in one Express + T
 
 ## Core concept
 - Feed generator: each user registers with a Bluesky app password and gets their own published feed (Top Skeets by likes, My Skeets newest first, each with or without replies). The server fetches posts in the background and serves the feed skeleton.
-- Tool pages: `/tutorials`, `/jokeweb`, `/mashup`, `/receipt`, `/tracer`, `/imagine-flagons`. Static HTML in `public/`, no sign-in, no server calls except to Bluesky's public API from the visitor's browser.
+- Tool pages: `/tutorials`, `/jokeweb`, `/mashup`, `/formats`, `/receipt`, `/tracer`, `/imagine-flagons`. Static HTML in `public/`, no sign-in, no server calls except to Bluesky's public API from the visitor's browser.
 - Hub at `/` links all of them plus four external sites.
 
 ## Architecture notes (rarely change)
 - Server: `src/index.ts` (routes), `scheduler.ts` (refresh cycles), `db.ts` (JSON files in `DATA_DIR`), `bluesky.ts` (author-feed fetch), `register.ts` / `identity.ts` (publish feed, find the account's PDS), `feed-skeleton.ts`, `well-known.ts`, `budget.ts` (shared AppView request budget), `clientip.ts`, `links.ts` (wraps `public/kiosk-links.js`).
 - Static pages share `public/kiosk.css`, `kiosk.js`, `kiosk-help.js`, `kiosk-links.js`, `favicon.svg`, `fonts/`.
-- Text-driven pages: `/tutorials` reads `public/tutorials.txt`; `/mashup` reads `public/topics.js`.
+- Text-driven pages: `/tutorials` reads `public/tutorials.txt`; `/mashup` reads `public/topics.js`; `/formats` reads `public/formats.txt` (format described at the top of that file).
 - Tests: unit in `test/*.test.js` (`npm test`); browser suites in `test/browser/` (`npm run test:browser`, needs a Chromium-family browser, mocks Bluesky).
 
 ## Maintenance rules (how these docs are kept)

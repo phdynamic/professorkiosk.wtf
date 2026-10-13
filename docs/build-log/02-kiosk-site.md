@@ -188,3 +188,8 @@
 - note: each overlaps an existing format (Before / After, If It Were, Interview Question); the developer may replace those
 - changed: the category chip check no longer hard-codes the Wordplay count
 - live-tested: no
+
+## 2026-10-13 · Format Deck review, category 4 (Dialogue)
+- changed: deleted Before / After and Customer Service; kept Is Just and Professor X Asks; replaced Interview Question with Interview Detour ("Me: a long, rambling answer... / Interviewer: I meant questions about {the interview topic}."); the deck has 35 formats
+- note: If It Were was kept alongside Is Just (the developer did not ask to remove it)
+- live-tested: no

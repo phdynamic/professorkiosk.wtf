@@ -28,12 +28,6 @@ how: Pair a grand plan with what actually happened. The gap is the joke, so keep
 template: Expectation: {the grand plan}
 template: Reality: {the small, exact outcome}
 
-## Before / After
-category: Contrast
-how: Two lines around one small event that changed how you see ordinary things. The event appears in both lines, so you only type it once.
-template: Before {the event}: {how things used to be}
-template: After {the event}: {how things are now}
-
 ## Then and Now
 category: Contrast
 how: Put a year from the past next to this year. The first line says how things were then. The second is a surprising way they have changed, or stayed exactly the same.
@@ -74,23 +68,17 @@ template: ★☆☆☆☆ {the thing being reviewed}
 template: "{a review title}"
 template: {the complaint}
 
-## Customer Service
-category: Dialogue
-how: A short exchange where a representative answers a normal complaint with total calm and zero help.
-template: Me: {my complaint}
-template: Them: {the calm, unhelpful reply}
-
 ## Overheard
 category: Dialogue
 how: Report one line of dialogue with no context. The missing context does the work.
 template: Overheard at {a place}:
 template: "{a line out of context}"
 
-## Interview Question
+## Interview Detour
 category: Dialogue
-how: A job interview where your answer is honest, strange, or both. A fixed question with a fresh answer is an old trick for a reason.
-template: Interviewer: {the question}
-template: Me: {my answer}
+how: Answer an interview question with a long, rambling reply about a very weird or very specific subject. The interviewer gently steers you back.
+template: Me: {a long, rambling answer about a very weird or specific subject}
+template: Interviewer: I meant questions about {the interview topic}.
 
 ## Professor X Asks
 category: Dialogue

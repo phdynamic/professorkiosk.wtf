@@ -157,3 +157,9 @@
 ## 2026-10-13 · Finder writes a new file each run
 - changed: output goes to `scripts/candidates-DATE-TIME.txt` (ignored by git) instead of overwriting `candidates.txt`, after a one-format run overwrote a full run
 - live-tested: no
+
+## 2026-10-13 · Finder retries Bluesky server errors
+- note: fourth real run: 194 candidates, Before / After 8 and Customer Service 4; One-Star Review was skipped after a temporary HTTP 502
+- changed: the finder retries 5xx answers twice (waits 2 s, then 4 s) and lists any formats it could not search at the end
+- built: unit test for the retry (now 24)
+- live-tested: no

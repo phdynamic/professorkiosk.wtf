@@ -106,6 +106,7 @@ async function fetchPage(q, cursor) {
     const r = await fetch(url, { headers });
     if (r.status === 429) { await sleep((Number(r.headers.get('retry-after')) || 30) * 1000); continue; }
     if (r.status === 401 || r.status === 403) { const e = new Error('blocked'); e.blocked = r.status; throw e; }
+    if (r.status >= 500 && attempt < 2) { await sleep(2000 * (attempt + 1)); continue; }   // a hiccup on Bluesky's side: wait and try again
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return r.json();
   }
@@ -134,7 +135,7 @@ async function main() {
   }
   const lines = [';; Candidates from scripts/find-examples.mjs, most-liked first. Read each one. Copy the post: lines you like into public/formats.txt.',
     ';; Only feature posts you would be comfortable having the author see. Nothing here is on the site until you copy it.', ''];
-  let total = 0;
+  let total = 0; const failed = [];
   try { await signIn(); } catch (e) { console.error(e.message); process.exitCode = 1; return; }
   for (const f of formats) {
     let posts = [];
@@ -145,7 +146,7 @@ async function main() {
         console.error('Set BSKY_HANDLE and BSKY_APP_PASSWORD (an app password from Bluesky Settings) and run again, or use --print-queries and search by hand.');
         process.exitCode = 1; return;
       }
-      console.error(`${f.name}: ${e.message}`); continue;
+      console.error(`${f.name}: ${e.message}`); failed.push(f.name); continue;
     }
     const byUri = new Map(posts.map(p => [p.uri, p])), unique = [...byUri.values()];
     const need = likesGiven || f.likes == null ? minLikes : f.likes;   // a format whose real posts are rarely liked can lower the bar with a likes: line
@@ -166,6 +167,7 @@ async function main() {
     if (misses.length) misses.forEach(p => console.log(`    nothing fit the format; top result: ${p.likeCount || 0} likes: ${(p.record && p.record.text || '').replace(/\s+/g, ' ').slice(0, 90)}`));
     await sleep(500);
   }
+  if (failed.length) { lines.push(`;; formats that could not be searched: ${failed.join(', ')}`); console.error(`\nCould not search: ${failed.join(', ')}. Run again with --only "<name>" for just those.`); }
   fs.writeFileSync(OUT, lines.join('\n'));
   console.log(`\n${total} candidates written to ${OUT}`);
 }

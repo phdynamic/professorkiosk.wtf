@@ -128,3 +128,21 @@ test('a bad match: regex is reported, and --print-queries signs in to nothing', 
   const q = await run({ FORMATS_FILE: formats, CANDIDATES_FILE: path.join(dir, 'c.txt'), ARGS: ['--print-queries'] });
   assert.strictEqual(q.code, 0); assert.ok(/bsky\.app\/search\?q=%22hello%20there%22/.test(q.out), q.out);
 });
+
+test('a temporary 502 from Bluesky is retried instead of skipping the format', async () => {
+  let hits = 0;
+  const srv = http.createServer((req, res) => {
+    res.setHeader('content-type', 'application/json');
+    if (req.url.includes('createSession')) return res.end(JSON.stringify({ accessJwt: 'tok123' }));
+    hits++; if (hits === 1) { res.statusCode = 502; return res.end('{}'); }
+    res.end(JSON.stringify({ posts: [{ uri: 'at://did:one/app.bsky.feed.post/p1', author: { did: 'did:one', handle: 'one.test' }, likeCount: 90, record: { text: 'Nobody:\nMe: retrying' } }] }));
+  });
+  await new Promise(r => srv.listen(0, '127.0.0.1', r));
+  try {
+    const dir = tmp(), formats = path.join(dir, 'f.txt'), out = path.join(dir, 'c.txt');
+    fs.writeFileSync(formats, '## Nobody / Me\nsearch: "Nobody:"\nmatch: ^nobody:\n');
+    const r = await run({ FORMATS_FILE: formats, CANDIDATES_FILE: out, BSKY_SERVICE: 'http://127.0.0.1:' + srv.address().port, BSKY_HANDLE: 'me.test', BSKY_APP_PASSWORD: 'x', ARGS: ['--pages', '1'] });
+    assert.strictEqual(r.code, 0, r.err);
+    assert.ok(/post: https:\/\/bsky\.app\/profile\/one\.test\/post\/p1/.test(fs.readFileSync(out, 'utf8')) && hits === 2, 'hits ' + hits);
+  } finally { srv.close(); }
+});

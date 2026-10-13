@@ -4,7 +4,7 @@ const out = [], errors = [];
 const ok = (n, c, x = '') => out.push((c ? 'PASS' : 'FAIL') + ': ' + n + (x ? ' — ' + x : ''));
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
 const AV = 'https://cdn.bsky.app/img/avatar/plain/did:plc:x/abc@jpeg';
-const PAGES = ['/', '/feeds', '/tracer', '/imagine-flagons', '/receipt', '/jokeweb', '/mashup', '/transitpass', '/rushhour', '/mutualmatch'];
+const PAGES = ['/', '/feeds', '/tracer', '/imagine-flagons', '/receipt', '/jokeweb', '/mashup', '/transitpass', '/rushhour', '/mutualmatch', '/tightener'];
 (async () => {
   const browser = await chromium.launch({ executablePath: require('./env').CHROME });
   async function mk(profile) {

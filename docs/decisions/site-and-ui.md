@@ -127,6 +127,12 @@
 - why: the developer asked to take both out altogether; I removed the finder as well because it existed only to find posts for "Seen in the wild" (it is in git history if wanted back)
 - source: developer request, 2026-10-13
 
+### 2026-10-13 · Joke Tightener is rule-based and tightens the whole joke · active
+- what: `/tightener` flags filler and hedge words and phrases (tap to cut, one-tap tighten with Undo), repeated words (three or more, shown but never cut) and sentences over 22 words (listed); character counter out of 300 in graphemes; Copy and Open in Bluesky; nothing stored; it is tool 05 on the hub, before Mutual Match (everything below moved down one, separate sites now 13 to 16)
+- why: the developer asked for the Tightener (named it the Joke Tightener and said it should tighten the entire joke, not split setup from punchline) and chose these features and the no-storage rule; the exact word lists, the "So" and "that" rules, the 22-word limit and the decision to never cut repeats for you are my choices
+- source: developer request and answers, 2026-10-13
+- live-tested: no
+
 ### 2026-10-13 · Mutual Match compares follows, followers and replies, and lists where the two differ · active
 - what: `/mutualmatch` reads both profiles, then replies (newest 500 posts), follows and followers (5,000 each, Load more to 20,000), and shows accounts both follow, follow both, both replied to, plus for each account the 5 accounts it replies to most that the other does not follow; a Venn-style card on one canvas; labeled accounts by handle only; it is tool 05 on the hub (everything below moved down one, separate sites now 12 to 15)
 - why: the developer chose the three comparisons, the 5,000 limit with Load more, the list-plus-card result and the placement; "They differ" was added by the developer, who defined it as the top 5 accounts each person interacts with that the other doesn't follow, and I took "interact with" to mean replies because that is the interaction the page already reads; the 5-account cut, the plus-sign "at least" wording and the Venn layout are my choices

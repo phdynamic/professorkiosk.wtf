@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Joke Tightener</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<meta name="description" content="Paste a joke and see the filler and hedge words, repeated words and long sentences in it. Tap a flag to cut it, or tighten the whole joke in one tap." />
+<link rel="preload" href="/fonts/dm-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/dm-sans-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<script>
+  // Apply the theme before first paint to avoid a light flash
+  (function() {
+    var saved = null;
+    try { saved = localStorage.getItem('theme'); } catch (e) {}
+    var dark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+  })();
+</script>
+<link rel="stylesheet" href="/kiosk.css" />
+<style>
+:root { --hero: var(--sky); --rink: #1d1b4f; }
+h1, h2, h3, p, ul, ol, dl, dd { margin: 0; }
+button, textarea { font: inherit; }
+[hidden] { display: none !important; }
+
+main.k-main { padding: 32px 0 0; }
+.k-hero .k-wrap { flex-wrap: wrap; align-items: flex-start; }
+.k-hero .copy { flex: 1 1 420px; min-width: 0; }
+.sticker { flex: 0 0 auto; display: none; }
+@media (min-width: 640px) { .sticker { display: block; margin-right: 8px; } }
+.stack { display: grid; gap: 24px; }
+.panel { background: var(--surface); border: 3px solid var(--line); border-radius: 20px; box-shadow: 5px 5px 0 var(--shadow-c); padding: 20px; min-width: 0; }
+.panel h2 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+.panel .sub { font-size: 14px; color: var(--ink2); margin-bottom: 14px; }
+.muted { font-size: 14px; color: var(--ink2); }
+
+.twin { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 980px) { .twin { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+
+#draft { width: 100%; min-height: 190px; resize: vertical; border: 3px solid var(--line); border-radius: 14px; padding: 12px 14px; background: var(--surface); color: var(--ink); font-size: 17px; line-height: 1.5; }
+.count { margin-top: 10px; font: 500 14px var(--mono); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.count b { font-weight: 500; font-size: 18px; }
+.count.over b { background: var(--coral); color: var(--navy); border-radius: 8px; padding: 1px 8px; }
+.row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+.row .k-btn { min-height: 44px; font-size: 15px; }
+.row .k-btn .arr { color: var(--yellow); }
+html[data-theme="dark"] .row .k-btn.primary .arr { color: var(--navy); }
+.status { min-height: 24px; font: 500 13px/1.4 var(--mono); margin-top: 10px; }
+.hint { font-size: 14px; margin-top: 10px; color: var(--ink2); }
+.hint a { font-weight: 700; text-underline-offset: 3px; }
+
+/* the draft with its flags */
+.flagview { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 18px; line-height: 2; min-height: 80px; }
+.flagview .empty { color: var(--ink2); font-style: italic; font-size: 15px; }
+.flag { border: 2px solid var(--navy); background: var(--yellow); color: var(--navy); border-radius: 8px; padding: 0 6px; font: inherit; cursor: pointer; }
+.flag::after { content: " \00d7"; font-weight: 800; font-size: .8em; }
+.flag:hover { background: var(--coral); }
+html[data-theme="dark"] .flag { border-color: var(--yellow); }
+.rep { background: var(--tint-teal); border-bottom: 3px solid var(--teal); border-radius: 4px; padding: 0 2px; }
+.key { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; font-size: 13px; color: var(--ink2); }
+.key .sw { display: inline-block; width: 14px; height: 14px; border-radius: 4px; vertical-align: -2px; margin-right: 6px; border: 2px solid var(--navy); }
+
+/* notes */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.stat { border: 3px solid var(--line); border-radius: 14px; padding: 8px 6px; text-align: center; background: var(--surface2); }
+.stat b { display: block; font-size: 22px; font-weight: 800; }
+.stat span { font: 500 11px var(--mono); color: var(--ink2); text-transform: uppercase; letter-spacing: .06em; }
+.notes { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.notes li { border-top: 2px dotted var(--ink2); padding-top: 10px; font-size: 15px; line-height: 1.5; }
+.notes li:first-child { border-top: 0; padding-top: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.chips .chip { min-height: 44px; border: 2px solid var(--navy); background: var(--yellow); color: var(--navy); border-radius: 22px; padding: 0 14px; font-weight: 700; cursor: pointer; }
+html[data-theme="dark"] .chips .chip { border-color: var(--yellow); }
+.chips .chip:hover { background: var(--coral); }
+.good { font-weight: 800; }
+
+.privacy { background: var(--tint-teal); border: 3px dashed var(--line); border-radius: 20px; padding: 16px 18px; }
+.privacy h2 { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+.privacy ul { padding-left: 20px; margin: 0; }
+.privacy li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<div class="k-top">
+  <a class="k-btn" href="/">&larr; Professor Kiosk</a>
+  <div class="right">
+    <button class="k-btn" id="helpBtn" type="button" aria-haspopup="dialog">? Help</button>
+    <button class="k-btn night" id="themeToggle" type="button" aria-label="Toggle night mode">🌙 Night mode</button>
+  </div>
+</div>
+
+<dialog class="k-help" id="help" aria-labelledby="help-t">
+  <div class="hh"><h2 id="help-t">How the Joke Tightener works</h2><button class="k-btn" id="helpX" type="button" aria-label="Close help">&#x2715;</button></div>
+  <div class="hb">
+    <h3>The idea</h3>
+    <p>A joke usually gets funnier when it gets shorter. Paste a joke or a draft post and the Tightener flags the words that pad it out. You decide what to cut. It never rewrites anything on its own.</p>
+
+    <h3>The three steps</h3>
+    <ol>
+      <li><b>Paste or type your joke.</b> The whole joke, setup and punchline together.</li>
+      <li><b>Look at the flags.</b> Yellow words are filler or hedges. Tap one to cut it, or tap its button in the list.</li>
+      <li><b>Tighten.</b> Cut flags one at a time, or press "Tighten it all" to cut every one at once. Undo brings the text back. Then copy it or open it in Bluesky.</li>
+    </ol>
+
+    <h3>What it flags</h3>
+    <ul>
+      <li><b>Filler and hedge words</b> (yellow, tap to cut): really, very, just, actually, basically, literally, honestly, totally, completely, absolutely, quite, rather, somewhat, simply, truly, definitely, probably, perhaps, obviously, clearly, plus phrases like kind of, sort of, a bit, you know, I mean, I think, I guess, to be honest and in fact. Also "So" at the start of a sentence, and "that" after verbs like think, said, knew and feel ("I think that" becomes "I think").</li>
+      <li><b>Repeated words</b> (teal underline): a word used three or more times. These are never cut for you, because repeating a word is often the joke. Look at each one and decide.</li>
+      <li><b>Long sentences</b>: any sentence over 22 words. They are listed in the notes, not cut.</li>
+    </ul>
+
+    <h3>Good to know</h3>
+    <ul>
+      <li>A flag is only a suggestion. Sometimes "just" or "really" is exactly the voice of the joke. Cut what helps.</li>
+      <li>The counter shows characters out of Bluesky's limit of 300, and how many characters you have cut.</li>
+      <li>Everything happens in your browser. Your joke is not sent anywhere and nothing is saved, so copy what you want to keep before you leave the page.</li>
+    </ul>
+  </div>
+</dialog>
+
+<header class="k-hero">
+  <div class="k-wrap">
+    <div class="copy">
+      <span class="k-tag navy">Level 1 &middot; Tool 05</span>
+      <h1>Joke Tightener</h1>
+      <p>Paste a joke and see the filler, hedges, repeated words and long sentences in it. Tap a flag to cut it, or tighten the whole joke in one tap.</p>
+    </div>
+    <svg class="sticker" width="180" height="140" viewBox="0 0 180 140" aria-hidden="true" focusable="false">
+      <rect x="40" y="58" width="100" height="30" rx="8" fill="#1B2150"/>
+      <rect x="34" y="52" width="100" height="30" rx="8" fill="#FFD23F" stroke="#1B2150" stroke-width="3"/>
+      <path d="M8 67 H30 M22 58 L31 67 L22 76" fill="none" stroke="#1B2150" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M172 67 H150 M158 58 L149 67 L158 76" fill="none" stroke="#1B2150" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M50 67 H118" stroke="#1B2150" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+  </div>
+</header>
+
+<main class="k-main">
+  <div class="k-wrap">
+    <div class="stack">
+      <section class="panel" aria-labelledby="in-h">
+        <h2 id="in-h">Your joke</h2>
+        <p class="sub">Type or paste the whole joke. Nothing leaves this page.</p>
+        <label class="sr" for="draft" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Your joke</label>
+        <textarea id="draft" maxlength="2000" spellcheck="true" placeholder="Paste a joke here…"></textarea>
+        <div class="count" id="count"><b>0</b> / 300 characters</div>
+        <div class="row">
+          <button class="k-btn primary" id="all" type="button" disabled>Tighten it all <span class="arr" aria-hidden="true">&rarr;</span></button>
+          <button class="k-btn" id="undo" type="button" disabled>Undo</button>
+          <button class="k-btn" id="clear" type="button" disabled>Clear</button>
+        </div>
+        <p class="hint">Want to see how it works? <a href="#example" id="example">Try an example</a>.</p>
+      </section>
+
+      <div class="twin">
+        <section class="panel" aria-labelledby="view-h">
+          <h2 id="view-h">The flags</h2>
+          <p class="sub">Tap a yellow word to cut it.</p>
+          <div class="flagview" id="view"><span class="empty">Your joke shows up here with flags on it.</span></div>
+          <div class="key"><span><span class="sw" style="background:var(--yellow)"></span>filler or hedge, tap to cut</span><span><span class="sw" style="background:var(--tint-teal);border-color:var(--teal)"></span>repeated three or more times</span></div>
+        </section>
+
+        <section class="panel" aria-labelledby="notes-h">
+          <h2 id="notes-h">Notes</h2>
+          <div class="stats" id="stats"></div>
+          <ul class="notes" id="notes"></ul>
+        </section>
+      </div>
+
+      <section class="panel" aria-labelledby="out-h">
+        <h2 id="out-h">When you're happy with it</h2>
+        <div class="row" style="margin-top:0">
+          <button class="k-btn primary" id="copy" type="button" disabled>Copy post</button>
+          <a class="k-btn" id="open" href="https://bsky.app/intent/compose" target="_blank" rel="noopener" aria-disabled="true">Open in Bluesky &#8599;</a>
+        </div>
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="privacy" aria-labelledby="priv">
+        <h2 id="priv">What this asks for</h2>
+        <ul>
+          <li><b>Sign-in:</b> none. No password, no permissions.</li>
+          <li><b>Reads:</b> nothing from Bluesky. It only looks at the text you type.</li>
+          <li><b>Stored:</b> nothing. Your joke stays in this page and is gone when you leave it.</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+</main>
+
+<footer class="k-foot">
+  <div class="k-wrap">
+    <strong>Thank you for using Professor Kiosk.<br />Please take your receipt.</strong>
+    <div class="links">
+      <a class="by" href="https://bsky.app/profile/professorkiosk.wtf" target="_blank" rel="noopener"><img class="footer-avatar" data-pk-avatar src="" alt="" hidden />Made by @professorkiosk.wtf</a>
+      <a class="kofi" href="https://ko-fi.com/professorkiosk" target="_blank" rel="noopener">&#9749; Support these projects on Ko-fi</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/kiosk-help.js" defer></script>
+<script>
+(function () {
+'use strict';
+
+var LIMIT = 300, LONG_WORDS = 22, REPEAT_MIN = 3;
+var EXAMPLE = "So I was honestly just trying to open a jar of pickles, and I literally could not do it, and I think that is kind of a metaphor for my life, which is really just a lot of jars.";
+
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+// ---- Night mode (shared 'theme' key) ----
+function applyThemeLabel() { $('themeToggle').textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️ Day mode' : '🌙 Night mode'; }
+$('themeToggle').addEventListener('click', function () {
+  var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (dark) document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', 'dark');
+  try { localStorage.setItem('theme', dark ? 'light' : 'dark'); } catch (e) {}
+  applyThemeLabel();
+});
+applyThemeLabel();
+
+// Bluesky's limit counts graphemes (a family emoji is one), not code units
+var seg = (window.Intl && Intl.Segmenter) ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
+function glen(s) { return seg ? Array.from(seg.segment(s)).length : Array.from(s).length; }
+
+// ---- What counts as padding ----
+var WORDS = ['really', 'very', 'just', 'actually', 'basically', 'literally', 'honestly', 'totally', 'completely', 'absolutely', 'quite', 'rather', 'somewhat', 'simply', 'truly', 'definitely', 'probably', 'perhaps', 'obviously', 'clearly'];
+var PHRASES = ['kind of', 'sort of', 'a little bit', 'a bit', 'you know', 'i mean', 'i think', 'i guess', 'i suppose', 'i feel like', 'in my opinion', 'to be honest', 'at the end of the day', 'needless to say', "for what it's worth", 'as a matter of fact', 'in fact'];
+var THAT_AFTER = ['think', 'thought', 'said', 'say', 'says', 'knew', 'know', 'realized', 'realised', 'feel', 'felt', 'hope', 'bet', 'guess', 'believe', 'noticed', 'found', 'saw', 'learned', 'wish', 'mean', 'means'];
+var STOP = 'the and that with for you are was but not this have from they his her she him had has were will would could should there their what when which who whom them then than into out about over also its our your all any can did does done how why one too yet get got let say said'.split(' ');
+function reEsc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+var ALT = PHRASES.concat(WORDS).sort(function (a, b) { return b.length - a.length; }).map(reEsc).join('|').replace(/'/g, "['’]");
+var FILLER = new RegExp('(^|[^A-Za-z0-9\\u00C0-\\u024F\'’])(' + ALT + ')(?![A-Za-z0-9\\u00C0-\\u024F\'’])', 'gi');
+var THAT = new RegExp('\\b(' + THAT_AFTER.join('|') + ')(\\s+)(that)(?![A-Za-z0-9\'’])', 'gi');
+var SO = /(^|[.!?]\s+|\n\s*)(so)(?=[,\s]\s*\S)/gi;
+
+function cutsOf(text) {
+  var out = [], m;
+  FILLER.lastIndex = 0;
+  while ((m = FILLER.exec(text))) {
+    var s = m.index + m[1].length;
+    out.push({ s: s, e: s + m[2].length, text: m[2] });
+    FILLER.lastIndex = s + m[2].length;
+  }
+  THAT.lastIndex = 0;
+  while ((m = THAT.exec(text))) { var s2 = m.index + m[1].length + m[2].length; out.push({ s: s2, e: s2 + 4, text: m[3] }); }
+  SO.lastIndex = 0;
+  while ((m = SO.exec(text))) { var s3 = m.index + m[1].length; out.push({ s: s3, e: s3 + 2, text: m[2] }); }
+  out.sort(function (a, b) { return a.s - b.s || (b.e - b.s) - (a.e - a.s); });
+  var kept = [], end = -1;
+  out.forEach(function (c) { if (c.s >= end) { kept.push(c); end = c.e; } });
+  // "I think that" would lose both words and break the sentence: when a phrase has just been flagged, leave "that" alone
+  return kept.filter(function (c, i) { return !(c.text.toLowerCase() === 'that' && i > 0 && kept[i - 1].e <= c.s && /^\s*$/.test(text.slice(kept[i - 1].e, c.s))); });
+}
+
+// take one flag out and tidy the spacing, commas and capital letter around it
+function applyCut(text, c) {
+  var s = c.s, e = c.e, before = text.slice(0, s), after = text.slice(e);
+  var atStart = /(^|[.!?]\s+|\n\s*)$/.test(before);
+  // a comma straight after the cut goes too when the cut opened a sentence, or the cut sat between two commas
+  if (after.charAt(0) === ',' && (atStart || /,\s*$/.test(before))) after = after.slice(1);
+  if (/\s$/.test(before) && /^\s/.test(after)) after = after.replace(/^\s+/, '');
+  if (/^[,.!?;:]/.test(after)) before = before.replace(/[ \t]+$/, '');
+  if (atStart || before === '') after = after.replace(/^(\s*)(\S)/, function (_, sp, ch) { return sp + ch.toUpperCase(); });
+  if (before === '' ) after = after.replace(/^\s+/, '');
+  return before + after;
+}
+function tightenAll(text) {
+  var guard = 0, c;
+  while ((c = cutsOf(text)).length && guard++ < 300) text = applyCut(text, c[c.length - 1]);
+  return text;
+}
+
+var WORD = /[A-Za-z0-9À-ɏ'’]+/g;
+function wordsOf(text) { return text.match(WORD) || []; }
+function repeatsOf(text) {
+  var count = Object.create(null), m, list = [];
+  WORD.lastIndex = 0;
+  while ((m = WORD.exec(text))) { var w = m[0].toLowerCase().replace(/['’]s$/, ''); if (w.length >= 3 && STOP.indexOf(w) === -1 && WORDS.indexOf(w) === -1) (count[w] = count[w] || []).push({ s: m.index, e: m.index + m[0].length }); }
+  Object.keys(count).forEach(function (w) { if (count[w].length >= REPEAT_MIN) list.push({ word: w, n: count[w].length, spots: count[w] }); });
+  return list.sort(function (a, b) { return b.n - a.n || (a.word < b.word ? -1 : 1); });
+}
+function sentencesOf(text) {
+  var out = [], re = /[^.!?\n]+[.!?]*/g, m;
+  while ((m = re.exec(text))) { var t = m[0].trim(); if (t) out.push({ text: t, words: wordsOf(t).length }); }
+  return out;
+}
+
+// ---- State ----
+var S = { text: '', history: [], saved: 0, cuts: 0 };
+
+function render() {
+  var text = S.text, cuts = cutsOf(text), reps = repeatsOf(text), sents = sentencesOf(text), words = wordsOf(text).length;
+  var n = glen(text), over = n > LIMIT;
+  var c = $('count'); c.className = 'count' + (over ? ' over' : '');
+  c.innerHTML = '<b>' + n + '</b> / ' + LIMIT + ' characters' + (S.saved > 0 ? ' &middot; ' + S.saved + ' cut so far' : '') + (over ? ' &middot; over by ' + (n - LIMIT) : '');
+  $('all').disabled = !cuts.length; $('undo').disabled = !S.history.length; $('clear').disabled = !text;
+  $('copy').disabled = !text.trim();
+  var op = $('open'); op.setAttribute('href', 'https://bsky.app/intent/compose' + (text.trim() ? '?text=' + encodeURIComponent(text) : '')); op.setAttribute('aria-disabled', text.trim() ? 'false' : 'true');
+
+  // the draft with its flags: cut buttons and repeat marks
+  var marks = [];
+  cuts.forEach(function (x, i) { marks.push({ s: x.s, e: x.e, kind: 'cut', i: i }); });
+  reps.forEach(function (r) { r.spots.forEach(function (p) { marks.push({ s: p.s, e: p.e, kind: 'rep' }); }); });
+  marks.sort(function (a, b) { return a.s - b.s; });
+  var html = '', pos = 0;
+  marks.forEach(function (m) {
+    if (m.s < pos) return;
+    html += esc(text.slice(pos, m.s));
+    var w = esc(text.slice(m.s, m.e));
+    html += m.kind === 'cut' ? '<button type="button" class="flag" data-i="' + m.i + '" aria-label="Cut &quot;' + w + '&quot;">' + w + '</button>' : '<span class="rep">' + w + '</span>';
+    pos = m.e;
+  });
+  html += esc(text.slice(pos));
+  $('view').innerHTML = text.trim() ? html : '<span class="empty">Your joke shows up here with flags on it.</span>';
+
+  // stats and notes
+  var longest = sents.reduce(function (m, s) { return Math.max(m, s.words); }, 0);
+  $('stats').innerHTML = [[words, 'words'], [sents.length, sents.length === 1 ? 'sentence' : 'sentences'], [longest, 'longest, in words']].map(function (x) { return '<div class="stat"><b>' + x[0] + '</b><span>' + x[1] + '</span></div>'; }).join('');
+  var notes = [];
+  if (!text.trim()) notes.push('Paste a joke to see what it finds.');
+  else {
+    if (cuts.length) notes.push('<span class="good">' + cuts.length + (cuts.length === 1 ? ' filler or hedge' : ' fillers or hedges') + '</span> you could cut. Tap one to cut it, or press Tighten it all.<div class="chips">' + cuts.map(function (x, i) { return '<button type="button" class="chip" data-i="' + i + '" aria-label="Cut &quot;' + esc(x.text) + '&quot;">' + esc(x.text) + ' &times;</button>'; }).join('') + '</div>');
+    if (reps.length) notes.push('<span class="good">Repeated:</span> ' + reps.slice(0, 5).map(function (r) { return '&ldquo;' + esc(r.word) + '&rdquo; &times;' + r.n; }).join(', ') + '. Repeating a word is sometimes the joke, so these are not cut for you.');
+    var long = sents.filter(function (s) { return s.words > LONG_WORDS; });
+    if (long.length) notes.push('<span class="good">' + (long.length === 1 ? 'One long sentence' : long.length + ' long sentences') + '</span> (over ' + LONG_WORDS + ' words): ' + long.map(function (s) { var w = s.text.split(/\s+/); return '&ldquo;' + esc(w.slice(0, 6).join(' ')) + '&hellip;&rdquo; is ' + s.words + ' words'; }).join('; ') + '. Can any of it go?');
+    if (!cuts.length && !reps.length && !long.length) notes.push('<span class="good">Nothing to flag.</span> This one is already tight' + (S.saved > 0 ? ', and you cut ' + S.saved + ' characters getting it there' : '') + '.');
+  }
+  $('notes').innerHTML = notes.map(function (x) { return '<li>' + x + '</li>'; }).join('');
+}
+
+function setText(t, fromUser) {
+  S.text = t;
+  if ($('draft').value !== t) $('draft').value = t;
+  render();
+}
+function cutAt(i) {
+  var cuts = cutsOf(S.text), c = cuts[i]; if (!c) return;
+  var before = S.text, after = applyCut(before, c);
+  S.history.push(before); S.saved += glen(before) - glen(after); S.cuts++;
+  setText(after);
+  say('Cut "' + c.text + '".');
+  var next = $('view').querySelectorAll('.flag')[Math.min(i, $('view').querySelectorAll('.flag').length - 1)];
+  if (next) next.focus();
+}
+function say(t) { $('status').textContent = t || ''; }
+
+$('draft').addEventListener('input', function () { S.text = $('draft').value; render(); say(''); });
+$('view').addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('button.flag'); if (b) cutAt(+b.dataset.i); });
+$('notes').addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('button.chip'); if (b) cutAt(+b.dataset.i); });
+$('all').addEventListener('click', function () {
+  var before = S.text, after = tightenAll(before);
+  if (after === before) return;
+  S.history.push(before); S.saved += glen(before) - glen(after);
+  setText(after); say('Cut everything flagged. Undo brings it back.');
+});
+$('undo').addEventListener('click', function () {
+  if (!S.history.length) return;
+  var prev = S.history.pop(); S.saved = Math.max(0, S.saved - (glen(prev) - glen(S.text)));
+  setText(prev); say('Undone.');
+});
+$('clear').addEventListener('click', function () { if (!S.text) return; S.history.push(S.text); setText(''); S.saved = 0; render(); say('Cleared. Undo brings it back.'); $('draft').focus(); });
+$('example').addEventListener('click', function (e) { e.preventDefault(); S.history = []; S.saved = 0; setText(EXAMPLE); say(''); });
+$('copy').addEventListener('click', function () {
+  var t = S.text;
+  function fallback() { var ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); var ok = false; try { ok = document.execCommand('copy'); } catch (x) {} ta.remove(); say(ok ? 'Copied.' : 'Couldn\'t copy. Select the text yourself.'); }
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { say('Copied.'); }, fallback); else fallback();
+});
+$('open').addEventListener('click', function (e) { if ($('open').getAttribute('aria-disabled') === 'true') e.preventDefault(); });
+
+window.__tight = { cutsOf: cutsOf, applyCut: applyCut, tightenAll: tightenAll, repeatsOf: repeatsOf, sentencesOf: sentencesOf, glen: glen, state: function () { return S; }, example: EXAMPLE };
+render();
+})();
+</script>
+<script src="/kiosk.js" defer></script>
+</body>
+</html>

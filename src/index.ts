@@ -366,6 +366,10 @@ app.get('/transitpass', (_req, res) => {
   res.set('Cache-Control', 'no-cache');
   res.sendFile(path.join(__dirname, '..', 'public', 'transitpass.html'));
 });
+app.get('/tightener', (_req, res) => {
+  res.set('Cache-Control', 'no-cache');
+  res.sendFile(path.join(__dirname, '..', 'public', 'tightener.html'));
+});
 app.get('/mutualmatch', (_req, res) => {
   res.set('Cache-Control', 'no-cache');
   res.sendFile(path.join(__dirname, '..', 'public', 'mutualmatch.html'));

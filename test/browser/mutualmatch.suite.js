@@ -104,7 +104,7 @@ const pix = (page, x, y) => page.evaluate(([x, y]) => { const c = document.getEl
   // ---- the empty page and the checks on what is typed ----
   const { page, log } = await mk(browser); await page.goto(BASE);
   const e0 = await page.evaluate(() => ({ tag: document.querySelector('.k-hero .k-tag').textContent, slot: !document.getElementById('slot').hidden, result: document.getElementById('result').hidden, help: !!document.getElementById('helpBtn'), theme: !!document.getElementById('themeToggle'), foot: !!document.querySelector('footer.k-foot .kofi') }));
-  ok('M1 the empty page: Tool 05 tag, the empty-slot box, nothing else yet, plus Help, Night mode and the footer', /Tool 05/.test(e0.tag) && e0.slot && e0.result && e0.help && e0.theme && e0.foot, JSON.stringify(e0));
+  ok('M1 the empty page: Tool 06 tag, the empty-slot box, nothing else yet, plus Help, Night mode and the footer', /Tool 06/.test(e0.tag) && e0.slot && e0.result && e0.help && e0.theme && e0.foot, JSON.stringify(e0));
   await page.click('#go'); const r1 = await txt(page, '#find-err');
   await page.fill('#ha', 'alice.example'); await page.click('#go'); const r2 = await txt(page, '#find-err');
   await go(page, 'alice.example', 'not a handle!'); const r3 = await txt(page, '#find-err');

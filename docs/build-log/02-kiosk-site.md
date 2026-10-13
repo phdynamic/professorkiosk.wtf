@@ -263,3 +263,8 @@
 - changed: Your profile, Feeds and Contests rewritten in the developer's wording; the "Stuck for something to post?" paragraph moved out of Growing an audience into a new Posting section (placed right after it) and now also names the Format Deck; group chats are now "up to 100 people"
 - tests: the Tutorials checks were updated to match (14 sections, "too complicated", 100 people), and the check that banned any mention of Twitter or FavStar in the tutorial text was narrowed to the hub card and the page shell, because the developer's Contests text now mentions Twitter and FavStar on purpose
 - live-tested: no
+
+## 2026-10-13 · Joke Tightener built; hub renumbered
+- built: `public/tightener.html` (route `/tightener`, hub card 05), `test/browser/tightener.suite.js` (21 checks); added to the help, icon, footer and hub checks; the Tutorials Posting section now mentions it
+- changed: hub order is now Tutorials, Joke-Web, Mashup, Format Deck, Joke Tightener, Mutual Match, Top Skeets, Rush Hour, Transit Pass, Skeet Receipt, Tracer, Saga (01 to 12); separate sites 13 to 16; Joke Tightener is sky blue, the other card colors did not change; the "Tool NN" tags follow
+- live-tested: no

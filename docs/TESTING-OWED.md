@@ -111,6 +111,13 @@ Source: `public/formats.html`, `public/formats.txt`. The automated suite covers 
 - Phone layout. How: open /formats on a real phone, deal several cards, type in a blank with the keyboard open. Expect: readable card, reachable blanks, no sideways scroll. The post sits below the blanks, so with many blanks you scroll to see it while typing; decide whether that is acceptable.
 - The formats text. How: read the deck once on the live site. Expect: you are happy with each how-line and the order of the cards. The developer reviewed every format in chat on 2026-10-13, so this is only a last look.
 
+## Joke Tightener (live site, real browser, real phone)
+Source: `public/tightener.html`. The automated suite covers the rules; these are the by-hand confirmations.
+- Real jokes. How: paste five of your own jokes and posts. Expect: the flags are mostly words you would agree to cut; tell the assistant which flags are wrong (words it should leave alone) or missed.
+- Tighten it all. How: press it on a few posts. Expect: the result reads like a sentence (spacing, commas and capital letters tidy). Undo brings the original back.
+- Phone. How: open /tightener on a real phone and tap the small yellow words and the chips below. Expect: both work and nothing scrolls sideways.
+- Help text. How: read the Help dialog. Expect: the word lists and limits match what you see.
+
 ## Mutual Match (live site, real browser, real phone)
 Source: `public/mutualmatch.html`. The automated suite uses a mocked Bluesky; these are the by-hand confirmations.
 - Real lists. How: compare yourself with a friend, then with a very large account. Expect: follows and followers load 100 at a time, the plus signs and "Load more" appear for big accounts, and it stays inside Bluesky's rate limit (tell the assistant how long a big pair takes and whether it gets rate-limited).

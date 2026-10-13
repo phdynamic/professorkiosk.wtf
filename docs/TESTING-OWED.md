@@ -109,4 +109,4 @@ Source: `public/formats.html`, `public/formats.txt`. The automated suite covers 
 - Copy on phones. How: tap Copy post on iPhone Safari and Android Chrome, paste into the Bluesky composer. Expect: exact text with line breaks. The older-browser fallback copy path was not exercised on a real phone.
 - Character limit. How: put a post of exactly 300 and then 301 characters, with an emoji in it, into the composer. Expect: the page's counter and Bluesky agree.
 - Phone layout. How: open /formats on a real phone, deal several cards, type in a blank with the keyboard open. Expect: readable card, reachable blanks, no sideways scroll. The post sits below the blanks, so with many blanks you scroll to see it while typing; decide whether that is acceptable.
-- The formats text. How: read `public/formats.txt`. Expect: you are happy with each how-line and tip. It is a first draft by the assistant, not yet read by you; edit or delete freely.
+- The formats text. How: read the deck once on the live site. Expect: you are happy with each how-line and the order of the cards. The developer reviewed every format in chat on 2026-10-13, so this is only a last look.

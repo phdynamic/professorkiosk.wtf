@@ -205,3 +205,7 @@
 ## 2026-10-13 · Format Deck review, category 7 (Escalation) and 8 (Tiny scenes)
 - changed: kept the five Escalation formats; deleted Tiny Scene; added LaCroix ("LaCroix is what happens when {a silly way of describing the drink}.") to Tiny scenes; the deck has 30 formats in 7 categories
 - live-tested: no
+
+## 2026-10-13 · Format Deck review finished; status notes brought up to date
+- changed: `STATUS.md` (pinned to 7390f3b, Format Deck line, suite counts), `NEXT-SESSION.txt` and the formats line in `TESTING-OWED.md` now describe the deck after the review
+- live-tested: no

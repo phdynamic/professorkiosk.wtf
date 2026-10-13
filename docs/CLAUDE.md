@@ -21,7 +21,7 @@ Project: Professor Kiosk site (professorkiosk.wtf). Two parts in one Express + T
 
 ## Core concept
 - Feed generator: each user registers with a Bluesky app password and gets their own published feed (Top Skeets by likes, My Skeets newest first, each with or without replies). The server fetches posts in the background and serves the feed skeleton.
-- Tool pages: `/tutorials`, `/jokeweb`, `/mashup`, `/formats`, `/receipt`, `/tracer`, `/imagine-flagons`. Static HTML in `public/`, no sign-in, no server calls except to Bluesky's public API from the visitor's browser.
+- Tool pages: `/tutorials`, `/jokeweb`, `/mashup`, `/formats`, `/transitpass`, `/receipt`, `/tracer`, `/imagine-flagons`. Static HTML in `public/`, no sign-in, no server calls except to Bluesky's public API from the visitor's browser.
 - Hub at `/` links all of them plus four external sites.
 
 ## Architecture notes (rarely change)

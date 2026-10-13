@@ -126,3 +126,8 @@
 - what: no `example:` or `post:` lines, no worked example box or Use this example button, no live post lookups (the Format Deck makes no Bluesky requests); the finder (`scripts/find-examples.mjs`, `test/find-examples.test.js`) and the `search:`, `match:` and `likes:` lines are gone; a card is the how-line, the blanks, the post, the counter, Copy and Open in Bluesky, and the tip
 - why: the developer asked to take both out altogether; I removed the finder as well because it existed only to find posts for "Seen in the wild" (it is in git history if wanted back)
 - source: developer request, 2026-10-13
+
+### 2026-10-13 · Transit Pass is one canvas, with a profile read and no feed pagination · active
+- what: `/transitpass` draws the pass once on a canvas used for both the page and the PNG; data is one `getProfile` read (join date from `createdAt`, post rate as total posts over days since joining); route and line from a hash of the DID; the same label hide list as Skeet Receipt; it is tool 09 on the hub, so the separate sites moved to 10 to 13
+- why: the developer described the tool (handle in, pass card out, saved as a PNG like the Receipt) and asked for it to be built first; one canvas instead of the Receipt's separate HTML and canvas drawings was my choice to keep the page and the image identical; pass types, the pace wording and the line names are my inventions, not the developer's
+- source: developer request, 2026-10-13

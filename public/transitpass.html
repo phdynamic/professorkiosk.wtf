@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Transit Pass</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<meta name="description" content="Paste a Bluesky handle and get a transit pass for the account: member since, posts, followers and a route color. Save it, share it." />
+<link rel="preload" href="/fonts/dm-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/dm-sans-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<script>
+  // Apply the theme before first paint to avoid a light flash
+  (function() {
+    var saved = null;
+    try { saved = localStorage.getItem('theme'); } catch (e) {}
+    var dark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+  })();
+</script>
+<link rel="stylesheet" href="/kiosk.css" />
+<style>
+:root { --hero: var(--teal); --rink: #1d1b4f; }
+h1, h2, h3, p, ul, ol { margin: 0; }
+button, input { font: inherit; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* hero with the input card */
+.k-hero .k-wrap { flex-wrap: wrap; align-items: flex-start; }
+.k-hero .copy { flex: 1 1 420px; min-width: 0; }
+.sticker { flex: 0 0 auto; display: none; }
+@media (min-width: 640px) { .sticker { display: block; margin-right: 8px; } }
+.find { flex: 1 1 100%; background: #fffcf3; color: var(--rink); border: 3px solid var(--rink); border-radius: 20px; box-shadow: 6px 6px 0 var(--rink); padding: 18px; }
+.find label { display: block; font-weight: 800; font-size: 17px; line-height: 1.2; margin-bottom: 8px; }
+.find .row { display: flex; gap: 12px; flex-wrap: wrap; }
+.find input { flex: 1 1 260px; min-width: 0; min-height: 52px; border: 3px solid var(--rink); border-radius: 14px; padding: 0 14px; background: #fff; color: var(--rink); font: 400 14px/1 var(--mono); }
+.find input::placeholder { color: #565c86; opacity: 1; }
+.find .k-btn { min-height: 52px; font-size: 16px; background: var(--rink); color: #fff6e0; border-color: var(--rink); box-shadow: 3px 3px 0 var(--rink); }
+.find .k-btn .arr { color: var(--yellow); }
+.find .note { margin: 12px 0 0; font-size: 14px; }
+.find .note a { font-weight: 700; text-underline-offset: 3px; }
+.find :focus-visible { outline-color: var(--rink); }
+.find .err { margin: 12px 0 0; padding: 10px 14px; border: 2px solid #b91c1c; border-radius: 12px; background: #fff1f0; color: #8f1111; font-weight: 700; font-size: 14px; }
+
+/* layout */
+main.k-main { padding: 32px 0 0; }
+.layout { display: grid; gap: 32px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 860px) { .layout { grid-template-columns: minmax(0, 480px) minmax(0, 1fr); align-items: start; } }
+.panel { background: var(--surface); border: 3px solid var(--line); border-radius: 20px; box-shadow: 5px 5px 0 var(--shadow-c); padding: 20px; }
+.panel h2 { font-size: 22px; font-weight: 800; margin-bottom: 12px; }
+.side { display: grid; gap: 24px; }
+
+.opt { display: flex; align-items: center; gap: 12px; min-height: 44px; font-weight: 700; cursor: pointer; }
+.opt input { width: 24px; height: 24px; accent-color: var(--navy); flex: none; }
+html[data-theme="dark"] .opt input { accent-color: var(--yellow); }
+.opt small { display: block; font-weight: 400; font-size: 14px; color: var(--ink2); }
+.opt input:disabled + span { opacity: .6; }
+.actions { display: grid; gap: 12px; margin-top: 16px; }
+.actions .k-btn { width: 100%; justify-content: space-between; min-height: 44px; font-size: 15px; }
+.actions .k-btn .arr { color: var(--yellow); }
+html[data-theme="dark"] .actions .k-btn.primary .arr { color: var(--navy); }
+.status { min-height: 24px; font: 500 13px/1.4 var(--mono); margin-top: 10px; }
+.hint { font-size: 14px; margin-top: 14px; color: var(--ink2); }
+.labelnote { margin-top: 12px; padding: 10px 14px; border: 2px dashed var(--line); border-radius: 12px; font-size: 14px; font-weight: 700; background: var(--tint-yellow); }
+.privacy { background: var(--tint-teal); border: 3px dashed var(--line); border-radius: 20px; padding: 16px 18px; }
+.privacy h2 { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+.privacy ul { padding-left: 20px; }
+.privacy li { margin: 4px 0; }
+.privacy p { margin-top: 10px; font-size: 14px; }
+
+/* the pass */
+.stage { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 6px 0 10px; }
+.slot { width: min(480px, 100%); border: 3px dashed var(--line); border-radius: 18px; padding: 56px 24px; text-align: center; background: var(--surface2); }
+.slot b { display: block; font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+.slot span { font: 400 13px var(--mono); color: var(--ink2); }
+.slot .bar { height: 12px; border-radius: 6px; background: var(--navy); margin: 0 auto 22px; width: 70%; }
+html[data-theme="dark"] .slot .bar { background: var(--line); }
+.pass-wrap { width: min(480px, 100%); }
+#pass { display: block; width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="k-top">
+  <a class="k-btn" href="/">&larr; Professor Kiosk</a>
+  <div class="right">
+    <button class="k-btn" id="helpBtn" type="button" aria-haspopup="dialog">? Help</button>
+    <button class="k-btn night" id="themeToggle" type="button" aria-label="Toggle night mode">🌙 Night mode</button>
+  </div>
+</div>
+
+<dialog class="k-help" id="help" aria-labelledby="help-t">
+  <div class="hh"><h2 id="help-t">How Transit Pass works</h2><button class="k-btn" id="helpX" type="button" aria-label="Close help">&#x2715;</button></div>
+  <div class="hb">
+    <h3>The idea</h3>
+    <p>Type a Bluesky handle and get a transit pass for that account: when it joined, how many posts it has made and how fast, how many followers it has, and a route color of its own. Save it, share it, keep it in your wallet.</p>
+
+    <h3>The three steps</h3>
+    <ol>
+      <li><b>Type a handle.</b> With or without the @, or paste a link to the profile. Any Bluesky handle works, including handles that are domain names.</li>
+      <li><b>Print the pass.</b> Choose whether the photo, name and handle show.</li>
+      <li><b>Share it.</b> Save or copy the image, or copy the alt text to put on your own post.</li>
+    </ol>
+
+    <h3>What is on the pass</h3>
+    <ul>
+      <li><b>Route and line.</b> A number and a line color picked from the account's permanent ID, so the same account always gets the same route.</li>
+      <li><b>Member since.</b> The date Bluesky has on record for the account, shown in UTC.</li>
+      <li><b>Pace.</b> Total posts divided by the days since the account joined, so it shows posts a day, a week or a month, whichever reads best. It is an average over the whole life of the account, not a recent rate.</li>
+      <li><b>Posts, followers and following.</b> The totals Bluesky shows on the profile, as of the moment you print.</li>
+      <li><b>Pass type.</b> Day Tripper (under a month old), Regular (under a year), Commuter (under three years) or Lifer.</li>
+    </ul>
+
+    <h3>Good to know</h3>
+    <ul>
+      <li>Public profiles only. If an account has a content label, its photo and name are left off the pass.</li>
+      <li>The whole thing runs in your browser. It asks Bluesky for the public profile and nothing else, and nothing is stored.</li>
+      <li>The numbers keep changing on Bluesky. The pass shows them as of the time printed.</li>
+    </ul>
+  </div>
+</dialog>
+
+<header class="k-hero">
+  <div class="k-wrap">
+    <div class="copy">
+      <span class="k-tag navy">Level 1 &middot; Tool 09</span>
+      <h1>Transit Pass</h1>
+      <p>Type a Bluesky handle and get a transit pass for the account: member since, posts, followers and a route color. Save it, share it.</p>
+    </div>
+    <svg class="sticker" width="180" height="140" viewBox="0 0 180 140" aria-hidden="true" focusable="false">
+      <rect x="22" y="26" width="140" height="88" rx="14" fill="#1B2150"/>
+      <rect x="14" y="18" width="140" height="88" rx="14" fill="#FFFDF6" stroke="#1B2150" stroke-width="3"/>
+      <path d="M14 32 a14 14 0 0 1 14 -14 H58 V106 H28 a14 14 0 0 1 -14 -14 Z" fill="#FF7A66" stroke="#1B2150" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M70 40 H138 M70 56 H120" stroke="#1B2150" stroke-width="3" stroke-linecap="round"/>
+      <rect x="70" y="76" width="68" height="16" rx="4" fill="#3DD1B5" stroke="#1B2150" stroke-width="3"/>
+      <circle cx="36" cy="62" r="9" fill="#FFFDF6" stroke="#1B2150" stroke-width="3"/>
+    </svg>
+    <form class="find" id="find" novalidate>
+      <label for="handle">Bluesky handle</label>
+      <div class="row">
+        <input id="handle" name="handle" type="text" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@professorkiosk.wtf" aria-describedby="find-note find-err" />
+        <button class="k-btn" id="go" type="submit">Print pass <span class="arr" aria-hidden="true">&rarr;</span></button>
+      </div>
+      <p class="err" id="find-err" hidden></p>
+      <p class="note" id="find-note"><b>Public profiles only.</b> Works with any handle or profile link. Want an example? <a href="/transitpass#handle=professorkiosk.wtf">Try @professorkiosk.wtf</a></p>
+    </form>
+  </div>
+</header>
+
+<main class="k-main">
+  <div class="k-wrap">
+    <div class="layout">
+      <section class="stage" aria-label="Your pass">
+        <div class="slot" id="slot">
+          <div class="bar" aria-hidden="true"></div>
+          <b>Your pass prints here</b>
+          <span>Type a handle above.</span>
+        </div>
+        <div class="pass-wrap" id="pwrap" hidden>
+          <canvas id="pass" width="1440" height="900" role="img" aria-label="Transit pass"></canvas>
+        </div>
+      </section>
+
+      <div class="side">
+        <section class="panel" aria-labelledby="opts">
+          <h2 id="opts">Make it yours</h2>
+          <label class="opt"><input type="checkbox" id="o-photo" checked /><span>Include photo<small>Turn off to keep the profile picture off the pass.</small></span></label>
+          <label class="opt"><input type="checkbox" id="o-name" checked /><span>Include name<small>The display name from the profile.</small></span></label>
+          <label class="opt"><input type="checkbox" id="o-handle" checked /><span>Include handle<small>Turn off to share just the numbers.</small></span></label>
+          <p class="labelnote" id="labelnote" hidden>Photo and name hidden because this account has a content label.</p>
+          <div class="actions">
+            <button class="k-btn primary" id="save" type="button" disabled>Share or save image <span class="arr" aria-hidden="true">&rarr;</span></button>
+            <button class="k-btn" id="copyimg" type="button" disabled>Copy image</button>
+            <button class="k-btn" id="copyalt" type="button" disabled>Copy alt text</button>
+            <button class="k-btn" id="another" type="button" disabled>Print another</button>
+          </div>
+          <p class="status" id="status" role="status" aria-live="polite"></p>
+          <p class="hint">Numbers are as of the time printed. They keep changing on Bluesky.</p>
+        </section>
+
+        <section class="privacy" aria-labelledby="priv">
+          <h2 id="priv">What this asks for</h2>
+          <ul>
+            <li><b>Sign-in:</b> none. No password, no permissions.</li>
+            <li><b>Reads:</b> one public profile, the same as someone who isn't logged in, plus the profile picture from Bluesky's image server.</li>
+            <li><b>Stored:</b> nothing. Your browser fetches the profile and draws the pass here.</li>
+          </ul>
+          <p>Accounts with a content label are printed without their photo and name.</p>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="k-foot">
+  <div class="k-wrap">
+    <strong>Thank you for using Professor Kiosk.<br />Please take your receipt.</strong>
+    <div class="links">
+      <a class="by" href="https://bsky.app/profile/professorkiosk.wtf" target="_blank" rel="noopener"><img class="footer-avatar" data-pk-avatar src="" alt="" hidden />Made by @professorkiosk.wtf</a>
+      <a class="kofi" href="https://ko-fi.com/professorkiosk" target="_blank" rel="noopener">&#9749; Support these projects on Ko-fi</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/kiosk-help.js" defer></script>
+<script>
+(function () {
+'use strict';
+
+// ---- Config ----
+var APPVIEW = 'https://public.api.bsky.app';
+// Label values from @atproto/api's built-in label definitions: adult, graphic and moderation labels (same list as Skeet Receipt).
+var HIDE_LABELS = ['porn', 'sexual', 'nudity', 'graphic-media', 'gore', '!hide', '!warn', '!no-unauthenticated'];
+var CREDIT = 'professorkiosk.wtf/transitpass';
+var INK = '#1d1b4f', PAPER = '#fffdf6', CREAM = '#fff6e0';
+var CW = 480, CH = 300, SCALE = 3;           // the pass is drawn 480 x 300 CSS px at 3x = 1440 x 900 pixels
+var LINES = [
+  { name: 'Coral', color: '#ff7a66' }, { name: 'Yellow', color: '#ffd23f' }, { name: 'Teal', color: '#3dd1b5' },
+  { name: 'Purple', color: '#a78bfa' }, { name: 'Pink', color: '#ff8fc7' }, { name: 'Sky', color: '#7cc4ff' },
+  { name: 'Green', color: '#7bd88f' }, { name: 'Orange', color: '#ff9f43' }
+];
+var DAY = 86400000;
+
+function $(id) { return document.getElementById(id); }
+
+// ---- Night mode (shared 'theme' key) ----
+function applyThemeLabel() {
+  var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  $('themeToggle').textContent = dark ? '☀️ Day mode' : '🌙 Night mode';
+}
+$('themeToggle').addEventListener('click', function () {
+  var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (dark) document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', 'dark');
+  try { localStorage.setItem('theme', dark ? 'light' : 'dark'); } catch (e) {}
+  applyThemeLabel();
+});
+applyThemeLabel();
+
+// ---- Parsing what was typed: a handle, an @handle, a profile link or a DID ----
+function parseActor(raw) {
+  var s = String(raw || '').trim(), m;
+  if ((m = /^https?:\/\/[^\/\s]+\/profile\/([^\/?#\s]+)/i.exec(s))) s = m[1];
+  s = s.replace(/^@+/, '');
+  try { s = decodeURIComponent(s); } catch (e) {}
+  if (/^did:[a-z]+:[A-Za-z0-9._:%-]+$/.test(s)) return s;
+  s = s.toLowerCase();
+  if (s.length > 253) return null;
+  return /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]([a-z0-9-]{0,61}[a-z0-9])?$/.test(s) ? s : null;
+}
+
+// ---- Fetching (one unauthenticated read, plus the picture) ----
+function BskyError(kind) { this.kind = kind; }
+function getJson(url) {
+  return fetch(url).then(function (res) {
+    if (res.ok) return res.json();
+    if (res.status === 429 || res.status >= 500) throw new BskyError('net');
+    throw new BskyError('http' + res.status);
+  }, function () { throw new BskyError('net'); });
+}
+function fetchProfile(actor) {
+  return getJson(APPVIEW + '/xrpc/app.bsky.actor.getProfile?actor=' + encodeURIComponent(actor)).then(function (p) {
+    if (!p || !p.did) throw new BskyError('noacct');
+    return p;
+  }, function (e) { throw (e.kind === 'net' ? e : new BskyError('noacct')); });
+}
+// the picture comes from Bluesky's image server only; any failure just means no photo
+function loadAvatar(url) {
+  return new Promise(function (resolve) {
+    if (typeof url !== 'string' || !/^https:\/\/cdn\.bsky\.app\//.test(url)) return resolve(null);
+    var img = new Image(), done = false;
+    function end(v) { if (!done) { done = true; resolve(v); } }
+    img.crossOrigin = 'anonymous';
+    img.onload = function () { end(img); };
+    img.onerror = function () { end(null); };
+    setTimeout(function () { end(null); }, 6000);
+    img.src = url;
+  });
+}
+
+// ---- Model ----
+function fnv(str) {
+  var h = 0x811c9dc5;
+  for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h >>> 0;
+}
+var nowFn = function () { return Date.now(); };
+function labelVals(p) { return (p.labels || []).map(function (l) { return l && l.val; }).filter(Boolean); }
+function toInt(n) { n = Number(n); return isFinite(n) && n >= 0 ? Math.floor(n) : 0; }
+// posts a day, a week or a month, whichever has a number of at least 1 (an average over the account's whole life)
+function paceOf(posts, days) {
+  if (!days || days <= 0) return null;
+  var perDay = posts / Math.max(days, 1);
+  function fmt(x) { return x >= 10 ? String(Math.round(x)) : (Math.round(x * 10) / 10).toString(); }
+  var unit, v;
+  if (perDay >= 1) { v = perDay; unit = 'a day'; }
+  else if (perDay * 7 >= 1) { v = perDay * 7; unit = 'a week'; }
+  else { v = perDay * 30.4375; unit = 'a month'; }
+  return { text: fmt(v) + ' ' + (fmt(v) === '1' ? 'post' : 'posts') + ' ' + unit, perDay: perDay };
+}
+function typeOf(days) {
+  if (days == null) return 'MYSTERY RIDER';
+  if (days < 30) return 'DAY TRIPPER';
+  if (days < 365) return 'REGULAR';
+  if (days < 1095) return 'COMMUTER';
+  return 'LIFER';
+}
+function buildModel(p, avatar) {
+  var h = fnv(p.did), line = LINES[h % LINES.length];
+  var created = p.createdAt ? new Date(p.createdAt) : null;
+  if (created && isNaN(created)) created = null;
+  var printedAt = new Date(nowFn());
+  var days = created ? Math.max(0, (printedAt - created) / DAY) : null;
+  var posts = toInt(p.postsCount);
+  return {
+    did: p.did, hash: h,
+    route: String((h >>> 8) % 100).padStart(2, '0'), line: line,
+    handle: String(p.handle || ''), name: String(p.displayName || '').trim(),
+    created: created, printedAt: printedAt, days: days,
+    posts: posts, followers: toInt(p.followersCount), follows: toInt(p.followsCount),
+    pace: days != null ? paceOf(posts, days) : null, type: typeOf(days),
+    labeled: labelVals(p).some(function (v) { return HIDE_LABELS.indexOf(v) !== -1; }),
+    avatar: avatar
+  };
+}
+
+// ---- Formatting ----
+var dateFmt = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+function fmtDate(d) { return d ? dateFmt.format(d) : 'Unknown'; }
+function fmtN(n) { return Number(n).toLocaleString('en-US'); }
+
+// what shows depends on the three switches, and a label forces photo and name off
+var state = { model: null, photo: true, name: true, handle: true };
+function view() {
+  var m = state.model;
+  var photo = state.photo && !m.labeled && !!m.avatar;
+  var name = state.name && !m.labeled && m.name ? m.name : '';
+  var handle = state.handle && m.handle ? '@' + m.handle : '';
+  return { photo: photo, name: name, handle: handle, anon: !photo && !name && !handle };
+}
+function altText() {
+  var m = state.model, v = view(), who = [v.name, v.name && v.handle ? '(' + v.handle + ')' : v.handle].filter(Boolean).join(' ');
+  return ['Transit pass' + (who ? ' for ' + who : '') + '.',
+    'Route ' + m.route + ', ' + m.line.name + ' Line. Pass type: ' + m.type + '.',
+    'Member since ' + fmtDate(m.created) + '.',
+    fmtN(m.posts) + (m.posts === 1 ? ' post' : ' posts') + (m.pace ? ', about ' + m.pace.text : '') + '.',
+    fmtN(m.followers) + ' followers, ' + fmtN(m.follows) + ' following.',
+    CREDIT].join(' ');
+}
+
+// ---- Drawing (one canvas, used both on the page and for the saved image) ----
+function withFonts(fn) {
+  var faces = ['800 22px "DM Sans"', '400 13px "DM Mono"', '500 18px "DM Mono"'];
+  var load = Promise.all(faces.map(function (f) { return document.fonts && document.fonts.load ? document.fonts.load(f) : null; }));
+  var timeout = new Promise(function (r) { setTimeout(r, 3000); });
+  return Promise.race([load, timeout]).then(fn, fn);
+}
+function rr(g, x, y, w, h, r) {
+  g.beginPath(); g.moveTo(x + r, y); g.lineTo(x + w - r, y); g.arcTo(x + w, y, x + w, y + r, r); g.lineTo(x + w, y + h - r);
+  g.arcTo(x + w, y + h, x + w - r, y + h, r); g.lineTo(x + r, y + h); g.arcTo(x, y + h, x, y + h - r, r); g.lineTo(x, y + r); g.arcTo(x, y, x + r, y, r); g.closePath();
+}
+function fit(g, text, maxW) {
+  if (g.measureText(text).width <= maxW) return text;
+  var t = text; while (t.length > 1 && g.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+  return t + '…';
+}
+function bars(hash) {   // the same barcode for the same account: [x, width] pairs in a 150 wide box
+  var a = hash || 1, out = [], x = 0;
+  while (x < 148) {
+    a ^= a << 13; a >>>= 0; a ^= a >>> 17; a ^= a << 5; a >>>= 0;
+    var w = 1 + (a % 3), gap = 1 + ((a >>> 3) % 3);
+    out.push([x, w]); x += w + gap;
+  }
+  return out;
+}
+var MONO = '"DM Mono", ui-monospace, Menlo, Consolas, monospace', HEAD = '"DM Sans", system-ui, sans-serif';
+function paint(cv, solid) {
+  var m = state.model, v = view();
+  cv.width = CW * SCALE; cv.height = CH * SCALE;
+  var g = cv.getContext('2d');
+  g.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  g.clearRect(0, 0, CW, CH);
+  if (solid) { g.fillStyle = CREAM; g.fillRect(0, 0, CW, CH); }
+  var X = 8, Y = 8, W = 456, H = 276, R = 22;
+  g.save(); g.translate(6, 7); rr(g, X, Y, W, H, R); g.fillStyle = INK; g.fill(); g.restore();
+  rr(g, X, Y, W, H, R); g.fillStyle = PAPER; g.fill();
+  // the colored route band on the left
+  g.save(); rr(g, X, Y, W, H, R); g.clip(); g.fillStyle = m.line.color; g.fillRect(X, Y, 120, H); g.restore();
+  g.fillStyle = INK; g.textBaseline = 'alphabetic';
+  g.textAlign = 'center';
+  g.font = '400 11px ' + MONO; g.letterSpacing = '2px'; g.fillText('ROUTE', 68, 62);
+  g.font = '800 58px ' + HEAD; g.letterSpacing = '0px'; g.fillText(m.route, 68, 122);
+  g.font = '500 11px ' + MONO; g.letterSpacing = '1.5px'; g.fillText(m.line.name.toUpperCase() + ' LINE', 68, 146);
+  g.font = '400 10px ' + MONO; g.letterSpacing = '1.5px'; g.fillText('ADMIT ONE', 68, 258);
+  g.letterSpacing = '0px';
+  // perforation and the outline
+  g.save(); g.setLineDash([4, 4]); g.lineWidth = 2; g.strokeStyle = INK; g.beginPath(); g.moveTo(128, 20); g.lineTo(128, 272); g.stroke(); g.restore();
+  rr(g, X, Y, W, H, R); g.lineWidth = 3; g.strokeStyle = INK; g.lineJoin = 'round'; g.stroke();
+
+  var L = 150, Rt = 450;
+  g.textAlign = 'left';
+  g.font = '400 10px ' + MONO; g.letterSpacing = '1.4px'; g.fillText('PROFESSOR KIOSK TRANSIT', L, 34);
+  g.textAlign = 'right'; g.font = '500 10px ' + MONO; g.letterSpacing = '1.2px'; g.fillText(m.type, Rt, 34);
+  g.letterSpacing = '0px'; g.textAlign = 'left';
+  function rule(y) { g.save(); g.setLineDash([4, 3]); g.lineWidth = 2; g.strokeStyle = INK; g.beginPath(); g.moveTo(L, y); g.lineTo(Rt, y); g.stroke(); g.restore(); }
+  rule(44);
+  // who it is
+  var tx = L, maxW = Rt - L;
+  if (v.photo) {
+    var cx = L + 28, cy = 86;
+    g.save(); g.beginPath(); g.arc(cx, cy, 28, 0, Math.PI * 2); g.clip();
+    var iw = m.avatar.naturalWidth || 1, ih = m.avatar.naturalHeight || 1, s = Math.max(56 / iw, 56 / ih);
+    g.drawImage(m.avatar, cx - iw * s / 2, cy - ih * s / 2, iw * s, ih * s); g.restore();
+    g.beginPath(); g.arc(cx, cy, 28, 0, Math.PI * 2); g.lineWidth = 3; g.strokeStyle = INK; g.stroke();
+    tx = L + 68; maxW = Rt - tx;
+  }
+  if (v.anon) {
+    g.font = '800 22px ' + HEAD; g.fillText('ANONYMOUS RIDER', tx, 92);
+  } else {
+    var ny = v.name && v.handle ? 82 : 92;
+    if (v.name) {
+      var size = 22; g.font = '800 ' + size + 'px ' + HEAD;
+      while (size > 15 && g.measureText(v.name).width > maxW) { size--; g.font = '800 ' + size + 'px ' + HEAD; }
+      g.fillText(fit(g, v.name, maxW), tx, ny);
+    }
+    if (v.handle) { g.font = '400 13px ' + MONO; g.fillText(fit(g, v.handle, maxW), tx, v.name ? 102 : 92); }
+  }
+  rule(124);
+  function stat(label, value, x, y) {
+    g.font = '400 10px ' + MONO; g.letterSpacing = '1.2px'; g.fillText(label, x, y); g.letterSpacing = '0px';
+    g.font = '500 18px ' + MONO; g.fillText(value, x, y + 22);
+  }
+  stat('MEMBER SINCE', fmtDate(m.created), L, 146);
+  stat('POSTS', fmtN(m.posts), 300, 146);
+  stat('FOLLOWERS', fmtN(m.followers), L, 196);
+  stat('FOLLOWING', fmtN(m.follows), 300, 196);
+  g.font = '400 12px ' + MONO; g.fillText('PACE', L, 242);
+  g.font = '500 12px ' + MONO; g.fillText(m.pace ? m.pace.text : 'unknown', L + 46, 242);
+  // barcode and credit
+  bars(m.hash).forEach(function (b) { g.fillRect(L + b[0], 250, b[1], 17); });
+  g.font = '400 10px ' + MONO; g.fillText(CREDIT, L, 278);
+}
+function renderPass() {
+  var m = state.model;
+  paint($('pass'), false);
+  $('pass').setAttribute('aria-label', altText());
+  $('labelnote').hidden = !m.labeled;
+  $('o-photo').disabled = $('o-name').disabled = m.labeled;
+}
+function canvasBlob() {
+  return withFonts(function () {
+    var cv = document.createElement('canvas');
+    paint(cv, true);
+    return new Promise(function (resolve, reject) {
+      cv.toBlob(function (b) { b ? resolve(b) : reject(new Error('no blob')); }, 'image/png');
+    });
+  });
+}
+
+// ---- UI ----
+var statusEl = $('status');
+function say(msg) { statusEl.textContent = msg; }
+var MESSAGES = {
+  empty: 'Type a handle first.',
+  badhandle: "That doesn't look like a Bluesky handle. Try something like name.bsky.social, or a domain such as professorkiosk.wtf.",
+  noacct: "We couldn't find that account.",
+  net: "Bluesky didn't answer. Try again in a minute."
+};
+function showErr(msg) { var e = $('find-err'); e.textContent = msg; e.hidden = !msg; }
+function setBusy(b) { $('go').disabled = b; $('go').firstChild.nodeValue = b ? 'Printing… ' : 'Print pass '; }
+function setActions(on) { ['save', 'copyimg', 'copyalt', 'another'].forEach(function (id) { $(id).disabled = !on; }); }
+
+var busy = false;
+function print(input) {
+  if (busy) return;
+  showErr('');
+  var raw = String(input || '').trim();
+  if (!raw) { showErr(MESSAGES.empty); say(MESSAGES.empty); $('handle').focus(); return; }
+  var actor = parseActor(raw);
+  if (!actor) { showErr(MESSAGES.badhandle); say(MESSAGES.badhandle); $('handle').focus(); return; }
+  busy = true; setBusy(true); say('Printing…');
+  fetchProfile(actor).then(function (p) {
+    var labeled = labelVals(p).some(function (v) { return HIDE_LABELS.indexOf(v) !== -1; });
+    return (labeled ? Promise.resolve(null) : loadAvatar(p.avatar)).then(function (img) { return buildModel(p, img); });
+  }).then(function (model) {
+    state.model = model; state.photo = $('o-photo').checked || model.labeled; state.name = $('o-name').checked; state.handle = $('o-handle').checked;
+    $('slot').hidden = true; $('pwrap').hidden = false;
+    return withFonts(function () { renderPass(); setActions(true); });
+  }).then(function () {
+    $('pwrap').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+    say('Pass printed.');
+  }, function (e) {
+    var msg = MESSAGES[e && e.kind] || MESSAGES.noacct;
+    if (e && /^http/.test(e.kind || '')) msg = MESSAGES.noacct;
+    showErr(msg); say(msg);
+  }).then(function () { busy = false; setBusy(false); });
+}
+var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function clearHash() { if (location.hash) history.replaceState(null, '', location.pathname); }
+$('find').addEventListener('submit', function (e) { e.preventDefault(); clearHash(); print($('handle').value); });
+// The example link is a deep link; clicking it when the address already carries the same #handle=
+// fragment fires no hashchange, so it is handled here and prints every time.
+$('find-note').addEventListener('click', function (e) {
+  var a = e.target.closest && e.target.closest('a[href*="#handle="]');
+  if (!a) return;
+  e.preventDefault();
+  var h = decodeURIComponent(a.getAttribute('href').split('#handle=')[1]);
+  clearHash(); $('handle').value = h; print(h);
+});
+[['o-photo', 'photo'], ['o-name', 'name'], ['o-handle', 'handle']].forEach(function (p) {
+  $(p[0]).addEventListener('change', function () {
+    state[p[1]] = $(p[0]).checked;
+    if (state.model) withFonts(renderPass);
+  });
+});
+
+function fileName() { return 'transit-pass-route-' + state.model.route + '.png'; }
+function download(blob) {
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = fileName();
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+}
+$('save').addEventListener('click', function () {
+  if (!state.model) return;
+  say('Drawing the image…');
+  canvasBlob().then(function (blob) {
+    var file = typeof File === 'function' ? new File([blob], fileName(), { type: 'image/png' }) : null;
+    if (file && navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+      return navigator.share({ files: [file], text: 'Transit pass ' + CREDIT }).then(function () { say('Shared.'); },
+        function (err) { if (err && err.name === 'AbortError') say(''); else { download(blob); say('Image saved.'); } });
+    }
+    download(blob); say('Image saved.');
+  }, function () { say("Couldn't draw the image. Try Copy alt text instead."); });
+});
+if (!(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write)) $('copyimg').hidden = true;
+$('copyimg').addEventListener('click', function () {
+  if (!state.model) return;
+  say('Drawing the image…');
+  canvasBlob().then(function (blob) {
+    return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+  }).then(function () { say('Image copied.'); }, function () { say("Couldn't copy the image. Try Share or save instead."); });
+});
+$('copyalt').addEventListener('click', function () {
+  if (!state.model) return;
+  var t = altText();
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { say('Alt text copied.'); }, function () { say("Couldn't copy. Select the text yourself."); });
+  else say("Couldn't copy. Select the text yourself.");
+});
+$('another').addEventListener('click', function () {
+  state.model = null;
+  $('pwrap').hidden = true; $('slot').hidden = false;
+  $('labelnote').hidden = true; $('o-photo').disabled = $('o-name').disabled = false;
+  setActions(false); showErr(''); say('');
+  $('handle').value = ''; $('handle').focus();
+  if (location.hash) history.replaceState(null, '', location.pathname);
+});
+if (document.fonts && document.fonts.load) {      // redraw once the fonts are ready
+  Promise.all(['800 22px "DM Sans"', '400 13px "DM Mono"', '500 18px "DM Mono"'].map(function (f) { return document.fonts.load(f); })).then(function () { if (state.model) renderPass(); });
+}
+
+// ---- Deep link: /transitpass#handle=<handle> (a fragment, so it never reaches server logs) ----
+function fromHash() {
+  var m = location.hash.match(/^#handle=(.+)$/);
+  if (!m) return;
+  var h;
+  try { h = decodeURIComponent(m[1]); } catch (e) { h = m[1]; }
+  $('handle').value = h;
+  print(h);
+}
+window.addEventListener('hashchange', fromHash);
+fromHash();
+
+window.__transit = { parseActor: parseActor, paceOf: paceOf, typeOf: typeOf, fnv: fnv, lines: LINES, state: function () { return state; }, setNow: function (fn) { nowFn = fn || function () { return Date.now(); }; }, alt: function () { return state.model ? altText() : ''; } };
+})();
+</script>
+<script src="/kiosk.js" defer></script>
+</body>
+</html>

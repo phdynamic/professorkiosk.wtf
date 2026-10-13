@@ -110,3 +110,13 @@ Source: `public/formats.html`, `public/formats.txt`. The automated suite covers 
 - Character limit. How: put a post of exactly 300 and then 301 characters, with an emoji in it, into the composer. Expect: the page's counter and Bluesky agree.
 - Phone layout. How: open /formats on a real phone, deal several cards, type in a blank with the keyboard open. Expect: readable card, reachable blanks, no sideways scroll. The post sits below the blanks, so with many blanks you scroll to see it while typing; decide whether that is acceptable.
 - The formats text. How: read the deck once on the live site. Expect: you are happy with each how-line and the order of the cards. The developer reviewed every format in chat on 2026-10-13, so this is only a last look.
+
+## Transit Pass (live site, real browser, real phone)
+Source: `public/transitpass.html`. The automated suite covers it with a mocked Bluesky; these are the by-hand confirmations.
+- Member since. How: print passes for accounts whose join dates you know (yours, an old one, a new one). Expect: the date matches when the account really joined (within a day; it is shown in UTC). If the profile has no `createdAt` the pass says Unknown; tell the assistant if that happens often, since the page has no other source for the date.
+- Pace. How: print a busy account and a quiet one. Expect: the pace reads sensibly. Remember it is posts divided by days since joining, an average over the whole life, not a recent rate.
+- Picture. How: print an account with a picture and one without. Expect: the picture shows in the circle and in the saved PNG; if the picture can't load the pass still prints without it.
+- Label. How: print an account that has a content label. Expect: no photo and no name, with the note.
+- Save, copy and share. How: Share or save image on a phone and on a computer; Copy image; Copy alt text. Expect: a 1440 x 900 PNG that looks like the page; the share sheet on phones; the alt text pastes.
+- Phone layout. How: open /transitpass on a real phone. Expect: the pass fits the screen and everything is easy to tap.
+- Help text. How: read the Help dialog. Expect: every claim matches what you see (route and line, member since, pace, pass types, labels, nothing stored).

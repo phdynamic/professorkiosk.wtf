@@ -213,3 +213,9 @@
 ## 2026-10-13 · Notes for Transit Pass and Rush Hour recorded
 - changed: `NEXT-SESSION.txt` now holds the developer's descriptions of Transit Pass and Rush Hour (pasted by the developer; neither is built)
 - live-tested: no
+
+## 2026-10-13 · Transit Pass built; Format Deck card text fixed
+- built: `public/transitpass.html` (route `/transitpass`, hub card 09, hub externals renumbered 10 to 13), `test/browser/transitpass.suite.js` (33 checks); added to the help, icon, footer and hub checks
+- fixed: the Format Deck hub card and its Help text still named a "quote post game opener" after that format was removed; the hub card now names Nobody / Me, Professor X Asks and Fake Headline, and a test checks every format it names still exists
+- changed: recorded the Rush Hour description, including the "What Lands" panel, in `NEXT-SESSION.txt`; Tightener and Daily Reps dropped
+- live-tested: no

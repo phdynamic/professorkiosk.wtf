@@ -179,8 +179,11 @@ const TXT = fs.readFileSync(path.join(ROOT, 'public', 'formats.txt'), 'utf8');
   // ---- the hub and the server ----
   const hub = await mk(); await hub.goto('http://localhost:3988/');
   const hb = await hub.evaluate(() => ({ nums: [...document.querySelectorAll('.tool .num')].map(n => n.textContent + ' ' + n.nextElementSibling.textContent), href: [...document.querySelectorAll('a.k-btn')].map(a => a.getAttribute('href')).includes('/formats') }));
-  ok('F34 the hub has Format Deck as card 08 linking to /formats, and the four separate sites are now 09 to 12', hb.href && hb.nums.length === 12 && hb.nums[7] === '08 Format Deck' && hb.nums[8] === '09 Shitsky38.com' && hb.nums[11] === '12 My Twitter Archive', JSON.stringify(hb.nums));
+  ok('F34 the hub has Format Deck as card 08 linking to /formats, and the four separate sites are now 10 to 13', hb.href && hb.nums.length === 13 && hb.nums[7] === '08 Format Deck' && hb.nums[9] === '10 Shitsky38.com' && hb.nums[12] === '13 My Twitter Archive', JSON.stringify(hb.nums));
   await hub.close();
+  const hubTxt = await (async () => { const h2 = await mk(); await h2.goto('http://localhost:3988/'); const t = await h2.evaluate(() => { const c = [...document.querySelectorAll('.tool')].find(x => /Format Deck/.test(x.textContent)); return c.querySelector('.tool-body p').textContent; }); await h2.close(); return t; })();
+  const named = ['Nobody / Me', 'Professor X Asks', 'Fake Headline'];
+  ok('F34b the hub card names formats, and every format it names is still in the deck (so it cannot mention one that was removed)', named.every(n => hubTxt.includes(n) && new RegExp('^## ' + n.replace(/[\/]/g, '\\/') + '$', 'm').test(TXT)) && !/quote post game opener/i.test(hubTxt), hubTxt.slice(0, 120));
   ok('F35 the server has a /formats route', /app\.get\('\/formats'/.test(fs.readFileSync(path.join(ROOT, 'src', 'index.ts'), 'utf8')));
 
   // ---- look: contrast, size, focus, phone, night ----

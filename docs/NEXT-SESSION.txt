@@ -2,10 +2,7 @@ NEXT SESSION
 
 Last commit when these docs were updated: 7390f3b (2026-10-13).
 Format Deck (2026-10-13) is committed and was reviewed with the developer format by format (30 formats in 7 categories, no tips, no worked examples, no Seen in the wild). It is not live-tested.
-Next tools the developer said they like, none started (descriptions as the developer pasted them on 2026-10-13, from an earlier session's notes):
-  Transit Pass. Paste a handle and get a transit-pass card for the account, with join date, post rate, follower count, and a route color. It's a Skeet Receipt for accounts and fits the kiosk theme. Same pipeline, so it's about a day of work.
-  Rush Hour. Pulls your own post history and draws a heatmap of when your posts land and when they do best, by hour and weekday. It uses the author-feed pagination you already have. Big accounts mean many requests, so it needs the same cap-plus-"Load more" approach as the Tracer.
-  (The "What Lands" panel mentioned earlier is not described in those notes.)
-Proposed but not chosen: Tightener, Daily Reps (no description recorded).
+Transit Pass (2026-10-13) is built and tested with mocks, not live-tested. Next tool: Rush Hour. The developer's description (2026-10-13): pulls your own post history and draws a heatmap of when your posts land and when they do best, by hour and weekday, using the author-feed pagination the Tracer's approach already uses; big accounts mean many requests, so it needs the same cap-plus-"Load more" approach as the Tracer. A second panel, "What Lands", sits next to the heatmap and compares your top 10% of posts against the rest on length, image or no image, reply or not, and opening word, so it shows what your own hits have in common. The developer said to ask them questions about Rush Hour when that step starts.
+Tightener and Daily Reps will not be built (the developer, 2026-10-13); Transit Pass was built first because Rush Hour builds on the same profile fetch.
 Rule the developer set: no tool that stores or shares visitor content (moderation). See decisions/site-and-ui.md.
 Live checks owed: see TESTING-OWED.md.

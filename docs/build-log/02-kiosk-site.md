@@ -258,3 +258,8 @@
 ## 2026-10-13 · Card fixes; first Tutorials edits from the developer
 - changed: Joke-Web card names full, mini and double web; Tracer and Saga cards say "No sign-in"; Top Skeets card says it needs an app password; Mashup meta description wording; Top Skeets page got a meta description; Tutorials introduction, The language (reskeet and quote skeet terms) and Do's and don'ts edited by the developer's wording; the Tutorials card, hero line and meta description now say "jokes or other weirdness"
 - live-tested: no
+
+## 2026-10-13 · More Tutorials edits from the developer
+- changed: Your profile, Feeds and Contests rewritten in the developer's wording; the "Stuck for something to post?" paragraph moved out of Growing an audience into a new Posting section (placed right after it) and now also names the Format Deck; group chats are now "up to 100 people"
+- tests: the Tutorials checks were updated to match (14 sections, "too complicated", 100 people), and the check that banned any mention of Twitter or FavStar in the tutorial text was narrowed to the hub card and the page shell, because the developer's Contests text now mentions Twitter and FavStar on purpose
+- live-tested: no

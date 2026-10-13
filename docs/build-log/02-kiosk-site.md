@@ -250,3 +250,7 @@
 ## 2026-10-13 · Mutual Match: They differ uses likes and reposts
 - changed: the tab now ranks accounts by likes plus reposts (not replies); likes read through plc.directory and each account's own server; suite is 38 checks
 - live-tested: no
+
+## 2026-10-13 · Tutorials card and page intro brought in line
+- changed: the hub card for Bluesky Tutorials now describes the whole page (adds growing an audience, hashtags, cleaning up the timeline, and that it is for people who want to post jokes); the page intro in `tutorials.txt`, its hero fallback line and meta description match; the hub's sign-in notice now says every other tool works without signing in (it named only three tools)
+- live-tested: no

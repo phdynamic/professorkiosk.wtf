@@ -209,3 +209,7 @@
 ## 2026-10-13 · Format Deck review finished; status notes brought up to date
 - changed: `STATUS.md` (pinned to 7390f3b, Format Deck line, suite counts), `NEXT-SESSION.txt` and the formats line in `TESTING-OWED.md` now describe the deck after the review
 - live-tested: no
+
+## 2026-10-13 · Notes for Transit Pass and Rush Hour recorded
+- changed: `NEXT-SESSION.txt` now holds the developer's descriptions of Transit Pass and Rush Hour (pasted by the developer; neither is built)
+- live-tested: no

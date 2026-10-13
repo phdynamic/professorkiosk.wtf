@@ -68,6 +68,7 @@ main.k-main { padding: 32px 0 0; }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 16px; }
 .stat { background: var(--surface); border: 3px solid var(--line); border-radius: 14px; padding: 10px 8px; text-align: center; box-shadow: var(--hard-sm); }
 .stat b { display: block; font-size: 26px; font-weight: 800; }
+.stat b.long { font-size: 17px; line-height: 1.25; }
 .stat span { font: 500 11px var(--mono); color: var(--ink2); text-transform: uppercase; letter-spacing: .06em; }
 
 .twin { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr); }
@@ -471,7 +472,7 @@ function render() {
   var rel = $('rel');
   if (run.rel) { rel.hidden = false; rel.textContent = run.rel; } else rel.hidden = true;
   var cells = [[plus(both, pt.both), 'Both follow'], [plus(m.rep.length, pt.rep), 'Both replied to'], [hubName(run) || '—', 'Top community hub']];
-  $('stats').innerHTML = cells.map(function (c) { return '<div class="stat"><b>' + esc(c[0]) + '</b><span>' + esc(c[1]) + '</span></div>'; }).join('');
+  $('stats').innerHTML = cells.map(function (c) { return '<div class="stat"><b' + (String(c[0]).length > 10 ? ' class="long"' : '') + '>' + esc(c[0]) + '</b><span>' + esc(c[1]) + '</span></div>'; }).join('');
   [['t-follow', 'follow'], ['t-comm', 'comm'], ['t-reply', 'reply'], ['t-diff', 'diff']].forEach(function (p) { $(p[0]).setAttribute('aria-pressed', String(state.tab === p[1])); });
   renderList(); renderCard();
 }
@@ -662,7 +663,9 @@ function paint(cv, solid) {
   stat('BOTH FOLLOW', c.both, 66); stat('BOTH REPLIED TO', c.rep, 112);
   if (c.hub) {
     g.font = '400 10px ' + MONO; g.letterSpacing = '1.2px'; g.fillText('TOP COMMUNITY HUB', 270, 158); g.letterSpacing = '0px';
-    g.font = '800 15px ' + HEAD; g.fillText(fit(g, c.hub, 176), 270, 179);
+    var hs = 15; g.font = '800 ' + hs + 'px ' + HEAD;
+    while (hs > 9 && g.measureText(c.hub).width > 176) { hs--; g.font = '800 ' + hs + 'px ' + HEAD; }
+    g.fillText(fit(g, c.hub, 176), 270, 179);
   }
   if (c.names.length) {
     g.font = '400 10px ' + MONO; g.letterSpacing = '1.2px'; g.fillText('SHARED, FOR EXAMPLE', 270, 214); g.letterSpacing = '0px';

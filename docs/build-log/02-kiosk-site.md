@@ -108,3 +108,8 @@
 - changed: `#resetDlg` pop-up replaces the tap-twice button; Erase clears the board (both webs in a double), the draft and the stored previous web (`pk-jokeweb-prev-v1`)
 - built: jokeweb section P (9 checks, now 116); test helper `mk` can seed the previous-web slot
 - live-tested: no
+
+## 2026-10-13 · Sally Holloway credited
+- built: `#credit` panel with `#book` link in `jokeweb.html`, a Help sentence, a Tutorials sentence, a hub card clause; jokeweb suite section Q (118 checks)
+- note: the book facts (title, subtitle, ISBN 9781907498374, Rethink Press) come from web search results, not from the book; the link target was not opened from here
+- live-tested: no

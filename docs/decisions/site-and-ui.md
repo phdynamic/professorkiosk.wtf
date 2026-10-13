@@ -87,3 +87,8 @@
 - what: replaces the tap-twice confirm with a dialog (Erase / Keep my webs, Esc cancels); Erase wipes the web or both webs of a double web, the draft and the spare previous web, so no swap button remains; the size choice is kept
 - why: developer asked for a warning that both webs will be erased and no switch-back button afterward (I read "both webs" as the current and previous web, and for a double web both A and B)
 - source: developer request, 2026-10-12
+
+### 2026-10-13 · Credit Sally Holloway and link to her book wherever the joke-web is described · active
+- what: a credit panel and Get the book link on `/jokeweb`, a line in its Help, a sentence in `tutorials.txt` and a clause on the hub card; the link goes to the publisher's page for the book
+- why: developer asked to credit her with the technique and to plug the book with a purchase link; the publisher page was chosen because I could not open any shop page from the sandbox to confirm it sells the book (the developer may prefer a bookshop or affiliate link)
+- source: developer request, 2026-10-13

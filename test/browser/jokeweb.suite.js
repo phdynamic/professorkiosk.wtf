@@ -372,6 +372,15 @@ const labels = page => page.evaluate(() => [...document.querySelectorAll('#frame
     ok('P9 a single web with a previous one warns that both will be erased', /Both your current web and the previous web/.test(await p2.innerText('#reset-msg')));
     await p2.close();
   }
+  // Q. credit
+  {
+    const { page } = await mk(browser); await page.goto(BASE);
+    const cr = await page.evaluate(() => { const a = document.querySelector('#credit #book'), txt = document.getElementById('credit').textContent; return { href: a && a.href, target: a && a.target, rel: a && a.rel, name: /Sally Holloway/.test(txt), title: /The Serious Guide to Joke Writing/.test(txt) }; });
+    ok('Q1 the page credits Sally Holloway and her book, with a link that opens in a new tab', cr.name && cr.title && cr.href === 'https://rethinkpress.com/books/the-serious-guide-to-joke-writing' && cr.target === '_blank' && /noopener/.test(cr.rel), JSON.stringify(cr));
+    await page.click('#helpBtn');
+    ok('Q2 Help credits her too, with the same link', /Sally Holloway/.test(await page.innerText('#help')) && await page.locator('#help a[href="https://rethinkpress.com/books/the-serious-guide-to-joke-writing"]').count() === 1);
+    await page.close();
+  }
   // M. help dialog
   {
     const { page } = await mk(browser); await page.goto(BASE);

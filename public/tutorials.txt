@@ -102,7 +102,7 @@ Three dependable ways to gain followers:
 2. Follow people whose posts you like after reposting several of theirs
 3. Post something every day so your name and avatar are out there
 
-Stuck for something to post? The [Joke-Web Maker](/jokeweb) walks you through free association, and the [Mashup Machine](/mashup) smashes random topics together. Neither writes the joke for you, but both get you started.
+Stuck for something to post? The [Joke-Web Maker](/jokeweb) walks you through free association, using the joke-web technique from Sally Holloway's book [The Serious Guide to Joke Writing](https://rethinkpress.com/books/the-serious-guide-to-joke-writing). The [Mashup Machine](/mashup) smashes random topics together. Neither writes the joke for you, but both get you started.
 
 ## Hashtags
 

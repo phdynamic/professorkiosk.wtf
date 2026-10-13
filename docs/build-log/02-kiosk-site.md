@@ -148,3 +148,8 @@
 - note: second real run found 151 candidates; still empty: Nobody / Me (6 fit, best 20 likes), Expectation / Reality (24 fit, best 29), Before / After (1 fit), Translation Guide (0 fit, searches off target), Ranking (3 fit, best 3), Official Notice (3 fit, best 0), Customer Service (1 fit), Fill in the Blank (0 fit: real posts have no underscores)
 - built: `likes:` line in `formats.txt` (per-format minimum likes; `--min-likes` overrides); set for 7 formats; new `search:`/`match:` lines for Translation Guide, Ranking, Official Notice, Customer Service, Before / After, Fill in the Blank
 - live-tested: no (the changes since the second run have not been run)
+
+## 2026-10-13 · Finder: last two formats retried
+- note: third real run found 184 candidates; only Before / After (4 fit, best 14 likes) and Customer Service (1 of 1,134 fit) came up empty
+- changed: wider `search:` and `match:` lines for both and a `likes:` bar of 3, so the developer has something to consider; if nothing usable turns up the worked example stays
+- live-tested: no

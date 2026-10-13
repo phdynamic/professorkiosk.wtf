@@ -58,11 +58,15 @@ template: Before {the event}: {how things used to be}
 template: After {the event}: {how things are now}
 example: I learned what a sconce is | walls were just walls | I judge every hallway for its lack of sconces
 tip: Keep the event tiny. A small trigger with a huge change is the whole engine.
+search: "before:" "after:"
+search: "me before" "me after"
 search: "before I" "after I"
+search: "before kids" "after kids"
 search: "before" "after" "I learned"
-likes: 15
-match: ^\s*before\b
-match: ^\s*after\b
+search: "before I knew" "after I knew"
+match: ^\s*(me |us |life |my \w+ )?before\b
+match: ^\s*(me |us |life |my \w+ )?after\b
+likes: 3
 
 ## Translation Guide
 category: Contrast
@@ -214,13 +218,17 @@ template: Me: {my complaint}
 template: Them: {the calm, unhelpful reply}
 example: My package says it was delivered, but I don't have it. | Our records show it arrived at a better house. No refund is available.
 tip: Make the reply sound like a policy. The agent never apologizes.
-search: "me:" "customer service"
-search: "customer service" "me:" "them:"
-search: "support:" "me:"
-search: "agent:" "me:"
-likes: 10
-match: ^\s*me:
-match: ^\s*(them|they|support|customer service|agent|rep|bot|chatbot):
+search: "customer:" "agent:"
+search: "customer:" "support:"
+search: "me:" "chatbot:"
+search: "me:" "customer service:"
+search: "me:" "agent:"
+search: "caller:" "operator:"
+search: "me:" "them:" "refund"
+search: "customer service" "hold music"
+match: ^\s*(me|customer|caller|guest|user|client)\b.{0,12}:
+match: ^\s*(customer service|support|agent|rep|representative|them|they|chatbot|bot|operator|manager|cashier|staff|automated voice|ai)\b.{0,12}:
+likes: 3
 
 ## Overheard
 category: Dialogue

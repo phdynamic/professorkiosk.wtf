@@ -128,6 +128,11 @@ category: Wordplay
 how: Define one thing as another thing that is surprising but, once you think about it, fits. The fit is the joke, so keep it short.
 template: {the first thing} is just {a surprising but fitting second thing}.
 
+## Classic Blunder
+category: Wordplay
+how: Borrow the famous speech from The Princess Bride about the classic blunders and name a pitfall that is either surprising or silly, ideally with a grain of truth. The more seriously you say it, the better.
+template: You just committed one of the classic blunders: {a surprising or silly pitfall}
+
 ## Rule of Three
 category: Escalation
 how: Two items set a pattern and the third breaks it. The pattern is the setup and the break is the punchline.

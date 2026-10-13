@@ -197,3 +197,7 @@
 ## 2026-10-13 · Format Deck review, category 5 (Questions)
 - changed: deleted If It Were and the whole Questions category (Which One of You, Be Honest, Rate It, Fill in the Blank, Quote Post Game Starter); Interview Detour now has Me asking a long, rambling question (was answer); the deck has 29 formats in 7 categories; hub card says "Nearly 30 formats"
 - live-tested: no
+
+## 2026-10-13 · Format Deck review, category 6 (Wordplay)
+- changed: kept the five Wordplay formats; added Classic Blunder ("You just committed one of the classic blunders: {a surprising or silly pitfall}") to Wordplay; the deck has 30 formats; hub card says "About 30 formats"
+- live-tested: no

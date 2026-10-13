@@ -170,3 +170,8 @@
 - changed: hub card and Help text no longer mention examples; `formats` suite reworked (48 checks); F3 now fills every blank with 40 characters and checks the post fits in 300
 - note: the one `post:` line the developer added went with the rest
 - live-tested: no
+
+## 2026-10-13 · Format Deck review, category 1 (Contrast)
+- changed: kept all five formats (Nobody / Me, Expectation / Reality, Before / After, Translation Guide, Two Types of People) and removed their tips at the developer's request; a tip is now optional in the suite (the page already hid an empty one)
+- note: the review of the other seven categories is in progress
+- live-tested: no

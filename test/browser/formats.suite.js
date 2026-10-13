@@ -16,10 +16,10 @@ const TXT = fs.readFileSync(path.join(ROOT, 'public', 'formats.txt'), 'utf8');
   for (const b of blocks) {
     const lines = b.split('\n'), name = lines[0].trim(), f = { template: [], how: '', tip: '', category: '' };
     for (const l of lines.slice(1)) { const m = /^(category|how|template|tip):\s?(.*)$/.exec(l); if (!m) { if (l.trim()) bad.push(name + ': ' + l.slice(0, 40)); continue; } if (m[1] === 'template') f.template.push(m[2]); else f[m[1]] = m[2]; }
-    if (!f.category || !f.how || !f.template.length || !f.tip) missing.push(name);
+    if (!f.category || !f.how || !f.template.length) missing.push(name);   // a tip is optional
     if (f.category && !cats.includes(f.category)) cats.push(f.category);
   }
-  ok('F1a the file holds 40 formats in 8 categories, each with a category, how, template and tip', blocks.length === 40 && cats.length === 8 && !missing.length, JSON.stringify([blocks.length, cats.length, missing]));
+  ok('F1a the file holds 40 formats in 8 categories, each with a category, how and template (a tip is optional)', blocks.length === 40 && cats.length === 8 && !missing.length, JSON.stringify([blocks.length, cats.length, missing]));
   ok('F1b every line under a format starts with a known label (category, how, template or tip), so no example:, post:, search:, match: or likes: lines are left over', !bad.length, bad.slice(0, 3).join(' / '));
   ok('F1c the text has no em or en dashes and no tabs', !/[—–\t]/.test(TXT));
   ok('F1d the "Rules for what goes in" note is still at the top', /Rules for what goes in/.test(TXT.split('\n').slice(0, 25).join('\n')));

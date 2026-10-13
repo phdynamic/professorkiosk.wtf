@@ -72,7 +72,7 @@ const nOf = t => Number((/: (\d+) post/.exec(t) || [])[1] || 0);
   // ---- the empty page ----
   const { page, log } = await mk(browser); await page.goto(BASE);
   const e0 = await page.evaluate(() => ({ tag: document.querySelector('.k-hero .k-tag').textContent, slot: !document.getElementById('slot').hidden, result: document.getElementById('result').hidden, help: !!document.getElementById('helpBtn'), theme: !!document.getElementById('themeToggle'), foot: !!document.querySelector('footer.k-foot .kofi') }));
-  ok('R1 the empty page: Tool 06 tag, the empty-slot box, nothing else yet, plus the Help button, Night mode and the footer', /Tool 06/.test(e0.tag) && e0.slot && e0.result && e0.help && e0.theme && e0.foot, JSON.stringify(e0));
+  ok('R1 the empty page: Tool 07 tag, the empty-slot box, nothing else yet, plus the Help button, Night mode and the footer', /Tool 07/.test(e0.tag) && e0.slot && e0.result && e0.help && e0.theme && e0.foot, JSON.stringify(e0));
   await page.click('#go'); const err1 = await txt(page, '#find-err');
   await go(page, 'not a handle!'); const err2 = await txt(page, '#find-err');
   ok('R2 an empty or a bad handle gets a plain message and nothing is sent to Bluesky', /Type a Bluesky handle first/.test(err1) && /doesn't look like a Bluesky handle/.test(err2) && !log.calls.length, err1 + ' | ' + err2);

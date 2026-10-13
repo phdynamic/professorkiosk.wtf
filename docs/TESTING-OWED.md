@@ -111,6 +111,16 @@ Source: `public/formats.html`, `public/formats.txt`. The automated suite covers 
 - Phone layout. How: open /formats on a real phone, deal several cards, type in a blank with the keyboard open. Expect: readable card, reachable blanks, no sideways scroll. The post sits below the blanks, so with many blanks you scroll to see it while typing; decide whether that is acceptable.
 - The formats text. How: read the deck once on the live site. Expect: you are happy with each how-line and the order of the cards. The developer reviewed every format in chat on 2026-10-13, so this is only a last look.
 
+## Mutual Match (live site, real browser, real phone)
+Source: `public/mutualmatch.html`. The automated suite uses a mocked Bluesky; these are the by-hand confirmations.
+- Real lists. How: compare yourself with a friend, then with a very large account. Expect: follows and followers load 100 at a time, the plus signs and "Load more" appear for big accounts, and it stays inside Bluesky's rate limit (tell the assistant how long a big pair takes and whether it gets rate-limited).
+- Counts. How: check one shared follow by hand on both profiles. Expect: it appears in "Both follow".
+- They differ. How: read the two groups. Expect: the accounts listed are ones each person really replies to, and the other person really doesn't follow them.
+- Follow each other line. How: try a pair that follows each other and a pair that doesn't. Expect: the sentence under the headline is right. If it never appears, the public `getRelationships` call isn't answering.
+- Private or odd accounts. How: try an account with a label, and one that has opted out of logged-out viewing. Expect: handle only in the list, no names on the card, or a clear error.
+- Card. How: Share or save on a phone and a computer. Expect: a 1440 x 900 PNG that looks like the page, photos drawn.
+- Phone layout. How: open /mutualmatch on a real phone. Expect: nothing scrolls sideways, buttons are easy to tap.
+
 ## Rush Hour (live site, real browser, real phone)
 Source: `public/rushhour.html`. The automated suite uses a mocked Bluesky; these are the by-hand confirmations.
 - Real feeds. How: read your own handle and a very busy account. Expect: posts load 100 at a time, reposts are not counted, "Load 500 more" works, and the 5,000 ceiling stops it with a plain line. Tell the assistant if Bluesky rate-limits it before 500.

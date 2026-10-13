@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mutual Match</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<meta name="description" content="Type two Bluesky handles and see who they both follow, who follows both, and who they both reply to. Save it as a card." />
+<link rel="preload" href="/fonts/dm-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/dm-sans-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<script>
+  // Apply the theme before first paint to avoid a light flash
+  (function() {
+    var saved = null;
+    try { saved = localStorage.getItem('theme'); } catch (e) {}
+    var dark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+  })();
+</script>
+<link rel="stylesheet" href="/kiosk.css" />
+<style>
+:root { --hero: var(--teal); --rink: #1d1b4f; }
+h1, h2, h3, p, ul, ol, dl, dd { margin: 0; }
+button, input { font: inherit; }
+[hidden] { display: none !important; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* hero with the input card */
+.k-hero .k-wrap { flex-wrap: wrap; align-items: flex-start; }
+.k-hero .copy { flex: 1 1 420px; min-width: 0; }
+.sticker { flex: 0 0 auto; display: none; }
+@media (min-width: 640px) { .sticker { display: block; margin-right: 8px; } }
+.find { flex: 1 1 100%; background: #fffcf3; color: var(--rink); border: 3px solid var(--rink); border-radius: 20px; box-shadow: 6px 6px 0 var(--rink); padding: 18px; }
+.find .two { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 720px) { .find .two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.find label { display: block; font-weight: 800; font-size: 17px; line-height: 1.2; margin-bottom: 8px; }
+.find input { width: 100%; min-width: 0; min-height: 52px; border: 3px solid var(--rink); border-radius: 14px; padding: 0 14px; background: #fff; color: var(--rink); font: 400 14px/1 var(--mono); }
+.find input::placeholder { color: #565c86; opacity: 1; }
+.find .go { margin-top: 14px; }
+.find .k-btn { min-height: 52px; font-size: 16px; background: var(--rink); color: #fff6e0; border-color: var(--rink); box-shadow: 3px 3px 0 var(--rink); }
+.find .k-btn .arr { color: var(--yellow); }
+.find .note { margin: 12px 0 0; font-size: 14px; }
+.find .note a { font-weight: 700; text-underline-offset: 3px; }
+.find :focus-visible { outline-color: var(--rink); }
+.find .err { margin: 12px 0 0; padding: 10px 14px; border: 2px solid #b91c1c; border-radius: 12px; background: #fff1f0; color: #8f1111; font-weight: 700; font-size: 14px; }
+
+main.k-main { padding: 32px 0 0; }
+.stack { display: grid; gap: 24px; }
+.panel { background: var(--surface); border: 3px solid var(--line); border-radius: 20px; box-shadow: 5px 5px 0 var(--shadow-c); padding: 20px; min-width: 0; }
+.panel h2 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+.panel .sub { font-size: 14px; color: var(--ink2); margin-bottom: 14px; }
+.yellow { background: var(--tint-yellow); }
+.muted { font-size: 14px; color: var(--ink2); }
+
+.row2 { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font-weight: 500; font-size: 15px; }
+.row2 .k-btn { min-height: 44px; }
+.pbar { height: 12px; background: var(--surface); border: 2px solid var(--line); border-radius: 999px; overflow: hidden; margin-top: 10px; }
+.pbar i { display: block; height: 100%; width: 0; background: var(--teal); transition: width .4s; }
+.notice { margin-top: 8px; font-size: 14px; font-weight: 700; }
+
+.slot { border: 3px dashed var(--line); border-radius: 18px; padding: 48px 24px; text-align: center; background: var(--surface2); }
+.slot b { display: block; font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+.slot span { font: 400 13px var(--mono); color: var(--ink2); }
+
+.headline { font-size: 22px; font-weight: 800; line-height: 1.25; }
+.rel { margin-top: 8px; font-size: 15px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 16px; }
+.stat { background: var(--surface); border: 3px solid var(--line); border-radius: 14px; padding: 10px 8px; text-align: center; box-shadow: var(--hard-sm); }
+.stat b { display: block; font-size: 26px; font-weight: 800; }
+.stat span { font: 500 11px var(--mono); color: var(--ink2); text-transform: uppercase; letter-spacing: .06em; }
+
+.twin { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 980px) { .twin { grid-template-columns: minmax(0, 480px) minmax(0, 1fr); align-items: start; } }
+.pass-wrap { width: min(480px, 100%); margin: 0 auto; }
+#card { display: block; width: 100%; height: auto; }
+.opt { display: flex; align-items: center; gap: 12px; min-height: 44px; font-weight: 700; cursor: pointer; }
+.opt input { width: 24px; height: 24px; accent-color: var(--navy); flex: none; }
+html[data-theme="dark"] .opt input { accent-color: var(--yellow); }
+.opt small { display: block; font-weight: 400; font-size: 14px; color: var(--ink2); }
+.opt input:disabled + span { opacity: .6; }
+.labelnote { margin-top: 12px; padding: 10px 14px; border: 2px dashed var(--line); border-radius: 12px; font-size: 14px; font-weight: 700; background: var(--tint-yellow); }
+.actions { display: grid; gap: 12px; margin-top: 16px; }
+.actions .k-btn { width: 100%; justify-content: space-between; min-height: 44px; font-size: 15px; }
+.actions .k-btn .arr { color: var(--yellow); }
+html[data-theme="dark"] .actions .k-btn.primary .arr { color: var(--navy); }
+.status { min-height: 24px; font: 500 13px/1.4 var(--mono); margin-top: 10px; }
+
+/* the lists */
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 2px solid var(--line); border-radius: 22px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: none; color: var(--ink); min-height: 44px; padding: 0 12px; font-weight: 700; font-size: 14px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--navy); color: var(--yellow); }
+html[data-theme="dark"] .seg button[aria-pressed="true"] { background: var(--yellow); color: var(--navy); }
+.controls input[type=search] { flex: 1 1 200px; min-width: 0; min-height: 44px; border: 2px solid var(--line); border-radius: 999px; padding: 0 14px; background: var(--surface); color: var(--ink); font-size: 14px; }
+.people { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.people li { min-width: 0; }
+.people li.grp { grid-column: 1 / -1; font-weight: 800; font-size: 15px; margin-top: 8px; }
+.people li.grp:first-child { margin-top: 0; }
+.people li.none { grid-column: 1 / -1; }
+.people a { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 10px; border: 2px solid var(--line); border-radius: 14px; text-decoration: none; color: inherit; background: var(--surface); }
+.people a:hover { background: var(--tint-teal); }
+.av { position: relative; flex: none; width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--navy); overflow: hidden; display: grid; place-items: center; font-weight: 800; font-size: 14px; color: var(--navy); background: var(--tint-yellow); }
+.av img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.who { min-width: 0; }
+.who b { display: block; font-weight: 800; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.who span { display: block; font: 400 12px var(--mono); color: var(--ink2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.who em { font-style: normal; font: 500 11px var(--mono); color: var(--ink2); }
+.more { margin-top: 14px; }
+.more .k-btn { min-height: 44px; }
+
+.privacy { background: var(--tint-teal); border: 3px dashed var(--line); border-radius: 20px; padding: 16px 18px; }
+.privacy h2 { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+.privacy ul { padding-left: 20px; margin: 0; }
+.privacy li { margin: 4px 0; }
+.privacy p { margin-top: 10px; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="k-top">
+  <a class="k-btn" href="/">&larr; Professor Kiosk</a>
+  <div class="right">
+    <button class="k-btn" id="helpBtn" type="button" aria-haspopup="dialog">? Help</button>
+    <button class="k-btn night" id="themeToggle" type="button" aria-label="Toggle night mode">🌙 Night mode</button>
+  </div>
+</div>
+
+<dialog class="k-help" id="help" aria-labelledby="help-t">
+  <div class="hh"><h2 id="help-t">How Mutual Match works</h2><button class="k-btn" id="helpX" type="button" aria-label="Close help">&#x2715;</button></div>
+  <div class="hb">
+    <h3>The idea</h3>
+    <p>Type two Bluesky handles and Mutual Match finds what the two accounts have in common: the accounts they both follow, the accounts that follow both of them, and the accounts they have both replied to. You get a card to save and share, and the full lists underneath.</p>
+
+    <h3>The three steps</h3>
+    <ol>
+      <li><b>Type two handles.</b> With or without the @, or paste links to the profiles. Any public accounts work, not only your own.</li>
+      <li><b>Wait a little.</b> It reads each account's follows, followers and recent replies. Big accounts take longer.</li>
+      <li><b>Look and share.</b> Switch between the three lists, search them, and save or copy the card.</li>
+    </ol>
+
+    <h3>What it counts</h3>
+    <ul>
+      <li><b>Both follow.</b> Accounts that appear in both accounts' follow lists.</li>
+      <li><b>Follow both.</b> Accounts that appear in both accounts' follower lists.</li>
+      <li><b>Both replied to.</b> Accounts that both people have replied to, in their most recent posts. It reads the newest 500 posts of each account first, so it covers recent history, not everything.</li>
+      <li><b>Where they differ.</b> For each account, the five accounts it replies to most (in those same recent posts) that the other account doesn't follow. It's a guess at who each one talks to that the other has never picked up. If a follow list was cut off at the limit, the other account may follow some of them.</li>
+    </ul>
+
+    <h3>Good to know</h3>
+    <ul>
+      <li>It reads the first 5,000 follows and 5,000 followers of each account, then stops. If an account has more, the page says so and offers "Load 5,000 more", up to 20,000. When a list is cut off, the numbers are "at least", shown with a plus sign.</li>
+      <li>Everything is read straight from Bluesky by your browser. Nothing is sent to our server or stored. The card is drawn in your browser too.</li>
+      <li>Accounts with a content label, or that asked not to be shown to people who aren't logged in, are shown by handle only, with no photo or name, and are never named on the card.</li>
+      <li>If an account's follow or follower list is private or can't be read, it says so instead of guessing.</li>
+    </ul>
+  </div>
+</dialog>
+
+<header class="k-hero">
+  <div class="k-wrap">
+    <div class="copy">
+      <span class="k-tag navy">Level 1 &middot; Tool 05</span>
+      <h1>Mutual Match</h1>
+      <p>Type two Bluesky handles and see who they both follow, who follows both, and who they both reply to. Save it as a card.</p>
+    </div>
+    <svg class="sticker" width="180" height="140" viewBox="0 0 180 140" aria-hidden="true" focusable="false">
+      <circle cx="108" cy="78" r="48" fill="#1B2150"/>
+      <circle cx="104" cy="74" r="48" fill="#3DD1B5" stroke="#1B2150" stroke-width="3"/>
+      <circle cx="68" cy="74" r="48" fill="#FF7A66" fill-opacity=".9" stroke="#1B2150" stroke-width="3"/>
+      <path d="M86 40 A48 48 0 0 1 86 108 A48 48 0 0 1 86 40 Z" fill="#FFD23F" stroke="#1B2150" stroke-width="3" stroke-linejoin="round"/>
+    </svg>
+    <form class="find" id="find" novalidate>
+      <div class="two">
+        <div><label for="ha">First handle</label><input id="ha" type="text" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@professorkiosk.wtf" aria-describedby="find-note find-err" /></div>
+        <div><label for="hb">Second handle</label><input id="hb" type="text" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@someone.bsky.social" aria-describedby="find-note find-err" /></div>
+      </div>
+      <div class="go"><button class="k-btn" id="go" type="submit">Find the match <span class="arr" aria-hidden="true">&rarr;</span></button></div>
+      <p class="err" id="find-err" hidden></p>
+      <p class="note" id="find-note"><b>Public accounts only.</b> Works with any handles or profile links.</p>
+    </form>
+  </div>
+</header>
+
+<main class="k-main">
+  <div class="k-wrap">
+    <div class="stack">
+      <section class="panel yellow" id="progress" hidden aria-live="polite">
+        <div class="row2"><span id="ptext">Starting&hellip;</span><button class="k-btn" id="stopBtn" type="button">Stop</button></div>
+        <div class="pbar"><i id="pfill"></i></div>
+        <div class="notice" id="pnotice" hidden></div>
+      </section>
+
+      <section class="panel yellow" id="capbar" hidden>
+        <div class="row2"><span id="captext"></span><button class="k-btn primary" id="more" type="button"></button></div>
+      </section>
+
+      <div class="slot" id="slot">
+        <b>Your match shows up here</b>
+        <span>Type two handles above.</span>
+      </div>
+
+      <div id="result" class="stack" hidden>
+        <section class="panel" aria-labelledby="sum-h">
+          <h2 id="sum-h" class="sr">Summary</h2>
+          <p class="headline" id="headline"></p>
+          <p class="rel" id="rel" hidden></p>
+          <div class="stats" id="stats"></div>
+        </section>
+
+        <div class="twin">
+          <section class="panel" aria-labelledby="card-h">
+            <h2 id="card-h">Your card</h2>
+            <div class="pass-wrap"><canvas id="card" width="1440" height="900" role="img" aria-label="Mutual match card"></canvas></div>
+            <label class="opt"><input type="checkbox" id="o-photo" checked /><span>Include photos<small>The two profile pictures.</small></span></label>
+            <label class="opt"><input type="checkbox" id="o-name" checked /><span>Include names<small>Display names, and the names of shared accounts.</small></span></label>
+            <label class="opt"><input type="checkbox" id="o-handle" checked /><span>Include handles<small>Used when names are off or missing.</small></span></label>
+            <p class="labelnote" id="labelnote" hidden></p>
+            <div class="actions">
+              <button class="k-btn primary" id="save" type="button">Share or save image <span class="arr" aria-hidden="true">&rarr;</span></button>
+              <button class="k-btn" id="copyimg" type="button">Copy image</button>
+              <button class="k-btn" id="copyalt" type="button">Copy alt text</button>
+              <button class="k-btn" id="another" type="button">Compare another pair</button>
+            </div>
+            <p class="status" id="status" role="status" aria-live="polite"></p>
+          </section>
+
+          <section class="panel" aria-labelledby="lists-h">
+            <h2 id="lists-h">The lists</h2>
+            <p class="sub" id="lists-sub"></p>
+            <div class="controls">
+              <div class="seg" role="group" aria-label="Which list">
+                <button type="button" id="t-follow" aria-pressed="true">Both follow</button>
+                <button type="button" id="t-fans" aria-pressed="false">Follow both</button>
+                <button type="button" id="t-reply" aria-pressed="false">Replied to</button>
+                <button type="button" id="t-diff" aria-pressed="false">They differ</button>
+              </div>
+              <input type="search" id="q" placeholder="Search names" aria-label="Search the list" autocomplete="off" />
+            </div>
+            <ul class="people" id="people"></ul>
+            <p class="muted" id="empty" hidden></p>
+            <div class="more" id="showmore" hidden><button class="k-btn" id="showmoreBtn" type="button"></button></div>
+          </section>
+        </div>
+      </div>
+
+      <section class="privacy" aria-labelledby="priv">
+        <h2 id="priv">What this asks for</h2>
+        <ul>
+          <li><b>Sign-in:</b> none. No password, no permissions.</li>
+          <li><b>Reads:</b> two public profiles, their follows and followers, and their recent public posts, the same as someone who isn't logged in.</li>
+          <li><b>Stored:</b> nothing. Your browser reads the lists and does the matching here.</li>
+        </ul>
+        <p>Accounts with a content label are shown by handle only and never named on the card.</p>
+      </section>
+    </div>
+  </div>
+</main>
+
+<footer class="k-foot">
+  <div class="k-wrap">
+    <strong>Thank you for using Professor Kiosk.<br />Please take your receipt.</strong>
+    <div class="links">
+      <a class="by" href="https://bsky.app/profile/professorkiosk.wtf" target="_blank" rel="noopener"><img class="footer-avatar" data-pk-avatar src="" alt="" hidden />Made by @professorkiosk.wtf</a>
+      <a class="kofi" href="https://ko-fi.com/professorkiosk" target="_blank" rel="noopener">&#9749; Support these projects on Ko-fi</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/kiosk-help.js" defer></script>
+<script>
+(function () {
+'use strict';
+
+// ---- Config (the test hook only changes these in tests) ----
+var CFG = Object.assign({ listCap: 5000, listMore: 5000, listCeiling: 20000, replyCap: 500, replyMore: 500, replyCeiling: 5000, gapMs: 120, timeoutMs: 15000 }, window.MM_TEST || {});
+var APPVIEW = 'https://public.api.bsky.app/xrpc/';
+// Label values from @atproto/api's built-in label definitions (same list as Skeet Receipt and Transit Pass).
+var HIDE_LABELS = ['porn', 'sexual', 'nudity', 'graphic-media', 'gore', '!hide', '!warn', '!no-unauthenticated'];
+var CREDIT = 'professorkiosk.wtf/mutualmatch';
+var INK = '#1d1b4f', PAPER = '#fffdf6', CREAM = '#fff6e0', CORAL = '#ff7a66', TEAL = '#3dd1b5';
+var CW = 480, CH = 300, SCALE = 3;
+var SHOW = 60;          // people drawn at first in a list
+
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+function fmtN(n) { return Number(n).toLocaleString('en-US'); }
+function toInt(n) { n = Number(n); return isFinite(n) && n >= 0 ? Math.floor(n) : 0; }
+
+// ---- Night mode (shared 'theme' key) ----
+function applyThemeLabel() { $('themeToggle').textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️ Day mode' : '🌙 Night mode'; }
+$('themeToggle').addEventListener('click', function () {
+  var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (dark) document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', 'dark');
+  try { localStorage.setItem('theme', dark ? 'light' : 'dark'); } catch (e) {}
+  applyThemeLabel();
+});
+applyThemeLabel();
+
+// ---- What was typed ----
+function parseActor(raw) {
+  var s = String(raw || '').trim(), m;
+  if ((m = /^https?:\/\/[^\/\s]+\/profile\/([^\/?#\s]+)/i.exec(s))) s = m[1];
+  s = s.replace(/^@+/, '');
+  try { s = decodeURIComponent(s); } catch (e) {}
+  if (/^did:[a-z]+:[A-Za-z0-9._:%-]+$/.test(s)) return s;
+  s = s.toLowerCase();
+  if (s.length > 253) return null;
+  return /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]([a-z0-9-]{0,61}[a-z0-9])?$/.test(s) ? s : null;
+}
+
+// ---- Talking to Bluesky: paced, retrying, polite about rate limits ----
+function BskyError(kind, who) { this.kind = kind; this.who = who || ''; }
+function setNotice(t) { var el = $('pnotice'); if (t) { el.textContent = t; el.hidden = false; } else el.hidden = true; }
+function api(method, params, run) {
+  var qs = new URLSearchParams();
+  Object.keys(params).forEach(function (k) { if (params[k] != null && params[k] !== '') qs.set(k, params[k]); });
+  var attempt = 0;
+  function go() {
+    attempt++;
+    if (run.stopped) return Promise.reject(new BskyError('stopped'));
+    var at = Math.max(Date.now(), run.nextStart || 0, run.pauseUntil || 0);
+    run.nextStart = at + CFG.gapMs;
+    return sleep(Math.max(0, at - Date.now())).then(function () {
+      if (run.stopped) throw new BskyError('stopped');
+      var ac = new AbortController(), t = setTimeout(function () { ac.abort(); }, CFG.timeoutMs);
+      run.ac = ac;
+      return fetch(APPVIEW + method + '?' + qs.toString(), { signal: ac.signal }).then(function (res) {
+        clearTimeout(t);
+        if (res.ok) { if (Date.now() >= (run.pauseUntil || 0)) setNotice(''); return res.json(); }
+        if (res.status === 429) {
+          var sec = parseInt(res.headers.get('retry-after') || '', 10);
+          var ms = Math.min(Math.max(sec > 0 ? sec * 1000 : 15000, CFG.minPause || 5000), 60000);
+          run.pauseUntil = Date.now() + ms; setNotice('Bluesky is rate-limiting requests. Waiting ' + Math.round(ms / 1000) + 's, then continuing…');
+          if (attempt < 5) return go();
+          throw new BskyError('rate');
+        }
+        if (res.status >= 500 && attempt < 3) return sleep(CFG.retryMs || 1000 * attempt).then(go);
+        throw new BskyError(res.status >= 500 ? 'net' : 'http' + res.status);
+      }, function () {
+        clearTimeout(t);
+        if (run.stopped) throw new BskyError('stopped');
+        if (attempt < 3) return sleep(CFG.retryMs || 1000 * attempt).then(go);
+        throw new BskyError('net');
+      });
+    });
+  }
+  return go();
+}
+
+// ---- People ----
+function labelVals(p) { return (p && p.labels || []).map(function (l) { return l && l.val; }).filter(Boolean); }
+function personOf(v) {
+  var hit = labelVals(v).filter(function (x) { return HIDE_LABELS.indexOf(x) !== -1; });
+  return { did: String(v.did), handle: String(v.handle || ''), name: String(v.displayName || '').trim(), avatar: typeof v.avatar === 'string' && /^https:\/\/cdn\.bsky\.app\//.test(v.avatar) ? v.avatar : '', labeled: hit.length > 0, hit: hit };
+}
+function shown(p) { return p.name || p.handle || p.did; }
+
+// ---- Reading ----
+// each list is one follows or followers list; the replies are what an account answered in its recent posts
+function newList(kind, who, did, total) { return { kind: kind, who: who, did: did, total: total, map: Object.create(null), n: 0, cursor: '', exhausted: false }; }
+function newReplies(who, did, total) { return { who: who, did: did, total: total, posts: 0, map: Object.create(null), cursor: '', exhausted: false }; }
+function readList(run, L) {
+  var method = L.kind === 'follows' ? 'app.bsky.graph.getFollows' : 'app.bsky.graph.getFollowers', key = L.kind;
+  function step() {
+    if (run.stopped || L.exhausted || L.n >= run.listCap) return;
+    return api(method, { actor: L.did, limit: 100, cursor: L.cursor }, run).then(function (res) {
+      if (state.run !== run) return;
+      var arr = Array.isArray(res[key]) ? res[key] : [];
+      arr.forEach(function (v) { if (v && v.did && !L.map[v.did]) { L.map[v.did] = personOf(v); L.n++; } });
+      progress(run);
+      if (!res.cursor || !arr.length || res.cursor === L.cursor) { L.exhausted = true; return; }
+      L.cursor = res.cursor;
+      return step();
+    }, function (e) { if (e && /^http(400|403|404)$/.test(e.kind)) { L.failed = true; L.exhausted = true; return; } throw e; });
+  }
+  return step();
+}
+function readReplies(run, R) {
+  function step() {
+    if (run.stopped || R.exhausted || R.posts >= run.replyCap) return;
+    return api('app.bsky.feed.getAuthorFeed', { actor: R.did, limit: 100, filter: 'posts_with_replies', cursor: R.cursor }, run).then(function (res) {
+      if (state.run !== run) return;
+      var feed = Array.isArray(res.feed) ? res.feed : [];
+      feed.forEach(function (item) {
+        var post = item && item.post;
+        if (!post || !post.uri || (item.reason && typeof item.reason.$type === 'string' && item.reason.$type.indexOf('reasonRepost') !== -1)) return;
+        if (post.author && post.author.did && post.author.did !== R.did) return;
+        if (R.seen[post.uri]) return; R.seen[post.uri] = 1; R.posts++;
+        var par = item.reply && item.reply.parent && item.reply.parent.author;
+        if (!par || !par.did || par.did === R.did) return;
+        var e = R.map[par.did] || (R.map[par.did] = { person: personOf(par), n: 0 }); e.n++;
+      });
+      progress(run);
+      if (!res.cursor || !feed.length || res.cursor === R.cursor) { R.exhausted = true; return; }
+      R.cursor = res.cursor;
+      return step();
+    }, function (e) { if (e && /^http(400|403|404)$/.test(e.kind)) { R.failed = true; R.exhausted = true; return; } throw e; });
+  }
+  return step();
+}
+function allWork(run) {
+  return [
+    function () { return readReplies(run, run.ra); }, function () { return readReplies(run, run.rb); },
+    function () { return readList(run, run.fa); }, function () { return readList(run, run.fb); },
+    function () { return readList(run, run.na); }, function () { return readList(run, run.nb); }
+  ];
+}
+function expected(run) {
+  var s = 0;
+  [run.fa, run.fb, run.na, run.nb].forEach(function (L) { s += L.exhausted ? L.n : Math.max(L.n, Math.min(L.total || run.listCap, run.listCap)); });
+  [run.ra, run.rb].forEach(function (R) { s += R.exhausted ? R.posts : Math.max(R.posts, Math.min(R.total || run.replyCap, run.replyCap)); });
+  return s;
+}
+function readSoFar(run) { return run.fa.n + run.fb.n + run.na.n + run.nb.n + run.ra.posts + run.rb.posts; }
+function progress(run) {
+  var done = readSoFar(run), exp = Math.max(1, expected(run));
+  $('ptext').textContent = 'Reading @' + run.a.handle + ' and @' + run.b.handle + '… ' + fmtN(done) + ' items read';
+  $('pfill').style.width = Math.min(100, Math.round(done / exp * 100)) + '%';
+  if (done && state.run === run && Date.now() - (run.lastRender || 0) > 700) { run.lastRender = Date.now(); render(); }
+}
+
+// ---- The matching ----
+function intersect(m1, m2) {
+  var out = [], k;
+  for (k in m1) if (m2[k]) out.push(m1[k]);
+  return out;
+}
+function byName(a, b) { var x = (a.handle || a.did).toLowerCase(), y = (b.handle || b.did).toLowerCase(); return x < y ? -1 : x > y ? 1 : 0; }
+function matches(run) {
+  var both = intersect(run.fa.map, run.fb.map).sort(byName), fans = intersect(run.na.map, run.nb.map).sort(byName), rep = [], k;
+  for (k in run.ra.map) if (run.rb.map[k]) rep.push({ person: run.ra.map[k].person, n: run.ra.map[k].n + run.rb.map[k].n, na: run.ra.map[k].n, nb: run.rb.map[k].n });
+  rep.sort(function (x, y) { return y.n - x.n || byName(x.person, y.person); });
+  // the accounts each one talks to most that the other one does not follow
+  function differ(R, other, otherDid) {
+    var out = [], d;
+    for (d in R.map) if (!other.map[d] && d !== otherDid) out.push(Object.assign({}, R.map[d].person, { n: R.map[d].n }));
+    return out.sort(function (x, y) { return y.n - x.n || byName(x, y); }).slice(0, 5);
+  }
+  return { both: both, fans: fans, rep: rep.map(function (r) { return Object.assign({}, r.person, { n: r.n, na: r.na, nb: r.nb }); }), diffA: differ(run.ra, run.fb, run.b.did), diffB: differ(run.rb, run.fa, run.a.did) };
+}
+// a number is "at least" when either side of its comparison was cut off
+function partial(run) {
+  return {
+    both: !(run.fa.exhausted && run.fb.exhausted),
+    fans: !(run.na.exhausted && run.nb.exhausted),
+    rep: !(run.ra.exhausted && run.rb.exhausted)
+  };
+}
+function plus(n, p) { return fmtN(n) + (p ? '+' : ''); }
+
+// ---- State ----
+var state = { run: null, tab: 'follow', q: '', limit: SHOW, photo: true, name: true, handle: true, model: null };
+var busy = false;
+
+// ---- Results ----
+function who(p, short) {   // what to call an account on the card and in the text, honoring the switches
+  if (p.labeled) return p.handle ? '@' + p.handle : 'someone';
+  if (state.name && p.name) return p.name;
+  if (state.handle && p.handle) return '@' + p.handle;
+  return short || 'someone';
+}
+function render() {
+  var run = state.run; if (!run) return;
+  var m = matches(run), pt = partial(run);
+  run.m = m; run.pt = pt;
+  $('result').hidden = false; $('slot').hidden = true;
+  var both = m.both.length;
+  $('headline').textContent = '@' + run.a.handle + ' and @' + run.b.handle + ' both follow ' + (pt.both ? 'at least ' : '') + fmtN(both) + (both === 1 ? ' account.' : ' accounts.');
+  var rel = $('rel');
+  if (run.rel) { rel.hidden = false; rel.textContent = run.rel; } else rel.hidden = true;
+  var cells = [[plus(both, pt.both), 'Both follow'], [plus(m.fans.length, pt.fans), 'Follow both'], [plus(m.rep.length, pt.rep), 'Both replied to']];
+  $('stats').innerHTML = cells.map(function (c) { return '<div class="stat"><b>' + esc(c[0]) + '</b><span>' + esc(c[1]) + '</span></div>'; }).join('');
+  [['t-follow', 'follow'], ['t-fans', 'fans'], ['t-reply', 'reply'], ['t-diff', 'diff']].forEach(function (p) { $(p[0]).setAttribute('aria-pressed', String(state.tab === p[1])); });
+  renderList(); renderCard();
+}
+function listFor(run) { var m = run.m; return state.tab === 'follow' ? m.both : state.tab === 'fans' ? m.fans : m.rep; }
+function personItem(p, extra) {
+  var photo = p.avatar && !p.labeled ? '<img loading="lazy" alt="" src="' + esc(p.avatar.replace('/img/avatar/', '/img/avatar_thumbnail/')) + '">' : '';
+  var nm = p.labeled || !p.name ? (p.handle || p.did) : p.name;
+  return '<li><a href="https://bsky.app/profile/' + encodeURIComponent(p.handle && p.handle !== 'handle.invalid' ? p.handle : p.did) + '" target="_blank" rel="noopener"><span class="av" aria-hidden="true">' + esc((nm[0] || '?').toUpperCase()) + photo + '</span><span class="who"><b>' + esc(nm) + '</b><span>@' + esc(p.handle || p.did) + '</span>' + (extra ? ' <em>(' + esc(extra) + ')</em>' : '') + '</span></a></li>';
+}
+function renderDiff(run) {
+  var m = run.m, A = '@' + run.a.handle, B = '@' + run.b.handle;
+  var cutA = !run.fb.exhausted, cutB = !run.fa.exhausted, noRep = run.ra.failed || run.rb.failed;
+  $('lists-sub').textContent = 'The accounts each of them replies to most, in their recent posts, that the other one does not follow.' + (cutA || cutB ? ' One follow list was cut off at the read limit, so they may follow some of these.' : '') + (noRep ? ' One account\'s posts could not be read.' : '');
+  function group(title, list, ab) {
+    return '<li class="grp">' + esc(title) + '</li>' + (list.length ? list.map(function (p) { return personItem(p, p.n + (p.n === 1 ? ' reply' : ' replies')); }).join('') : '<li class="none muted">' + esc(ab) + '</li>');
+  }
+  $('people').innerHTML = group(A + ' talks to, ' + B + ' doesn\'t follow', m.diffA, 'No one found. ' + B + ' follows everyone ' + A + ' replied to, or there are no replies to go on.') +
+    group(B + ' talks to, ' + A + ' doesn\'t follow', m.diffB, 'No one found. ' + A + ' follows everyone ' + B + ' replied to, or there are no replies to go on.');
+  [].forEach.call($('people').querySelectorAll('img'), function (im) { im.addEventListener('error', function () { im.remove(); }); });
+  $('empty').hidden = true; $('showmore').hidden = true;
+}
+function renderList() {
+  var run = state.run; if (!run || !run.m) return;
+  $('q').hidden = state.tab === 'diff';
+  if (state.tab === 'diff') return renderDiff(run);
+  var all = listFor(run), q = state.q.trim().toLowerCase();
+  var list = q ? all.filter(function (p) { return (p.handle || '').toLowerCase().indexOf(q) !== -1 || (!p.labeled && p.name.toLowerCase().indexOf(q) !== -1); }) : all;
+  var sub = { follow: 'Accounts that both follow.', fans: 'Accounts that follow both.', reply: 'Accounts both have replied to, most replies first. Covers recent posts only.' }[state.tab];
+  var pt = run.pt[state.tab === 'follow' ? 'both' : state.tab === 'fans' ? 'fans' : 'rep'];
+  var failed = (state.tab === 'follow' && (run.fa.failed || run.fb.failed)) || (state.tab === 'fans' && (run.na.failed || run.nb.failed)) || (state.tab === 'reply' && (run.ra.failed || run.rb.failed));
+  $('lists-sub').textContent = sub + (pt ? ' Cut off at the read limit, so there may be more.' : '') + (failed ? ' One account\'s list could not be read, so this one is empty or partial.' : '');
+  $('people').innerHTML = list.slice(0, state.limit).map(function (p) { return personItem(p, state.tab === 'reply' ? p.na + ' + ' + p.nb + ' replies' : ''); }).join('');
+  [].forEach.call($('people').querySelectorAll('img'), function (im) { im.addEventListener('error', function () { im.remove(); }); });
+  var e = $('empty'); e.hidden = list.length > 0;
+  e.textContent = q ? 'No one in this list matches that search.' : failed ? 'This list could not be read.' : 'No accounts in common yet.' + (pt ? ' More may turn up if you load more.' : '');
+  $('showmore').hidden = list.length <= state.limit;
+  $('showmoreBtn').textContent = 'Show more (' + fmtN(list.length - state.limit) + ' left)';
+}
+
+// ---- The card ----
+var MONO = '"DM Mono", ui-monospace, Menlo, Consolas, monospace', HEAD = '"DM Sans", system-ui, sans-serif';
+function withFonts(fn) {
+  var faces = ['800 22px "DM Sans"', '400 13px "DM Mono"', '500 18px "DM Mono"'];
+  var load = Promise.all(faces.map(function (f) { return document.fonts && document.fonts.load ? document.fonts.load(f) : null; }));
+  return Promise.race([load, new Promise(function (r) { setTimeout(r, 3000); })]).then(fn, fn);
+}
+function rr(g, x, y, w, h, r) {
+  g.beginPath(); g.moveTo(x + r, y); g.lineTo(x + w - r, y); g.arcTo(x + w, y, x + w, y + r, r); g.lineTo(x + w, y + h - r);
+  g.arcTo(x + w, y + h, x + w - r, y + h, r); g.lineTo(x + r, y + h); g.arcTo(x, y + h, x, y + h - r, r); g.lineTo(x, y + r); g.arcTo(x, y, x + r, y, r); g.closePath();
+}
+function fit(g, text, maxW) {
+  if (g.measureText(text).width <= maxW) return text;
+  var t = text; while (t.length > 1 && g.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+  return t + '…';
+}
+function cardInfo() {
+  var run = state.run, m = run.m, pt = run.pt;
+  var photoOn = state.photo;
+  var names = m.both.filter(function (p) { return !p.labeled; }).slice(0, 3).map(function (p) { return who(p); }).filter(function (n) { return n !== 'someone'; });
+  return {
+    a: run.a, b: run.b, photoOn: photoOn,
+    an: who(run.a, 'Account A'), bn: who(run.b, 'Account B'),
+    both: plus(m.both.length, pt.both), fans: plus(m.fans.length, pt.fans), rep: plus(m.rep.length, pt.rep),
+    names: (state.name || state.handle) ? names : [], bothN: m.both.length
+  };
+}
+function paint(cv, solid) {
+  var c = cardInfo();
+  cv.width = CW * SCALE; cv.height = CH * SCALE;
+  var g = cv.getContext('2d');
+  g.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  g.clearRect(0, 0, CW, CH);
+  if (solid) { g.fillStyle = CREAM; g.fillRect(0, 0, CW, CH); }
+  var X = 8, Y = 8, W = 456, H = 276, R = 22;
+  g.save(); g.translate(6, 7); rr(g, X, Y, W, H, R); g.fillStyle = INK; g.fill(); g.restore();
+  rr(g, X, Y, W, H, R); g.fillStyle = PAPER; g.fill();
+  g.fillStyle = INK; g.textBaseline = 'alphabetic'; g.textAlign = 'left';
+  g.font = '400 10px ' + MONO; g.letterSpacing = '1.4px'; g.fillText('PROFESSOR KIOSK  ·  MUTUAL MATCH', 28, 34); g.letterSpacing = '0px';
+  g.save(); g.setLineDash([4, 3]); g.lineWidth = 2; g.strokeStyle = INK; g.beginPath(); g.moveTo(28, 44); g.lineTo(444, 44); g.stroke(); g.restore();
+  // the two circles and what they share
+  var cy = 122, r = 56, ax = 108, bx = 172;
+  g.fillStyle = CORAL; g.beginPath(); g.arc(ax, cy, r, 0, Math.PI * 2); g.fill();
+  g.fillStyle = TEAL; g.beginPath(); g.arc(bx, cy, r, 0, Math.PI * 2); g.fill();
+  g.save(); g.beginPath(); g.arc(ax, cy, r, 0, Math.PI * 2); g.clip(); g.fillStyle = '#ffd23f'; g.beginPath(); g.arc(bx, cy, r, 0, Math.PI * 2); g.fill(); g.restore();   // the shared part in yellow
+  g.lineWidth = 3; g.strokeStyle = INK; g.beginPath(); g.arc(ax, cy, r, 0, Math.PI * 2); g.stroke(); g.beginPath(); g.arc(bx, cy, r, 0, Math.PI * 2); g.stroke();
+  function face(p, cx) {
+    if (!c.photoOn || p.labeled || !p.img) return;
+    g.save(); g.beginPath(); g.arc(cx, cy, 20, 0, Math.PI * 2); g.clip();
+    var iw = p.img.naturalWidth || 1, ih = p.img.naturalHeight || 1, s = Math.max(40 / iw, 40 / ih);
+    g.drawImage(p.img, cx - iw * s / 2, cy - ih * s / 2, iw * s, ih * s); g.restore();
+    g.beginPath(); g.arc(cx, cy, 20, 0, Math.PI * 2); g.lineWidth = 3; g.strokeStyle = INK; g.stroke();
+  }
+  face(c.a, ax - 24); face(c.b, bx + 24);
+  g.textAlign = 'center';
+  var size = 24; g.font = '800 ' + size + 'px ' + HEAD;
+  while (size > 11 && g.measureText(c.both).width > 46) { size--; g.font = '800 ' + size + 'px ' + HEAD; }
+  g.fillStyle = INK; g.fillText(c.both, (ax + bx) / 2, cy + 8);
+  g.font = '800 12px ' + HEAD;
+  g.fillText(fit(g, c.an, 118), ax - 10, 204); g.fillText(fit(g, c.bn, 118), bx + 10, 220);
+  // numbers
+  g.textAlign = 'left';
+  function stat(label, value, y) {
+    g.font = '400 10px ' + MONO; g.letterSpacing = '1.2px'; g.fillText(label, 270, y); g.letterSpacing = '0px';
+    g.font = '500 18px ' + MONO; g.fillText(value, 270, y + 22);
+  }
+  stat('BOTH FOLLOW', c.both, 66); stat('FOLLOW BOTH', c.fans, 112); stat('BOTH REPLIED TO', c.rep, 158);
+  if (c.names.length) {
+    g.font = '400 10px ' + MONO; g.letterSpacing = '1.2px'; g.fillText('SHARED, FOR EXAMPLE', 270, 214); g.letterSpacing = '0px';
+    g.font = '800 12px ' + HEAD;
+    c.names.forEach(function (n, i) { g.fillText(fit(g, n, 176), 270, 231 + i * 15); });
+  }
+  g.font = '400 10px ' + MONO; g.fillText(CREDIT, 28, 270);
+}
+function altText() {
+  var c = cardInfo(), run = state.run;
+  var parts = ['Mutual match card for ' + c.an + ' and ' + c.bn + '.',
+    c.both + ' accounts both follow, ' + c.fans + ' follow both, ' + c.rep + ' both replied to.'];
+  if (c.names.length) parts.push('Shared accounts include ' + c.names.join(', ') + '.');
+  parts.push(CREDIT);
+  return parts.join(' ');
+}
+function renderCard() {
+  var run = state.run; if (!run || !run.m) return;
+  withFonts(function () { paint($('card'), false); });
+  $('card').setAttribute('aria-label', altText());
+  var lab = [run.a, run.b].filter(function (p) { return p.labeled; });
+  $('labelnote').hidden = !lab.length;
+  if (lab.length) $('labelnote').textContent = lab.map(function (p) { return '@' + p.handle; }).join(' and ') + (lab.length === 1 ? ' has' : ' have') + ' a label (' + [].concat.apply([], lab.map(function (p) { return p.hit; })).filter(function (v, i, a) { return a.indexOf(v) === i; }).join(', ') + '), so photo and name are left off the card.';
+}
+function loadAvatar(url) {
+  function one(u) {
+    return new Promise(function (resolve) {
+      var img = new Image(), done = false;
+      function end(v) { if (!done) { done = true; resolve(v); } }
+      img.crossOrigin = 'anonymous';
+      img.onload = function () { end(img.naturalWidth ? img : null); };
+      img.onerror = function () { end(null); };
+      setTimeout(function () { end(null); }, 8000);
+      img.src = u;
+    });
+  }
+  if (typeof url !== 'string' || !/^https:\/\/cdn\.bsky\.app\//.test(url)) return Promise.resolve(null);
+  var alt = url.replace('/img/avatar/', '/img/avatar_thumbnail/');
+  return one(url).then(function (img) {
+    if (img) return img;
+    return (alt !== url ? one(alt) : Promise.resolve(null)).then(function (i2) { return i2 || one('/api/avatar?u=' + encodeURIComponent(url)); });
+  });
+}
+function canvasBlob() {
+  return withFonts(function () {
+    var cv = document.createElement('canvas'); paint(cv, true);
+    return new Promise(function (resolve, reject) { cv.toBlob(function (b) { b ? resolve(b) : reject(new Error('no blob')); }, 'image/png'); });
+  });
+}
+
+// ---- Running ----
+var MESSAGES = {
+  empty: 'Type two Bluesky handles first.',
+  badhandle: 'That doesn\'t look like a Bluesky handle. Try something like name.bsky.social or a profile link.',
+  same: 'Those are the same account. Type two different ones.',
+  noacct: 'Couldn\'t find that account. Check the spelling, and note that only public accounts can be read.',
+  net: 'Bluesky didn\'t answer. Try again in a minute.',
+  rate: 'Bluesky kept rate-limiting requests. Try again in a minute.'
+};
+function showErr(msg) { var e = $('find-err'); e.textContent = msg; e.hidden = !msg; }
+function say(t) { $('status').textContent = t || ''; }
+function setBusy(b) { busy = b; $('go').disabled = b; $('go').firstChild.nodeValue = b ? 'Reading… ' : 'Find the match '; }
+
+function pump(run) {
+  run.stopped = false; run.failed = '';
+  $('progress').hidden = false; $('capbar').hidden = true; $('stopBtn').disabled = false; setBusy(true); progress(run);
+  var work = allWork(run);
+  return work.reduce(function (p, fn) { return p.then(function () { return run.stopped ? null : fn(); }); }, Promise.resolve()).catch(function (e) {
+    if (e && e.kind === 'stopped') return;
+    run.failed = MESSAGES[e && e.kind] || MESSAGES.net;
+  }).then(function () { if (state.run === run) finish(run); });
+}
+function allLists(run) { return [run.fa, run.fb, run.na, run.nb]; }
+function finish(run) {
+  setBusy(false); $('progress').hidden = true; setNotice(''); $('capbar').hidden = true;
+  render();
+  var btn = $('more');
+  if (run.failed) {
+    $('captext').textContent = run.failed + ' Showing what was read so far.';
+    btn.textContent = 'Try again'; btn.hidden = false; btn.onclick = function () { pump(run); }; $('capbar').hidden = false; return;
+  }
+  if (run.stopped) {
+    $('captext').textContent = 'Stopped. Showing what was read so far.';
+    btn.textContent = 'Keep reading'; btn.hidden = false; btn.onclick = function () { pump(run); }; $('capbar').hidden = false; return;
+  }
+  var cutL = allLists(run).some(function (L) { return !L.exhausted; }), cutR = !run.ra.exhausted || !run.rb.exhausted;
+  if (cutL || cutR) {
+    var atCeiling = (!cutL || run.listCap >= CFG.listCeiling) && (!cutR || run.replyCap >= CFG.replyCeiling);
+    $('captext').textContent = 'Read the first ' + fmtN(run.listCap) + ' of each follow and follower list' + (cutR ? ' and the newest ' + fmtN(run.replyCap) + ' posts' : '') + '. The numbers with a plus sign are at least that many.' + (atCeiling ? ' That\'s the limit for one run in the browser.' : '');
+    btn.textContent = 'Load more'; btn.hidden = atCeiling;
+    btn.onclick = function () { run.listCap = Math.min(run.listCap + CFG.listMore, CFG.listCeiling); run.replyCap = Math.min(run.replyCap + CFG.replyMore, CFG.replyCeiling); pump(run); };
+    $('capbar').hidden = false; return;
+  }
+  say('Read everything.');
+}
+$('stopBtn').addEventListener('click', function () { var r = state.run; if (!r) return; r.stopped = true; if (r.ac) r.ac.abort(); $('stopBtn').disabled = true; });
+
+function relText(run, rels) {
+  if (!rels) return '';
+  var rel = rels.find(function (r) { return r && r.did === run.a.did; }) || rels[0];
+  if (!rel || rel.$type && /notFound/.test(rel.$type)) return '';
+  var ab = !!rel.following, ba = !!rel.followedBy, A = '@' + run.a.handle, B = '@' + run.b.handle;
+  return ab && ba ? A + ' and ' + B + ' follow each other.' : ab ? A + ' follows ' + B + ', but ' + B + ' doesn\'t follow back.' : ba ? B + ' follows ' + A + ', but ' + A + ' doesn\'t follow back.' : 'Neither follows the other.';
+}
+function start(a, b) {
+  if (busy) return;
+  showErr(''); say('');
+  if (!String(a || '').trim() || !String(b || '').trim()) { showErr(MESSAGES.empty); (String(a || '').trim() ? $('hb') : $('ha')).focus(); return; }
+  var pa = parseActor(a), pb = parseActor(b);
+  if (!pa || !pb) { showErr(MESSAGES.badhandle); (pa ? $('hb') : $('ha')).focus(); return; }
+  if (pa === pb) { showErr(MESSAGES.same); return; }
+  if (state.run) { state.run.stopped = true; if (state.run.ac) state.run.ac.abort(); }
+  var run = { listCap: CFG.listCap, replyCap: CFG.replyCap, stopped: false, nextStart: 0, pauseUntil: 0 };
+  state.run = run; state.model = null; state.tab = 'follow'; state.q = ''; $('q').value = ''; state.limit = SHOW;
+  $('result').hidden = true; $('capbar').hidden = true; $('slot').hidden = false;
+  setBusy(true); $('progress').hidden = false; $('ptext').textContent = 'Looking up the accounts…'; $('pfill').style.width = '0'; $('stopBtn').disabled = false;
+  function prof(actor) {
+    return api('app.bsky.actor.getProfile', { actor: actor }, run).then(function (p) {
+      if (!p || !p.did) throw new BskyError('noacct');
+      return p;
+    }, function (e) { throw (e && (e.kind === 'net' || e.kind === 'rate' || e.kind === 'stopped') ? e : new BskyError('noacct', actor)); });
+  }
+  prof(pa).then(function (p1) { return prof(pb).then(function (p2) { return [p1, p2]; }); }).then(function (ps) {
+    var p1 = ps[0], p2 = ps[1];
+    if (p1.did === p2.did) throw new BskyError('same');
+    run.a = personOf(p1); run.b = personOf(p2);
+    run.fa = newList('follows', 'a', p1.did, toInt(p1.followsCount)); run.fb = newList('follows', 'b', p2.did, toInt(p2.followsCount));
+    run.na = newList('followers', 'a', p1.did, toInt(p1.followersCount)); run.nb = newList('followers', 'b', p2.did, toInt(p2.followersCount));
+    run.ra = newReplies('a', p1.did, toInt(p1.postsCount)); run.ra.seen = {}; run.rb = newReplies('b', p2.did, toInt(p2.postsCount)); run.rb.seen = {};
+    try { history.replaceState(null, '', '#a=' + encodeURIComponent(run.a.handle) + '&b=' + encodeURIComponent(run.b.handle)); } catch (e) {}
+    // the pictures for the card, and whether the two follow each other (a nicety: a failure just leaves it out)
+    var pics = Promise.all([run.a.labeled ? null : loadAvatar(p1.avatar), run.b.labeled ? null : loadAvatar(p2.avatar)]).then(function (im) { run.a.img = im[0]; run.b.img = im[1]; });
+    var rel = api('app.bsky.graph.getRelationships', { actor: p1.did, others: p2.did }, run).then(function (r) { run.rel = relText(run, r && r.relationships); }, function () {});
+    return Promise.all([pics, rel]).then(function () { return pump(run); });
+  }).catch(function (e) {
+    if (state.run !== run) return;
+    setBusy(false); $('progress').hidden = true;
+    var k = e && e.kind;
+    var msg = k === 'same' ? MESSAGES.same : k === 'noacct' ? (e.who ? 'Couldn\'t find ' + e.who + '. Check the spelling, and note that only public accounts can be read.' : MESSAGES.noacct) : MESSAGES[k] || MESSAGES.net;
+    showErr(msg);
+  });
+}
+$('find').addEventListener('submit', function (e) { e.preventDefault(); if (location.hash) { try { history.replaceState(null, '', location.pathname); } catch (x) {} } start($('ha').value, $('hb').value); });
+
+// ---- Buttons ----
+[['t-follow', 'follow'], ['t-fans', 'fans'], ['t-reply', 'reply'], ['t-diff', 'diff']].forEach(function (p) {
+  $(p[0]).addEventListener('click', function () { state.tab = p[1]; state.limit = SHOW; render(); });
+});
+var qt; $('q').addEventListener('input', function () { clearTimeout(qt); qt = setTimeout(function () { state.q = $('q').value; state.limit = SHOW; renderList(); }, 150); });
+$('showmoreBtn').addEventListener('click', function () { state.limit += SHOW * 2; renderList(); });
+[['o-photo', 'photo'], ['o-name', 'name'], ['o-handle', 'handle']].forEach(function (p) {
+  $(p[0]).addEventListener('change', function () { state[p[1]] = $(p[0]).checked; if (state.run && state.run.m) renderCard(); });
+});
+function fileName() { return 'mutual-match.png'; }
+function download(blob) {
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fileName();
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+}
+$('save').addEventListener('click', function () {
+  if (!state.run || !state.run.m) return;
+  say('Drawing the image…');
+  canvasBlob().then(function (blob) {
+    var file = typeof File === 'function' ? new File([blob], fileName(), { type: 'image/png' }) : null;
+    if (file && navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+      return navigator.share({ files: [file], text: 'Mutual match ' + CREDIT }).then(function () { say('Shared.'); }, function (err) { if (err && err.name === 'AbortError') say(''); else { download(blob); say('Image saved.'); } });
+    }
+    download(blob); say('Image saved.');
+  }, function () { say('Couldn\'t draw the image. Try Copy alt text instead.'); });
+});
+if (!(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write)) $('copyimg').hidden = true;
+$('copyimg').addEventListener('click', function () {
+  if (!state.run || !state.run.m) return;
+  say('Drawing the image…');
+  canvasBlob().then(function (blob) { return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]); }).then(function () { say('Image copied.'); }, function () { say('Couldn\'t copy the image. Try Share or save instead.'); });
+});
+$('copyalt').addEventListener('click', function () {
+  if (!state.run || !state.run.m) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(altText()).then(function () { say('Alt text copied.'); }, function () { say('Couldn\'t copy. Select the text yourself.'); });
+  else say('Couldn\'t copy. Select the text yourself.');
+});
+$('another').addEventListener('click', function () {
+  if (state.run) { state.run.stopped = true; if (state.run.ac) state.run.ac.abort(); }
+  state.run = null; setBusy(false); $('result').hidden = true; $('capbar').hidden = true; $('progress').hidden = true; $('slot').hidden = false; say(''); showErr('');
+  $('ha').value = ''; $('hb').value = ''; $('ha').focus();
+  try { history.replaceState(null, '', location.pathname); } catch (e) {}
+});
+if (document.fonts && document.fonts.load) {
+  Promise.all(['800 22px "DM Sans"', '400 13px "DM Mono"', '500 18px "DM Mono"'].map(function (f) { return document.fonts.load(f); })).then(function () { if (state.run && state.run.m) renderCard(); });
+}
+
+// ---- Deep link: /mutualmatch#a=<handle>&b=<handle> ----
+function fromHash() {
+  var m = /^#a=([^&]+)&b=([^&]+)$/.exec(location.hash || '');
+  if (!m) return;
+  var a, b; try { a = decodeURIComponent(m[1]); b = decodeURIComponent(m[2]); } catch (e) { a = m[1]; b = m[2]; }
+  $('ha').value = a; $('hb').value = b; start(a, b);
+}
+window.addEventListener('hashchange', fromHash);
+
+window.__mm = { parseActor: parseActor, matches: matches, partial: partial, state: function () { return state; }, cfg: CFG, alt: function () { return state.run && state.run.m ? altText() : ''; } };
+fromHash();
+})();
+</script>
+<script src="/kiosk.js" defer></script>
+</body>
+</html>

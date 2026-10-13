@@ -50,7 +50,7 @@ const pix = (page, x, y) => page.evaluate(([x, y]) => { const c = document.getEl
   // ---- the empty page ----
   const { page, log } = await mk(browser); await page.goto(BASE); await setNow(page);
   const e0 = await page.evaluate(() => ({ tag: document.querySelector('.k-hero .k-tag').textContent, slot: !document.getElementById('slot').hidden, pwrap: document.getElementById('pwrap').hidden, btns: ['save', 'copyimg', 'copyalt', 'another'].map(i => document.getElementById(i).disabled), help: !!document.getElementById('helpBtn'), theme: !!document.getElementById('themeToggle'), foot: !!document.querySelector('footer.k-foot .kofi') }));
-  ok('T1 the page opens empty: Tool 07 tag, "your pass prints here", the action buttons off, Help, Night mode and footer', /Tool 07/.test(e0.tag) && e0.slot && e0.pwrap && e0.btns.every(Boolean) && e0.help && e0.theme && e0.foot, JSON.stringify(e0));
+  ok('T1 the page opens empty: Tool 08 tag, "your pass prints here", the action buttons off, Help, Night mode and footer', /Tool 08/.test(e0.tag) && e0.slot && e0.pwrap && e0.btns.every(Boolean) && e0.help && e0.theme && e0.foot, JSON.stringify(e0));
 
   // ---- parsing what was typed ----
   const pa = await page.evaluate(() => { const f = window.__transit.parseActor; return { a: f('@Cool.Example'), b: f('  professorkiosk.wtf  '), c: f('https://bsky.app/profile/cool.example'), d: f('https://bsky.app/profile/did:plc:abc123/post/3k'), e: f('did:plc:abc123'), f: f('did:plc:abc123?x'), g: f('hello'), h: f('a b.example'), i: f(''), j: f('x.'), k: f('a'.repeat(260) + '.com'), l: f('@@two.example'), m: f('javascript:alert(1)'), n: f('cool.example/extra') }; });

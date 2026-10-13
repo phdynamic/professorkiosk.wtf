@@ -236,3 +236,9 @@
 - built: Rush Hour heatmap squares open a pop-up listing that hour's non-reply posts (most liked first, text, likes, time, Open on Bluesky), keyboard-reachable with arrow keys; posts now keep their text in memory for this; privacy text changed from "no post text is shown" to "text appears only in the pop-up"
 - removed: the "What Bluesky sent" debugging line on Transit Pass (the picture fallback stays)
 - live-tested: no (Rush Hour itself was confirmed by the developer on their account)
+
+## 2026-10-13 · Mutual Match built; hub renumbered again
+- built: `public/mutualmatch.html` (route `/mutualmatch`, hub card 05), `test/browser/mutualmatch.suite.js` (30 checks); added to the help, icon, footer and hub checks
+- changed: hub order is now Tutorials, Joke-Web, Mashup, Format Deck, Mutual Match, Top Skeets, Rush Hour, Transit Pass, Skeet Receipt, Tracer, Saga (01 to 11); separate sites 12 to 15; card colors and page hero colors reassigned again so neighbors differ (Mutual Match teal, Top Skeets purple, Rush Hour yellow, Transit Pass teal, Skeet Receipt sky, Tracer coral, Saga purple); the "Tool NN" tags follow
+- scope: the "They differ" tab was added mid-build at the developer's request
+- live-tested: no

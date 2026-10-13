@@ -127,6 +127,12 @@
 - why: the developer asked to take both out altogether; I removed the finder as well because it existed only to find posts for "Seen in the wild" (it is in git history if wanted back)
 - source: developer request, 2026-10-13
 
+### 2026-10-13 · Mutual Match compares follows, followers and replies, and lists where the two differ · active
+- what: `/mutualmatch` reads both profiles, then replies (newest 500 posts), follows and followers (5,000 each, Load more to 20,000), and shows accounts both follow, follow both, both replied to, plus for each account the 5 accounts it replies to most that the other does not follow; a Venn-style card on one canvas; labeled accounts by handle only; it is tool 05 on the hub (everything below moved down one, separate sites now 12 to 15)
+- why: the developer chose the three comparisons, the 5,000 limit with Load more, the list-plus-card result and the placement; "They differ" was added by the developer, who defined it as the top 5 accounts each person interacts with that the other doesn't follow, and I took "interact with" to mean replies because that is the interaction the page already reads; the 5-account cut, the plus-sign "at least" wording and the Venn layout are my choices
+- source: developer request and answers, 2026-10-13
+- live-tested: no
+
 ### 2026-10-13 · Rush Hour counts originals and quotes, ranks by likes, reads the author feed with a cap · active
 - what: `/rushhour` reads `getAuthorFeed` (`posts_with_replies`) paced, skipping reposts; cap 500, Load 500 more, ceiling 5,000; heatmap excludes replies, What Lands includes them; "best" = likes only; local time zone with a UTC switch; minimum 3 posts per square and 5 per day or hour for "best"; What Lands needs 20 posts; it is tool 10 on the hub (separate sites now 11 to 14)
 - why: the developer chose these when asked (originals and quotes, likes only, visitor's time, 500 then Load more); the minimums, the 20-post floor, the wording of "what stands out" and the 5,000 ceiling are my choices to keep small samples from reading as patterns

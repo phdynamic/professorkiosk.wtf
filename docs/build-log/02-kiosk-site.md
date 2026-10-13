@@ -242,3 +242,7 @@
 - changed: hub order is now Tutorials, Joke-Web, Mashup, Format Deck, Mutual Match, Top Skeets, Rush Hour, Transit Pass, Skeet Receipt, Tracer, Saga (01 to 11); separate sites 12 to 15; card colors and page hero colors reassigned again so neighbors differ (Mutual Match teal, Top Skeets purple, Rush Hour yellow, Transit Pass teal, Skeet Receipt sky, Tracer coral, Saga purple); the "Tool NN" tags follow
 - scope: the "They differ" tab was added mid-build at the developer's request
 - live-tested: no
+
+## 2026-10-13 · Mutual Match: Community replaces Follow both
+- changed: removed the followers reads and the Follow both tab; added the Community tab (button-triggered, ranks shared accounts by how many other shared accounts each follows); card and alt text name the top hub; suite is 35 checks
+- live-tested: no

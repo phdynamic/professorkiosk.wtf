@@ -143,3 +143,9 @@
 - what: `/transitpass` draws the pass once on a canvas used for both the page and the PNG; data is one `getProfile` read (join date from `createdAt`, post rate as total posts over days since joining); route and line from a hash of the DID; the same label hide list as Skeet Receipt; it is tool 09 on the hub, so the separate sites moved to 10 to 13
 - why: the developer described the tool (handle in, pass card out, saved as a PNG like the Receipt) and asked for it to be built first; one canvas instead of the Receipt's separate HTML and canvas drawings was my choice to keep the page and the image identical; pass types, the pace wording and the line names are my inventions, not the developer's
 - source: developer request, 2026-10-13
+
+### 2026-10-13 · Mutual Match: Community replaces Follow both · active
+- what: the "Follow both" (shared followers) list and the followers reads are gone; a Community tab now ranks the accounts both people follow by how many of the other shared accounts each follows, on a button press, reading each candidate's follow list (cap 1,000 follows; 60 candidates at first, 60 more at a time); the card and numbers show the top community hub once it has run. "Replied to" and "They differ" are unchanged (recent posts only, and labeled as such)
+- why: the developer asked for it because follower lists are slow and Both follow is the quick, useful one; I chose to rank only the shared accounts (not everyone who follows them) because finding other candidates would need follower lists of the shared accounts, which is what made Follow both slow; the 1,000-follow and 60-candidate limits are mine to bound the cost (about 600 requests at most per batch)
+- source: developer request, 2026-10-13
+- live-tested: no

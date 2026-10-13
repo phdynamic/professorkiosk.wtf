@@ -114,6 +114,7 @@ Source: `public/formats.html`, `public/formats.txt`. The automated suite covers 
 ## Mutual Match (live site, real browser, real phone)
 Source: `public/mutualmatch.html`. The automated suite uses a mocked Bluesky; these are the by-hand confirmations.
 - Real lists. How: compare yourself with a friend, then with a very large account. Expect: follows and followers load 100 at a time, the plus signs and "Load more" appear for big accounts, and it stays inside Bluesky's rate limit (tell the assistant how long a big pair takes and whether it gets rate-limited).
+- Community. How: press Find the community for a pair with 20 or more shared accounts. Expect: it finishes in a minute or two, the ranking looks like the middle of their shared group, and "Check 60 more" works for bigger groups. Tell the assistant if it is slow or gets rate-limited.
 - Counts. How: check one shared follow by hand on both profiles. Expect: it appears in "Both follow".
 - They differ. How: read the two groups. Expect: the accounts listed are ones each person really replies to, and the other person really doesn't follow them.
 - Follow each other line. How: try a pair that follows each other and a pair that doesn't. Expect: the sentence under the headline is right. If it never appears, the public `getRelationships` call isn't answering.

@@ -28,7 +28,7 @@ const ACCTS = {
   'quiet.example': acct('did:plc:quiet1', 'quiet.example', 'Quiet', null, range(0, 5), []),
   'spicy.example': acct('did:plc:spicy1', 'spicy.example', 'Secret Name', range(0, 12), range(0, 12), [], [{ val: 'porn' }])
 };
-async function mk(browser, { vp = { width: 1200, height: 900 }, scheme = 'light', test = { listCap: 100, listMore: 100, listCeiling: 200, replyCap: 500, replyMore: 500, replyCeiling: 1000, gapMs: 0, retryMs: 1, minPause: 1 }, delay = 0, mode = {} } = {}) {
+async function mk(browser, { vp = { width: 1200, height: 900 }, scheme = 'light', test = { listCap: 100, listMore: 100, listCeiling: 200, replyCap: 500, replyMore: 500, replyCeiling: 1000, commStart: 6, commMore: 6, commFollowCap: 100, gapMs: 0, retryMs: 1, minPause: 1 }, delay = 0, mode = {} } = {}) {
   const ctx = await browser.newContext({ viewport: vp, colorScheme: scheme, acceptDownloads: true, permissions: ['clipboard-read', 'clipboard-write'] });
   await ctx.addInitScript(t => { window.MM_TEST = t; }, test);
   const page = await ctx.newPage(); const log = { calls: [], third: [] };
@@ -42,6 +42,15 @@ async function mk(browser, { vp = { width: 1200, height: 900 }, scheme = 'light'
     if (actor === 'professorkiosk.wtf') return route.fulfill({ status: 404, headers: H, body: '{}' });
     log.calls.push(method.replace('app.bsky.', '') + ':' + actor);
     const json = o => route.fulfill({ headers: H, contentType: 'application/json', body: JSON.stringify(o) });
+    const pm = /^did:plc:person(\d+)$/.exec(actor || '');
+    if (pm && method === 'app.bsky.graph.getFollows') {      // the shared accounts' own follow lists, for the Community tab
+      n++; log.person = (log.person || 0) + 1;
+      const i = Number(pm[1]);
+      if (i === 15) return route.fulfill({ status: 400, headers: H, contentType: 'application/json', body: '{"error":"x"}' });
+      const list = i === 12 ? range(10, 20).filter(x => x !== 12) : i === 13 ? [10, 11, 14, 15, 16] : i === 18 ? range(100, 260).concat([12, 13, 14]) : [12, 13];
+      const off0 = Number(url.searchParams.get('cursor') || 0), lim0 = Number(url.searchParams.get('limit') || 50);
+      return route.fulfill({ headers: H, contentType: 'application/json', body: JSON.stringify({ follows: list.slice(off0, off0 + lim0).map(person), cursor: off0 + lim0 < list.length ? String(off0 + lim0) : undefined }) });
+    }
     const a = ACCTS[actor] || Object.values(ACCTS).find(x => x.did === actor);
     if (method === 'app.bsky.actor.getProfile') {
       if (mode.profile === 'down') return route.abort();
@@ -88,9 +97,9 @@ const pix = (page, x, y) => page.evaluate(([x, y]) => { const c = document.getEl
   // ---- a normal pair ----
   await go(page, 'alice.example', 'bob.example'); await done(page);
   const order = log.calls.join(' ');
-  ok('M4 it looks up both profiles, asks whether they follow each other, then reads replies, follows and followers for each', /^actor\.getProfile:alice\.example actor\.getProfile:bob\.example graph\.getRelationships:did:plc:alice1 feed\.getAuthorFeed:did:plc:alice1 feed\.getAuthorFeed:did:plc:bob1 graph\.getFollows:did:plc:alice1 graph\.getFollows:did:plc:bob1 graph\.getFollowers:did:plc:alice1 graph\.getFollowers:did:plc:bob1$/.test(order), order);
+  ok('M4 it looks up both profiles, asks whether they follow each other, then reads replies and follows for each', /^actor\.getProfile:alice\.example actor\.getProfile:bob\.example graph\.getRelationships:did:plc:alice1 feed\.getAuthorFeed:did:plc:alice1 feed\.getAuthorFeed:did:plc:bob1 graph\.getFollows:did:plc:alice1 graph\.getFollows:did:plc:bob1$/.test(order), order);
   const hd = await txt(page, '#headline'), st = await page.evaluate(() => [...document.querySelectorAll('#stats .stat')].map(s => s.textContent));
-  ok('M5 the headline and the three numbers: 10 both follow, 10 follow both, 2 both replied to', hd === '@alice.example and @bob.example both follow 10 accounts.' && st[0].startsWith('10') && st[1].startsWith('10') && st[2].startsWith('2'), hd + ' ' + JSON.stringify(st));
+  ok('M5 the headline and the three numbers: 10 both follow, 2 both replied to, and no community hub yet', hd === '@alice.example and @bob.example both follow 10 accounts.' && st[0].startsWith('10') && st[1].startsWith('2') && st[2].startsWith('—'), hd + ' ' + JSON.stringify(st));
   ok('M6 it says how the two relate: alice follows bob, bob does not follow back', (await txt(page, '#rel')) === "@alice.example follows @bob.example, but @bob.example doesn't follow back.", await txt(page, '#rel'));
 
   // ---- the lists ----
@@ -102,10 +111,19 @@ const pix = (page, x, y) => page.evaluate(([x, y]) => { const c = document.getEl
   await page.fill('#q', 'zzz'); await page.waitForTimeout(250);
   ok('M8 search matches names and handles, and says so when nothing matches', li.length === 1 && li[0].b === 'Person 14' && li2.length === 1 && /No one in this list matches/.test(await txt(page, '#empty')), JSON.stringify([li, li2]));
   await page.fill('#q', '');  await page.waitForTimeout(250);
-  await tab(page, 'fans'); li = await items(page);
-  const fanHandles = li.map(x => x.b);
   await tab(page, 'reply'); const rp = await items(page);
-  ok('M9 "Follow both" has the ten shared followers (p005 to p014), and "Both replied to" has p012 first (3 + 2 replies) then p013 (2 + 1)', li.length === 10 && fanHandles.includes('Person 5') && fanHandles.includes('Person 9') && rp.length === 2 && /Person 12@.*\(3 \+ 2 replies\)/.test(rp[0].t) && /Person 13@.*\(2 \+ 1 replies\)/.test(rp[1].t), JSON.stringify(rp));
+  ok('M9 "Replied to" has p012 first (3 + 2 replies) then p013 (2 + 1)', rp.length === 2 && /Person 12@.*\(3 \+ 2 replies\)/.test(rp[0].t) && /Person 13@.*\(2 \+ 1 replies\)/.test(rp[1].t), JSON.stringify(rp));
+  await tab(page, 'comm'); const c0 = await page.evaluate(() => ({ btn: !!document.getElementById('commGo'), q: document.getElementById('q').hidden, person: window.__personCalls }));
+  const personBefore = log.person || 0;
+  ok('M9b the Community tab starts with an explanation and a "Find the community" button, reads nothing yet, and hides the search box', c0.btn && c0.q && personBefore === 0);
+  await page.click('#commGo'); await done(page);
+  let cm = await items(page);
+  ok('M9c "Find the community" checks the first 6 of the 10 shared accounts (the test limit), ranks them by how many of the shared accounts each follows (p012: 9 of 9, p013: 5), and offers 6 more', (log.person || 0) === 6 && /Person 12@.*follows 9 of 9/.test(cm[0].t) && /Person 13@.*follows 5 of 9/.test(cm[1].t) && /Checked 6 of the 10 shared accounts/.test(await txt(page, '#captext')) && (await txt(page, '#more')) === 'Check 6 more', JSON.stringify(cm.map(x => x.t)));
+  await page.click('#more'); await done(page); cm = await items(page);
+  const ctext = cm.map(x => x.b + '|' + x.t.replace(/^.*?\)?(follows.*|follow list.*)$/, '$1'));
+  ok('M9d "Check 6 more" finishes the other 4: the two labeled accounts show by handle only, a private follow list says so, a list cut at the limit says "at least", and everything is ranked by handle within a tie', cm.length === 10 && cm[2].b === 'p010.example' && !cm[2].img && cm[3].b === 'p011.example' && /private or unreadable/.test(cm.find(x => x.b === 'Person 15').t) && /follows 0 of 9, at least/.test(cm.find(x => x.b === 'Person 18').t) && (log.person || 0) === 10, JSON.stringify(ctext));
+  const hubStat = await page.evaluate(() => [...document.querySelectorAll('#stats .stat')].map(s => s.textContent)[2]), hubAlt = await page.evaluate(() => window.__mm.alt());
+  ok('M9e the top hub (Person 12) appears in the third number and in the alt text', /^Person 12/.test(hubStat) && /Top community hub: Person 12\./.test(hubAlt), hubStat + ' | ' + hubAlt.slice(-90));
   await tab(page, 'diff'); const df = await items(page);
   const dtxt = df.map(x => x.grp ? '#' + x.t : x.b);
   ok('M10 "Where they differ": for each account the top 5 it replies to most that the other does not follow (alice: p040 to p044 by replies, never someone bob follows or bob himself; bob: p060, p061), and the search box is hidden', JSON.stringify(dtxt) === JSON.stringify(["#@alice.example talks to, @bob.example doesn't follow", 'Person 40', 'Person 41', 'Person 42', 'Person 43', 'Person 44', "#@bob.example talks to, @alice.example doesn't follow", 'Person 60', 'Person 61']) && (await page.isHidden('#q')) && /4 replies/.test(df[1].t), JSON.stringify(dtxt));
@@ -114,7 +132,7 @@ const pix = (page, x, y) => page.evaluate(([x, y]) => { const c = document.getEl
   // ---- the card ----
   const cv = await page.evaluate(() => { const c = document.getElementById('card'); return [c.width, c.height]; });
   const alt = await page.evaluate(() => window.__mm.alt());
-  ok('M11 the card is 1440 x 900 and its alt text gives the numbers and names three shared accounts, leaving out the two with labels', cv.join() === '1440,900' && /^Mutual match card for Alice A and Bob B\. 10 accounts both follow, 10 follow both, 2 both replied to\. Shared accounts include Person 12, Person 13, Person 14\./.test(alt), alt);
+  ok('M11 the card is 1440 x 900 and its alt text gives the numbers and names three shared accounts, leaving out the two with labels', cv.join() === '1440,900' && /^Mutual match card for Alice A and Bob B\. 10 accounts both follow, 2 both replied to\. Top community hub: Person 12\. Shared accounts include Person 12, Person 13, Person 14\./.test(alt), alt);
   const withPhoto = await pix(page, 84, 122);
   await page.uncheck('#o-photo'); await page.waitForTimeout(150); const noPhoto = await pix(page, 84, 122);
   ok('M12 the photo switch: with it the first account\'s picture (a red dot) is drawn in its circle, without it the circle shows the plain color', withPhoto[0] > 200 && withPhoto[1] < 90 && !(noPhoto[0] > 200 && noPhoto[1] < 60), JSON.stringify([withPhoto, noPhoto]));
@@ -136,12 +154,14 @@ const pix = (page, x, y) => page.evaluate(([x, y]) => { const c = document.getEl
   await go(page, 'spicy.example', 'bob.example'); await done(page);
   const spA = await page.evaluate(() => window.__mm.alt()), sp = await page.evaluate(() => ({ note: !document.getElementById('labelnote').hidden, t: document.getElementById('labelnote').textContent }));
   ok('M18 a labeled account is on the card by handle only (no name, no photo) and the note says why', sp.note && /@spicy\.example has a label \(porn\)/.test(sp.t) && !spA.includes('Secret Name') && /@spicy\.example and Bob B/.test(spA), sp.t + ' | ' + spA.slice(0, 70));
+  await tab(page, 'comm');
+  ok('M18b with fewer than 3 shared accounts the Community tab says it needs at least 3, with no button', /Needs at least 3 shared accounts.*These two have 2/.test(await txt(page, '#people')) && !(await page.$('#commGo')));
   await page.click('#another');
 
   // ---- big accounts: the read limit and "Load more" ----
   await go(page, 'big.example', 'bob.example'); await done(page);
   const bigSt = await page.evaluate(() => [...document.querySelectorAll('#stats .stat')].map(s => s.textContent)), cap = await txt(page, '#captext'), mb = await txt(page, '#more');
-  ok('M19 when a list is cut off at the limit the numbers say "at least" (a plus sign) and a Load more button appears', bigSt[0].includes('+') && /Read the first 100 of each/.test(cap) && /at least/.test(cap) && mb === 'Load more', JSON.stringify([bigSt, cap, mb]));
+  ok('M19 when a list is cut off at the limit the numbers say "at least" (a plus sign) and a Load more button appears', bigSt[0].includes('+') && /Read the first 100 follows of each account/.test(cap) && /at least/.test(cap) && mb === 'Load more', JSON.stringify([bigSt, cap, mb]));
   ok('M20 the differ tab says a follow list was cut off, so they may follow some of them', (await (async () => { await tab(page, 'diff'); return /cut off at the read limit/.test(await txt(page, '#lists-sub')); })()));
   await tab(page, 'follow');
   const nBefore = await page.evaluate(() => window.__mm.state().run.fa.n);
@@ -170,7 +190,7 @@ const pix = (page, x, y) => page.evaluate(([x, y]) => { const c = document.getEl
   await rl.page.waitForFunction(() => /rate-limiting/.test(document.getElementById('pnotice').textContent), null, { timeout: 4000 }); await done(rl.page);
   ok('M26 a rate-limit answer shows a waiting notice, then carries on and finishes', /both follow 10 accounts/.test(await txt(rl.page, '#headline')) && (await rl.page.isHidden('#pnotice')));
   await rl.ctx.close();
-  const mf = await mk(browser, { mode: { failFrom: 5 } }); await mf.page.goto(BASE); await go(mf.page, 'alice.example', 'bob.example'); await done(mf.page);
+  const mf = await mk(browser, { mode: { failFrom: 4 } }); await mf.page.goto(BASE); await go(mf.page, 'alice.example', 'bob.example'); await done(mf.page);
   ok('M27 if Bluesky fails halfway it keeps what it read, says so, and offers "Try again"', /Bluesky didn't answer/.test(await txt(mf.page, '#captext')) && (await txt(mf.page, '#more')) === 'Try again' && !(await mf.page.isHidden('#result')));
   await mf.ctx.close();
   const sl = await mk(browser, { delay: 400 }); await sl.page.goto(BASE); await go(sl.page, 'alice.example', 'bob.example');

@@ -113,3 +113,8 @@
 - what: `post:` lines hold links only; the page asks the public AppView when a card opens and hides a post that is gone, labeled, or a reply; the worked example stays as the backup; candidates come from `scripts/find-examples.mjs`, and the developer copies chosen `post:` lines in by hand
 - why: the developer asked for real Bluesky posts as embedded examples, "live lookup with a backup example if the post disappears" (their words). They picked automatic search for finding matches; my choice, not stated: the search runs as a script they read through before anything goes on the site, instead of on every visitor's page, because search results can't be vetted and there is no moderation capacity (standing rule)
 - source: developer request, 2026-10-13
+
+### 2026-10-13 · The finder ranks by likes and checks each post against the format's `match:` regexes; "Seen in the wild" belongs only to the Format Deck · active
+- what: `match:` lines (JS regular expressions, case-insensitive) in `formats.txt`; the finder signs in with an app password, reads three pages of top results per search, keeps posts that pass every `match:` line and `--min-likes` (30), one per author, most-liked first; the Joke-Web Maker does not use "Seen in the wild" (a README sentence that said it did was wrong and was removed)
+- why: developer wants real, well-liked posts that actually use each format; unauthenticated search is likely refused by Bluesky, so signing in is the working path (not confirmed from here)
+- source: developer request, 2026-10-13; `scripts/find-examples.mjs`

@@ -16,7 +16,7 @@ const NOTES = new Set(['category', 'how', 'template', 'example', 'tip', 'post', 
   let missing = [], bad = [], noSearch = [], badPosts = [], dupEx = [];
   for (const b of blocks) {
     const lines = b.split('\n'), name = lines[0].trim(), f = { template: [], example: null, how: '', tip: '', category: '', search: '', posts: [] };
-    for (const l of lines.slice(1)) { const m = /^(category|how|template|example|tip|post|search):\s?(.*)$/.exec(l); if (!m) { if (l.trim()) bad.push(name + ': ' + l.slice(0, 40)); continue; } if (m[1] === 'example' && f.example != null) dupEx.push(name); if (m[1] === 'template') f.template.push(m[2]); else if (m[1] === 'post') f.posts.push(m[2]); else f[m[1]] = m[2]; }
+    for (const l of lines.slice(1)) { const m = /^(category|how|template|example|tip|post|search|match):\s?(.*)$/.exec(l); if (!m) { if (l.trim()) bad.push(name + ': ' + l.slice(0, 40)); continue; } if (m[1] === 'example' && f.example != null) dupEx.push(name); if (m[1] === 'template') f.template.push(m[2]); else if (m[1] === 'post') f.posts.push(m[2]); else f[m[1]] = m[2]; }
     if (!f.category || !f.how || !f.template.length || f.example == null || !f.tip) missing.push(name);
     if (f.category && !cats.includes(f.category)) cats.push(f.category);
     if (!f.search) noSearch.push(name);

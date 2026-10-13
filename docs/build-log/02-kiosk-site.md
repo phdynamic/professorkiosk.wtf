@@ -132,3 +132,9 @@
 - note: left out on purpose, my choice, not stated: posts with any label on the post or author, replies, and images/video (the box points to the original)
 - note: the finder script was tested only against a local mock server; the sandbox cannot reach Bluesky
 - live-tested: no
+
+## 2026-10-13 · Finder improved; README corrected
+- fixed: README claimed the Joke-Web Maker reads public posts for "Seen in the wild"; it does not, only the Format Deck does
+- built: `scripts/find-examples.mjs` signs in with `BSKY_HANDLE` + `BSKY_APP_PASSWORD`, follows search cursors, filters by `match:` regexes and likes, sorts by likes; `match:` lines added to all 40 formats; page and suite accept `match:`
+- built: `test/find-examples.test.js` (5 tests; includes a check that every format's own worked example passes its `match:` lines)
+- live-tested: no (never run against real Bluesky)

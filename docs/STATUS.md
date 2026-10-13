@@ -8,7 +8,7 @@
 - Server hardening: shared AppView request budget (`src/budget.ts`), proxy-aware client address (`src/clientip.ts`), rate-limited mutation endpoints.
 
 ## Tested
-- Unit (`npm test`): budget, clientip, links. Last run 2026-10-10 at e89d28b: 17 of 17 pass.
+- Unit (`npm test`): budget, clientip, links, find-examples (the Format Deck finder, against a fake Bluesky). Last run 2026-10-13: find-examples 5 of 5 pass; the earlier 17 pass as of e89d28b.
 - Browser (`npm run test:browser`): tracer 39, imagine 7, receipt 122, jokeweb 118, mashup 49, icon 11, help 45, tutorials 29, feeds 12, footer 1. Last run 2026-10-10 at e89d28b: all pass. All use mocked Bluesky responses.
 
 - Format Deck "Seen in the wild" (2026-10-13, uncommitted): `post:` lines in `formats.txt`, looked up live from the public AppView; `formats` suite now 64 checks pass (mocked API). No `post:` lines are in the file yet; `scripts/find-examples.mjs` is untested against the real Bluesky (the build sandbox cannot reach it).

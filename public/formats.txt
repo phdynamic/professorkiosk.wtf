@@ -12,6 +12,8 @@
 ;;                             The card looks it up live and shows it with a link to the original. Nothing is copied into this file.
 ;;                             If the post is deleted, labeled, hidden, or a reply, it just does not show, and the worked example stays.
 ;;   search: "Nobody:" "Me:"   words for scripts/find-examples.mjs to search Bluesky with. The page ignores this line.
+;;   match: ^nobody:         a regular expression (case-insensitive, ^ and $ work on each line of a post) that a real post in this format
+;;                             must match, for scripts/find-examples.mjs. One line per test; a post must pass all of them. The page ignores it.
 ;;
 ;; The same {label} used twice is one blank that fills in twice (handy for callbacks).
 ;; The post must fit in 300 characters once the example words are in. The test suite checks this.
@@ -32,6 +34,8 @@ template: Me: {an oddly specific thing you do}
 example: *still rehearsing a comeback for a gas station cashier who was rude to me in 2017*
 tip: If the detail would fit anyone, cut it. "Overthinking" is a mood. "Rehearsing a rebuttal for a stranger" is a person.
 search: "Nobody:" "Me:"
+match: ^nobody:
+match: ^me:
 
 ## Expectation / Reality
 category: Contrast
@@ -41,6 +45,8 @@ template: Reality: {the small, exact outcome}
 example: I will wake up at 6 and become a morning person | I woke up at 3:40 and read about lighthouses until sunrise
 tip: Give both lines the same shape so the second one visibly falls over.
 search: "Expectation:" "Reality:"
+match: ^expectation
+match: ^reality
 
 ## Before / After
 category: Contrast
@@ -50,6 +56,8 @@ template: After {the event}: {how things are now}
 example: I learned what a sconce is | walls were just walls | I judge every hallway for its lack of sconces
 tip: Keep the event tiny. A small trigger with a huge change is the whole engine.
 search: "Before" "After" "I learned"
+match: ^before\b.*:
+match: ^after\b.*:
 
 ## Translation Guide
 category: Contrast
@@ -58,6 +66,7 @@ template: "{a polite phrase}" means "{what it really means}"
 example: No worries! | I will remember this until the sun burns out
 tip: Choose a phrase people really say, so the reader hears it in someone's voice.
 search: "means" "what it really means"
+match: [\"“].{1,60}[\"”] (means|translates to)
 
 ## Two Types of People
 category: Contrast
@@ -66,6 +75,7 @@ template: There are two types of people in the world: {type one} and {type two}.
 example: people who return the shopping cart | people who leave it in the lot like a trophy
 tip: Make the second type longer than the first. The extra words are the punchline.
 search: "two types of people"
+match: two (types|kinds) of people
 
 ## Ranking
 category: Lists
@@ -78,6 +88,8 @@ template: 4. {best}
 example: ways to leave a party | Saying goodbye to every single person | Announcing "well, I'm off" | Slipping out unseen | Walking out mid-sentence and never speaking of it again
 tip: Write the best item first, then build the other three around it.
 search: "worst to best"
+match: worst to best|best to worst
+match: ^\s*1[.)]
 
 ## Tier List
 category: Lists
@@ -89,6 +101,8 @@ template: F: {the worst pick}
 example: Sandwich cut | Diagonal, no hesitation | Straight down the middle | Handed over whole, like a brick
 tip: Give S and A boring entries and let F carry it. Or flip it and make the S tier the strange one.
 search: "tier list" "S:" "F:"
+match: tier list
+match: ^[sabcdf]\s*[:\-]
 
 ## Bingo Card
 category: Lists
@@ -99,6 +113,8 @@ template: FREE SPACE: {the free space}
 example: Office meeting | Someone unmutes to breathe | "Can everyone see my screen?" | A dog makes an unplanned cameo | Nobody remembers why this was scheduled
 tip: Squares should be things everyone in that situation has seen. The free space can be sad or silly.
 search: "bingo" "FREE SPACE"
+match: bingo
+match: free space|\|
 
 ## Award Ceremony
 category: Lists
@@ -107,6 +123,7 @@ template: And the award for {the award} goes to {the winner}, for {the reason}.
 example: Best Use of a Tuesday | my neighbor's leaf blower | starting at 7:01 a.m. with total commitment
 tip: Word the award as grandly as you can, then let the reason be small.
 search: "and the award for" "goes to"
+match: and the (award|oscar|prize|trophy|emmy|grammy) (for|goes)
 
 ## Pros and Cons
 category: Lists
@@ -117,6 +134,8 @@ template: Cons: {a calm, devastating con}
 example: buying a boat | Freedom, open water, a captain's hat | I now own a boat
 tip: Say the con in the same voice as the pro. Do not signal the joke.
 search: "Pros:" "Cons:"
+match: ^pros:
+match: ^cons:
 
 ## Fake Headline
 category: Fake documents
@@ -125,6 +144,7 @@ template: LOCAL {person} {does something ordinary}; {official reaction}
 example: MAN | SAYS HE'LL JUST GRAB ONE THING AT THE HARDWARE STORE | EXPERTS BAFFLED BY THE CANOE
 tip: Put the ordinary part before the semicolon and the absurd consequence after it. Capital letters help.
 search: "LOCAL MAN" "EXPERTS"
+match: ^(local|area|nearby|breaking:?|report:?|study:?|experts?|nation)\b
 
 ## One-Star Review
 category: Fake documents
@@ -135,6 +155,7 @@ template: {the complaint}
 example: The moon | Would not visit again | Traveled all that way and it was closed. No staff. Lots of rocks. Poor lighting. One star for the view of my house.
 tip: Include one fair compliment near the end. The generosity makes the rest funnier.
 search: "1 star" "would not visit again"
+match: ★☆☆☆☆|1 star|one star|1/5|⭐
 
 ## Official Notice
 category: Fake documents
@@ -144,6 +165,7 @@ template: {the hint of a larger history}
 example: Please do not microwave fish in the break room | This policy was established after the Incident. We do not discuss the Incident.
 tip: Keep a flat, official tone. The more history you imply, the less you should explain it.
 search: "NOTICE:" "the Incident"
+match: ^(notice|attention|reminder|warning|public service announcement)\b.{0,3}:
 
 ## Error Message
 category: Fake documents
@@ -153,6 +175,7 @@ template: {what it means for you}
 example: 404 | Motivation not found | Please try again after dinner, or never.
 tip: Use real-sounding codes (404, 418, 500) and keep the system's wording stiff.
 search: "Error 404" "not found" "please try again"
+match: error\s*(code)?\s*\d{3}
 
 ## Patch Notes
 category: Fake documents
@@ -164,6 +187,8 @@ template: - Fixed a bug where {an absurd bug}
 example: 2.0.1 | Improved sleep schedule (now 4 minutes earlier) | Removed "I'm fine" as the default response | I remembered an embarrassing thing from 2011 at random
 tip: End on the bug. It should be the thing everyone secretly wishes they could fix.
 search: "patch notes" "fixed a bug where"
+match: patch notes
+match: ^[-•*] 
 
 ## Customer Service
 category: Dialogue
@@ -173,6 +198,8 @@ template: Them: {the calm, unhelpful reply}
 example: My package says it was delivered, but I don't have it. | Our records show it arrived at a better house. No refund is available.
 tip: Make the reply sound like a policy. The agent never apologizes.
 search: "Me:" "Them:" "refund"
+match: ^me:
+match: ^(them|support|customer service|agent|rep):
 
 ## Overheard
 category: Dialogue
@@ -182,6 +209,7 @@ template: "{a line out of context}"
 example: the post office | I told the goose we were not doing this again.
 tip: The line should sound like part of a story you would pay to hear. Do not explain it.
 search: "overheard at"
+match: overheard
 
 ## Interview Question
 category: Dialogue
@@ -191,6 +219,8 @@ template: Me: {my answer}
 example: What is your greatest weakness? | Honesty. And geese.
 tip: Answer quickly and flatly. Hesitation reads as a bit. Confidence reads as a person.
 search: "Interviewer:" "greatest weakness"
+match: ^interviewer:
+match: ^(me|candidate):
 
 ## Brain Dialogue
 category: Dialogue
@@ -201,6 +231,8 @@ template: Brain: {the escalation}
 example: Remember that thing you said in 2014? | No. We are not doing this now. | It was a pun. It was bad. You said it twice.
 tip: Three lines at most, and the brain always gets the last word.
 search: "Brain:" "Me:"
+match: ^brain:
+match: ^me:
 
 ## Talking Object
 category: Dialogue
@@ -210,6 +242,7 @@ template: {the object}: {what it says back}
 example: Please just work today. | The printer | I respond to fear, not to requests. Show me the fear.
 tip: Let the object stay calm. An object that explains itself is funnier than one that rants.
 search: "Me:" "The printer:"
+match: ^me:[^\n]+\n(?!me:)[a-z][a-z ]{1,24}:
 
 ## Which One of You
 category: Questions
@@ -218,6 +251,7 @@ template: Which one of you {did the small crime}? {a worrying detail}
 example: put one single grape in the office fridge | It has been there for four months and it has a personality now.
 tip: The smaller the crime, the bigger the energy of the accusation.
 search: "which one of you"
+match: which one of you
 
 ## Be Honest
 category: Questions
@@ -226,6 +260,7 @@ template: Be honest: {an everyday question}
 example: how many tabs do you have open right now, and do you know what any of them are for?
 tip: Pick a habit people are quietly proud of or quietly embarrassed by, not a rare event.
 search: "be honest" "how many"
+match: \bbe honest\b
 
 ## Rate It
 category: Questions
@@ -235,6 +270,7 @@ template: {the details}
 example: dinner | Three crackers and a peach, eaten standing over the sink while a podcast about lighthouses plays.
 tip: End on a detail that makes people want to answer with both a number and an opinion.
 search: "rate my" "out of 10"
+match: rate (my|this|our) .{1,60}(out of|/) ?10
 
 ## Fill in the Blank
 category: Questions
@@ -244,6 +280,7 @@ template: {where to answer}
 example: My most dangerous personality trait is | Quote post with yours.
 tip: The best prompts are specific enough to be funny and open enough to reward the weird answer.
 search: "my most dangerous personality trait"
+match: _{3,}
 
 ## Quote Post Game Starter
 category: Questions
@@ -255,6 +292,7 @@ template: First entry: {your first entry}
 example: Worst names for a lighthouse | Quote the post above you with your own. No repeats. | Lights Out
 tip: Keep the rule to one sentence and check it for loopholes. Afterward, the [Quote Post Game Tracer](/tracer) shows every quote as a tree.
 search: "quote post game"
+match: quote post game|qp game|quote game
 
 ## Pun With a Question
 category: Wordplay
@@ -264,6 +302,7 @@ template: {the pun answer}
 example: What do you call a sheep who does the taxes? | A baa-lance sheet.
 tip: Put the pun word last. A pun followed by even one more word dies.
 search: "what do you call a"
+match: ^what do you (call|get)\b.*\?
 
 ## Dictionary Entry
 category: Wordplay
@@ -273,6 +312,7 @@ template: "{a sentence using it}"
 example: fridgeting | Opening the refrigerator again and again in the hope that food has appeared. | I spent the whole evening fridgeting.
 tip: Make the example sentence mundane. Treat the word as if it has always been real.
 search: "(n.)" "new word"
+match: \((n|v|adj|adv)\.?\)
 
 ## Portmanteau
 category: Wordplay
@@ -282,6 +322,7 @@ template: (n.) {what it means}
 example: nap | appointment | nappointment | a rest you have been looking forward to since breakfast
 tip: Say the blend out loud. If you stumble on it, so will the reader.
 search: "portmanteau" "(n.)"
+match: portmanteau|\w+\s*\+\s*\w+\s*=\s*\w+
 
 ## Rename It
 category: Wordplay
@@ -290,6 +331,8 @@ template: Renaming {the thing} to "{the new name}" because {the reason}.
 example: my commute | The Slow Parade of Brake Lights | that is what it is and I am in it
 tip: Make the new name long and grand. Short names rarely read as jokes.
 search: "renaming" "because"
+match: \brenam(e|ing)\b
+match: \bbecause\b
 
 ## If It Were
 category: Wordplay
@@ -298,6 +341,7 @@ template: If {the thing} were a {a kind of thing}, it would be {the specific ver
 example: my attention span | cooking show | four minutes of chopping an onion, then a sudden cut to a cat
 tip: "A sad one" is a shrug. "The one with a dead plant in the lobby" is a picture.
 search: "if my" "were a" "it would be"
+match: \bif .{1,60} were an? .{1,60}it would be
 
 ## Rule of Three
 category: Escalation
@@ -306,6 +350,7 @@ template: {first item}, {second item}, and {third item}.
 example: A quiet morning | a good book | scaring a pigeon off a statue
 tip: Make the first two similar in weight and length. Make the third shorter or odder.
 search: "and" "and then"
+match: ^[^,\n]{2,40}, [^,\n]{2,40}, and [^,\n]{2,60}\.?$
 
 ## Anti-Climax
 category: Escalation
@@ -314,6 +359,7 @@ template: {a grand build-up}, only to {a tiny letdown}.
 example: She trained for ten years, crossed three oceans, and fought a dragon | return a library book four days late
 tip: Spend most of your words on the build-up and very few on the letdown.
 search: "only to"
+match: \bonly to\b
 
 ## Running Bit
 category: Escalation
@@ -323,6 +369,8 @@ template: Day 9: {a much worse problem}. I said "{the repeated phrase}."
 example: a pigeon takes half my sandwich | I am choosing peace | the pigeon returns with a friend and a plan
 tip: The phrase should never change. The situation does all the escalating.
 search: "I said" "Day 1" "Day 9"
+match: \bday \d+\b
+match: \bI said\b
 
 ## Hill to Die On
 category: Escalation
@@ -334,6 +382,7 @@ template: - {a tiny petty thing}
 example: Being kind to strangers | Paying people fairly | The correct way to load a dishwasher (mine)
 tip: Make the petty hill the most detailed one. Specificity is the joke.
 search: "hills I will die on"
+match: hills? .{0,12}die on
 
 ## How To
 category: Escalation
@@ -345,6 +394,8 @@ template: 3. {a step that makes no sense}
 example: make friends | Smile and ask a question | Remember their name | Hold eye contact until it becomes a pact
 tip: Keep step 3 in the same calm voice as step 1.
 search: "how to" "step 1" "step 2" "step 3"
+match: ^how to\b
+match: ^\s*[12][.)]
 
 ## Nature Documentary
 category: Tiny scenes
@@ -354,6 +405,7 @@ template: {a dramatic narration line}
 example: suburban dad | standing motionless over a grill | The flames are low. His confidence is lower.
 tip: Speak as if it is life or death and the audience is holding its breath.
 search: "here we see" "in its natural habitat"
+match: here we see|in its natural habitat
 
 ## Dear Diary
 category: Tiny scenes
@@ -363,6 +415,8 @@ template: {the observation}
 example: 14 | being the only one who knows the office microwave is haunted | It beeped twice today. It does not have a second beep.
 tip: End on an observation that is tiny and uncomfortable, not a big reveal.
 search: "dear diary" "day"
+match: dear diary
+match: \bday \d+
 
 ## Future Archaeologists
 category: Tiny scenes
@@ -371,6 +425,7 @@ template: Future archaeologists will find {an ordinary object} and conclude {the
 example: my junk drawer | that we worshipped small keys, rubber bands, and one battery that may or may not work
 tip: The wrong conclusion should make sense from the outside while being totally wrong.
 search: "future archaeologists will"
+match: future archaeologists
 
 ## Confession
 category: Tiny scenes
@@ -380,6 +435,7 @@ template: {the confession}
 example: I own six quarter-zips and I still don't understand what they are for.
 tip: Confess a habit, not a crime. The smaller the secret, the better.
 search: "I have a confession"
+match: \bconfession\b
 
 ## Tiny Scene
 category: Tiny scenes
@@ -389,3 +445,4 @@ template: They do not know that {the absurd truth}.
 example: man | buying one (1) lemon at a farmers market | the lemon has been waiting for him for years
 tip: Narrate in the flat voice of a news report.
 search: "does not know that"
+match: \b(do|does)(n['’]?t| not) know that

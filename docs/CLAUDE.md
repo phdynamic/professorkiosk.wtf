@@ -27,7 +27,7 @@ Project: Professor Kiosk site (professorkiosk.wtf). Two parts in one Express + T
 ## Architecture notes (rarely change)
 - Server: `src/index.ts` (routes), `scheduler.ts` (refresh cycles), `db.ts` (JSON files in `DATA_DIR`), `bluesky.ts` (author-feed fetch), `register.ts` / `identity.ts` (publish feed, find the account's PDS), `feed-skeleton.ts`, `well-known.ts`, `budget.ts` (shared AppView request budget), `clientip.ts`, `links.ts` (wraps `public/kiosk-links.js`).
 - Static pages share `public/kiosk.css`, `kiosk.js`, `kiosk-help.js`, `kiosk-links.js`, `favicon.svg`, `fonts/`.
-- Text-driven pages: `/tutorials` reads `public/tutorials.txt`; `/mashup` reads `public/topics.js`; `/formats` reads `public/formats.txt` (format described at the top of that file).
+- Text-driven pages: `/tutorials` reads `public/tutorials.txt`; `/mashup` reads `public/topics.js`; `/formats` reads `public/formats.txt` (optional `post:` links are looked up live from the public AppView; `scripts/find-examples.mjs` finds candidates; format described at the top of that file).
 - Tests: unit in `test/*.test.js` (`npm test`); browser suites in `test/browser/` (`npm run test:browser`, needs a Chromium-family browser, mocks Bluesky).
 
 ## Maintenance rules (how these docs are kept)

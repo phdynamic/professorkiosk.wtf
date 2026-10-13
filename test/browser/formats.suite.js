@@ -6,22 +6,28 @@ const ok = (n, c, x = '') => out.push((c ? 'PASS' : 'FAIL') + ': ' + n + (x ? ' 
 const BASE = 'http://localhost:3988/formats';
 const ROOT = path.join(__dirname, '..', '..');
 const TXT = fs.readFileSync(path.join(ROOT, 'public', 'formats.txt'), 'utf8');
-const NOTES = new Set(['category', 'how', 'template', 'example', 'tip']);
+const NOTES = new Set(['category', 'how', 'template', 'example', 'tip', 'post', 'search']);
 
 (async () => {
   // ---- the text file, read without the page ----
   const body = TXT.split('\n').filter(l => !l.startsWith(';;')).join('\n');
   const blocks = body.split(/^## /m).slice(1);
   const cats = [];
-  let missing = [], bad = [];
+  let missing = [], bad = [], noSearch = [], badPosts = [], dupEx = [];
   for (const b of blocks) {
-    const lines = b.split('\n'), name = lines[0].trim(), f = { template: [], example: null, how: '', tip: '', category: '' };
-    for (const l of lines.slice(1)) { const m = /^(category|how|template|example|tip):\s?(.*)$/.exec(l); if (!m) { if (l.trim()) bad.push(name + ': ' + l.slice(0, 40)); continue; } if (m[1] === 'template') f.template.push(m[2]); else f[m[1]] = m[2]; }
+    const lines = b.split('\n'), name = lines[0].trim(), f = { template: [], example: null, how: '', tip: '', category: '', search: '', posts: [] };
+    for (const l of lines.slice(1)) { const m = /^(category|how|template|example|tip|post|search):\s?(.*)$/.exec(l); if (!m) { if (l.trim()) bad.push(name + ': ' + l.slice(0, 40)); continue; } if (m[1] === 'example' && f.example != null) dupEx.push(name); if (m[1] === 'template') f.template.push(m[2]); else if (m[1] === 'post') f.posts.push(m[2]); else f[m[1]] = m[2]; }
     if (!f.category || !f.how || !f.template.length || f.example == null || !f.tip) missing.push(name);
     if (f.category && !cats.includes(f.category)) cats.push(f.category);
+    if (!f.search) noSearch.push(name);
+    f.posts.forEach(u => { if (!/^(https:\/\/[^\/\s]+\/profile\/[^\/\s?#]+\/post\/[A-Za-z0-9]+\/?|at:\/\/[^\/\s]+\/app\.bsky\.feed\.post\/[A-Za-z0-9]+)$/.test(u.trim())) badPosts.push(name + ': ' + u.slice(0, 50)); });
+    if (f.posts.length > 3) badPosts.push(name + ' has ' + f.posts.length + ' post: lines (3 is the most the page shows)');
   }
   ok('F1a the file holds 40 formats in 8 categories, each with a category, how, template, example and tip', blocks.length === 40 && cats.length === 8 && !missing.length, JSON.stringify([blocks.length, cats.length, missing]));
   ok('F1b every line under a format starts with a known label', !bad.length, bad.slice(0, 3).join(' / '));
+  ok('F1g each format has exactly one example: line (a second one would replace the first; put the words on one line, separated by |)', !dupEx.length, dupEx.join(', '));
+  ok('F1e every format has a search: line for scripts/find-examples.mjs', !noSearch.length, noSearch.join(', '));
+  ok('F1f every post: line is a bsky-style post link or at:// address, and no format has more than 3', !badPosts.length, badPosts.join(' / '));
   ok('F1c the text has no em or en dashes and no tabs', !/[—–\t]/.test(TXT));
   ok('F1d the "Rules for what goes in" note is still at the top', /Rules for what goes in/.test(TXT.split('\n').slice(0, 25).join('\n')));
 
@@ -50,7 +56,7 @@ const NOTES = new Set(['category', 'how', 'template', 'example', 'tip']);
   // ---- deep link and what is shown ----
   await page.goto('about:blank'); await page.goto(BASE + '#f=nobody-me'); await ready(page);
   const nm = await page.evaluate(() => ({ name: document.getElementById('fname').textContent, cat: document.getElementById('cat').textContent, pos: document.getElementById('pos').textContent, how: document.getElementById('how').textContent, ex: document.getElementById('exText').textContent, labels: [...document.querySelectorAll('#fields label')].map(l => l.textContent), tip: document.getElementById('tip').textContent, current: document.querySelector('.tile[aria-current="true"]') && document.querySelector('.tile[aria-current="true"]').textContent }));
-  ok('F4 #f=nobody-me puts that card on the table: name, category, how, worked example, one labeled blank, a tip, and its tile marked', nm.name === 'Nobody / Me' && nm.cat === 'Contrast' && /^Card 1 of 40$/.test(nm.pos) && /quiet, ordinary world/.test(nm.how) && nm.ex === 'Nobody:\nMe: still rehearsing a comeback for a gas station cashier who was rude to me in 2017' && nm.labels.length === 1 && nm.labels[0] === 'An oddly specific thing you do' && /^Tip: /.test(nm.tip) && /On the table/.test(nm.current || ''), JSON.stringify(nm));
+  ok('F4 #f=nobody-me puts that card on the table: name, category, how, worked example, one labeled blank, a tip, and its tile marked', nm.name === 'Nobody / Me' && nm.cat === 'Contrast' && /^Card 1 of 40$/.test(nm.pos) && /quiet, ordinary world/.test(nm.how) && nm.ex === 'Nobody:\nMe: *still rehearsing a comeback for a gas station cashier who was rude to me in 2017*' && nm.labels.length === 1 && nm.labels[0] === 'An oddly specific thing you do' && /^Tip: /.test(nm.tip) && /On the table/.test(nm.current || ''), JSON.stringify(nm));
 
   // ---- typing, counting, warnings ----
   const g0 = await page.evaluate(() => ({ gaps: [...document.querySelectorAll('#post .gap')].map(g => g.textContent), warn: document.getElementById('warn').textContent, post: document.getElementById('post').textContent }));
@@ -146,12 +152,12 @@ const NOTES = new Set(['category', 'how', 'template', 'example', 'tip']);
   await ph2.close();
 
   // ---- nothing leaves the page ----
-  const p5 = await mk(); await p5.goto(BASE); await ready(p5);
+  const p5 = await mk(); await p5.route('**/formats.txt', r => r.fulfill({ contentType: 'text/plain; charset=utf-8', body: TXT.split('\n').filter(l => !/^post:/.test(l)).join('\n') })); await p5.goto(BASE); await ready(p5);
   const mark = requests.length;
   await p5.fill('#blank0', 'something'); await p5.click('#copy'); await p5.click('#deal'); await p5.click('#useEx'); await p5.waitForTimeout(300);
   const after = requests.slice(mark).filter(r => !/\/favicon\.svg$/.test(r));   // the browser asks for its own tab icon whenever it likes
-  ok('F30 typing, copying, dealing and filling in an example make no network requests at all', after.length === 0, after.join(' | '));
-  ok('F30b the page only ever asked for files on this site and the public Bluesky profile read for the footer avatar', requests.every(r => /^GET http:\/\/localhost:3988\//.test(r) || /^GET https:\/\/public\.api\.bsky\.app\/xrpc\/app\.bsky\.actor\.getProfile/.test(r)), requests.filter(r => !/localhost:3988/.test(r) && !/getProfile/.test(r)).join(' | '));
+  ok('F30 typing, copying, dealing and filling in an example make no network requests at all (with no post: lines in the file)', after.length === 0, after.join(' | '));
+  ok('F30b the page only ever asked for files on this site and the public Bluesky reads (footer avatar, example posts)', requests.every(r => /^GET http:\/\/localhost:3988\//.test(r) || /^GET https:\/\/public\.api\.bsky\.app\/xrpc\/(app\.bsky\.actor\.getProfile|com\.atproto\.identity\.resolveHandle|app\.bsky\.feed\.getPosts)/.test(r)), requests.filter(r => !/localhost:3988/.test(r) && !/getProfile|resolveHandle|getPosts/.test(r)).join(' | '));
   await p5.close();
 
   // ---- the text file is data: markup never runs, bad links dropped ----
@@ -193,7 +199,7 @@ const NOTES = new Set(['category', 'how', 'template', 'example', 'tip']);
       const lum = c => { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b); };
       const bgOf = el => { while (el) { const c = parse(getComputedStyle(el).backgroundColor); if (c.a > 0.99) return c; el = el.parentElement; } return { r: 255, g: 255, b: 255, a: 1 }; };
       const ratio = el => { const fg = parse(getComputedStyle(el).color), bg = bgOf(el), a = lum(fg), b = lum(bg); return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05); };
-      const sels = ['#how', '#exText', '#post', '#count', '#tip', '#fields label', '#fields small', '#tiles .nm', '#tiles .th', '#found', '#cats button', '#cat', '#post .gap'];
+      const sels = ['#how', '#exText', '#post', '#count', '#tip', '#fields label', '#fields small', '#tiles .nm', '#tiles .th', '#found', '#cats button', '#cat', '#post .gap', '.wp .txt', '.wp .by', '.wild .hint', '.wild h3'];
       const res = {}; sels.forEach(s => { const el = document.querySelector(s); if (el) res[s] = Math.round(ratio(el) * 100) / 100; });
       const rb = document.querySelector('#cats button[aria-pressed="true"]'); if (rb) res.pressed = Math.round(ratio(rb) * 100) / 100;
       return res;
@@ -227,10 +233,82 @@ const NOTES = new Set(['category', 'how', 'template', 'example', 'tip']);
   ok('F41 with reduced motion on, nothing animates (tiles and buttons have no transition)', await rm.evaluate(() => [...document.querySelectorAll('.tile, .k-btn')].every(e => getComputedStyle(e).transitionDuration.split(',').every(d => parseFloat(d) === 0))));
   await rm.close();
 
+  // ---- Seen in the wild: real public posts, looked up live ----
+  const WTXT = ';; test file\n' + [
+    ['Alpha', ['https://bsky.app/profile/good.example/post/good1aaa', 'https://blacksky.community/profile/did:plc:other/post/lab1aaa', 'at://did:plc:other/app.bsky.feed.post/rep1aaa']],
+    ['Beta', ['https://bsky.app/profile/gone.example/post/gone1aaa', 'https://bsky.app/profile/did:plc:other/post/authlab1']],
+    ['Gamma', ['https://bsky.app/profile/did:plc:other/post/media1aa', 'https://bsky.app/profile/did:plc:other/post/good2aaa']],
+    ['Delta', ['https://bsky.app/profile/did:plc:other/post/good2aaa', 'https://bsky.app/profile/did:plc:other/post/good3aaa', 'https://bsky.app/profile/did:plc:other/post/good4aaa', 'https://bsky.app/profile/did:plc:other/post/good5aaa', 'http://bsky.app/profile/x/post/abc', 'javascript:alert(1)']],
+    ['Epsilon', []],
+    ['Zeta', ['https://bsky.app/profile/down.example/post/down1aaa']],
+  ].map(([n, ps]) => '## ' + n + '\ncategory: Test\nhow: How it works.\ntemplate: Hi {a}\nexample: there\nsearch: "hi"\n' + ps.map(u => 'post: ' + u + '\n').join('')).join('\n');
+  const POSTS = {
+    good1aaa: { did: 'did:plc:good', handle: 'good.example', name: '<img src=x onerror="window.__pwn=9">', text: '<b>hi</b> there\nsecond line' },
+    lab1aaa: { did: 'did:plc:other', handle: 'other.example', text: 'labeled', labels: [{ val: 'porn' }] },
+    rep1aaa: { did: 'did:plc:other', handle: 'other.example', text: 'a reply', reply: { root: {} } },
+    authlab1: { did: 'did:plc:other', handle: 'other.example', text: 'author labeled', authorLabels: [{ val: '!no-unauthenticated' }] },
+    media1aa: { did: 'did:plc:other', handle: 'other.example', text: 'has a picture', embed: { $type: 'app.bsky.embed.images#view' } },
+    good2aaa: { did: 'did:plc:other', handle: 'other.example', name: 'Other Person', text: 'plain text', when: '2026-03-04T12:00:00Z' },
+    good3aaa: { did: 'did:plc:other', handle: 'other.example', text: 'third' },
+    good4aaa: { did: 'did:plc:other', handle: 'other.example', text: 'fourth' },
+  };
+  const api = [];
+  async function wildPage(vp, scheme, delayMs) {
+    const pg = await mk(vp, scheme);
+    await pg.route('**/formats.txt', r => r.fulfill({ contentType: 'text/plain; charset=utf-8', body: WTXT }));
+    await pg.route('https://public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle*', r => {
+      const u = new URL(r.request().url()), hd = u.searchParams.get('handle'); api.push('resolve ' + hd);
+      if (hd === 'down.example') return r.abort();
+      r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ did: hd === 'good.example' ? 'did:plc:good' : 'did:plc:' + hd.split('.')[0] }) });
+    });
+    await pg.route('https://public.api.bsky.app/xrpc/app.bsky.feed.getPosts*', async r => {
+      const uri = new URL(r.request().url()).searchParams.get('uris'), rkey = uri.split('/').pop(), p = POSTS[rkey]; api.push('get ' + uri);
+      if (delayMs) await new Promise(x => setTimeout(x, delayMs));
+      const body = p ? { posts: [{ uri, author: { did: p.did, handle: p.handle, displayName: p.name || '', labels: p.authorLabels || [] }, record: { $type: 'app.bsky.feed.post', text: p.text, createdAt: p.when || '2026-01-01T00:00:00Z', ...(p.reply ? { reply: p.reply } : {}) }, labels: p.labels || [], ...(p.embed ? { embed: p.embed } : {}) }] } : { posts: [] };
+      r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(body) });
+    });
+    return pg;
+  }
+  const wl = await wildPage(); await wl.goto(BASE + '#f=alpha'); await ready(wl); await wl.waitForSelector('#wild:not([hidden])');
+  const w1 = await wl.evaluate(() => { const fig = [...document.querySelectorAll('#wildList .wp')]; const a = document.querySelector('#wildList .wp a'); return { n: fig.length, txt: fig[0].querySelector('.txt').textContent, by: fig[0].querySelector('.by').textContent, href: a.getAttribute('href'), target: a.target, rel: a.rel, injected: document.querySelectorAll('#wild b, #wild img').length, pwn: window.__pwn, ex: document.getElementById('exText').textContent, h: document.querySelector('#wild h3').textContent }; });
+  ok('F50 a post: link is looked up live and shown as plain text with its author and a link to the original; labeled posts and replies are left out; the worked example stays', w1.n === 1 && w1.txt === '<b>hi</b> there\nsecond line' && /<img src=x/.test(w1.by) && /@good\.example/.test(w1.by) && w1.href === 'https://bsky.app/profile/did:plc:good/post/good1aaa' && w1.target === '_blank' && /noopener/.test(w1.rel) && w1.injected === 0 && w1.pwn === undefined && w1.ex === 'Hi there' && w1.h === 'Seen in the wild', JSON.stringify(w1));
+  ok('F51 it asks only for what it needs: one handle lookup, and one post read per link (a link with a DID in it needs no lookup)', api.filter(x => /^resolve/.test(x)).length === 1 && api.filter(x => /^get/.test(x)).length === 3 && api.every(x => !/token|auth/i.test(x)), api.join(' | '));
+  await wl.click('#tiles .tile:has-text("Beta")'); await wl.waitForTimeout(500);
+  ok('F52 when every post for a card is gone or hidden (deleted, or the author has a label), the whole section is hidden and the card is otherwise unchanged', await wl.evaluate(() => document.getElementById('wild').hidden && document.querySelectorAll('#wildList .wp').length === 0 && document.getElementById('exText').textContent === 'Hi there'));
+  await wl.click('#tiles .tile:has-text("Gamma")'); await wl.waitForSelector('#wild:not([hidden])');
+  const w3 = await wl.evaluate(() => ({ n: document.querySelectorAll('#wildList .wp').length, more: document.querySelectorAll('#wildList .more').length, by: document.querySelectorAll('#wildList .by')[1].textContent }));
+  ok('F53 two posts show side by side; a post with an image, video or link says so; a name and a date appear when the post has them', w3.n === 2 && w3.more === 1, JSON.stringify(w3));
+  const before = api.length;
+  await wl.click('#tiles .tile:has-text("Epsilon")'); await wl.waitForTimeout(300);
+  await wl.click('#tiles .tile:has-text("Alpha")'); await wl.waitForSelector('#wild:not([hidden])');
+  ok('F54 a card with no post: lines makes no request, and coming back to a card that already loaded does not ask again', api.length === before && await wl.evaluate(() => document.querySelectorAll('#wildList .wp').length) === 1, api.slice(before).join(' | '));
+  await wl.click('#tiles .tile:has-text("Zeta")'); await wl.waitForTimeout(500);
+  ok('F55 when Bluesky can not be reached the section stays hidden, there is no error shown, and the card still works', await wl.evaluate(() => document.getElementById('wild').hidden && !document.querySelector('.error, [role="alert"]:not(:empty)') && document.querySelectorAll('#fields input').length === 1));
+  await wl.fill('#blank0', 'abc'); ok('F55b typing on a card still works after a failed lookup', (await wl.locator('#post').innerText()) === 'Hi abc');
+  await wl.close();
+
+  const dl = await wildPage(undefined, undefined, 700); await dl.goto(BASE + '#f=epsilon'); await ready(dl);
+  await dl.click('#tiles .tile:has-text("Alpha")'); await dl.waitForTimeout(100); await dl.click('#tiles .tile:has-text("Epsilon")'); await dl.waitForTimeout(1300);
+  ok('F56 if you move to another card before a slow lookup finishes, the old card\'s posts do not appear on the new card', await dl.evaluate(() => document.getElementById('wild').hidden && document.getElementById('fname').textContent === 'Epsilon' && document.querySelectorAll('#wildList .wp').length === 0));
+  const pr = await dl.evaluate(() => { const r = window.__formats.postRef; return [r('https://bsky.app/profile/a.b.example/post/3kabc'), r('https://blacksky.community/profile/did:plc:xyz/post/3kabc/'), r('at://did:plc:xyz/app.bsky.feed.post/3kabc'), r('http://bsky.app/profile/a/post/b'), r('javascript:alert(1)'), r('https://bsky.app/profile/a/post/b/extra'), r('https://bsky.app/profile/a'), r('')]; });
+  ok('F57 post links work from bsky.app, other hosts and at:// addresses; http, javascript: and malformed links are dropped', pr[0].actor === 'a.b.example' && pr[0].rkey === '3kabc' && pr[1].actor === 'did:plc:xyz' && pr[2].actor === 'did:plc:xyz' && pr[2].rkey === '3kabc' && pr.slice(3).every(x => x === null), JSON.stringify(pr));
+  const pd = await dl.evaluate(() => window.__formats.formats().find(f => f.slug === 'delta').posts.length);
+  ok('F58 a card keeps at most 3 posts, and search: lines never show on the page', pd === 3 && !(await dl.evaluate(() => document.body.textContent.includes('"hi"'))), String(pd));
+  await dl.close();
+
+  for (const [vp, scheme, label] of [[{ width: 1100, height: 900 }, 'light', 'day mode'], [{ width: 390, height: 800 }, 'dark', 'phone, night mode']]) {
+    const cw = await wildPage(vp, scheme); await cw.goto(BASE + '#f=gamma'); await ready(cw); await cw.waitForSelector('#wild:not([hidden])');
+    if (scheme === 'light') await contrast(cw, 'day mode with example posts showing');
+    const sz = await cw.evaluate(() => { const a = [...document.querySelectorAll('#wildList .by a')].map(e => Math.round(e.getBoundingClientRect().height)); return { a, over: document.documentElement.scrollWidth > innerWidth + 1 }; });
+    ok('F59 ' + label + ': the "View the original" links are at least 44 pixels tall and the page does not scroll sideways', sz.a.length === 2 && sz.a.every(h => h >= 44) && !sz.over, JSON.stringify(sz));
+    if (scheme === 'dark') { await cw.click('#themeToggle'); await cw.waitForTimeout(100); await contrast(cw, 'night mode with example posts showing'); await cw.screenshot({ path: 'formats-wild-phone.png', fullPage: true }); }
+    await cw.close();
+  }
+
   // ---- Help ----
   const hp = await mk(); await hp.goto(BASE); await ready(hp); await hp.click('#helpBtn');
   const help = await hp.evaluate(() => document.querySelector('#help .hb').textContent);
-  ok('F42 Help explains the formats, the 300 limit, that Open in Bluesky is bsky.app only (use Copy elsewhere), and that nothing leaves the browser', /Open in Bluesky/.test(help) && /300/.test(help) && /Blacksky/.test(help) && /Northsky/.test(help) && /saved on this device only/.test(help) && /nothing is sent to this site/i.test(help));
+  ok('F42 Help explains the formats, the 300 limit, that Open in Bluesky is bsky.app only (use Copy elsewhere), and that nothing leaves the browser', /Open in Bluesky/.test(help) && /300/.test(help) && /Blacksky/.test(help) && /Northsky/.test(help) && /saved on this device only/.test(help) && /nothing is sent to this site/i.test(help) && /Seen in the wild/.test(help) && /deleted, hidden, or flagged/.test(help));
   await hp.close();
 
   console.log(out.join('\n')); console.log('JS errors:', errors.length ? errors.join('|') : 'none');

@@ -110,3 +110,9 @@ Source: `public/formats.html`, `public/formats.txt`. The automated suite covers 
 - Character limit. How: put a post of exactly 300 and then 301 characters, with an emoji in it, into the composer. Expect: the page's counter and Bluesky agree.
 - Phone layout. How: open /formats on a real phone, deal several cards, type in a blank with the keyboard open. Expect: readable card, reachable blanks, no sideways scroll. The post sits below the blanks, so with many blanks you scroll to see it while typing; decide whether that is acceptable.
 - The formats text. How: read `public/formats.txt`. Expect: you are happy with each how-line, example and tip. It is a first draft by the assistant, not yet read by you; edit or delete freely.
+
+## Format Deck: Seen in the wild (real Bluesky)
+Source: `public/formats.html` (`renderWild`), `scripts/find-examples.mjs`. The suite covers the page with a mocked API only.
+- Live lookup. How: put one real `post:` line under a format, open that card on the live site. Expect: the post's text, name, date and a working link to the original. Then try a bogus rkey. Expect: the box does not appear and the worked example stays.
+- Handle links. How: use a `post:` link copied from bsky.app (handle form) and one from Blacksky or Northsky. Expect: both show.
+- The finder script. How: `node scripts/find-examples.mjs --only "Overheard"`. Expect: candidates in `scripts/candidates.txt`, or a message that search needs sign-in. If it is blocked, try `--print-queries`. Tell the assistant what it printed, because it was never run against the real service.

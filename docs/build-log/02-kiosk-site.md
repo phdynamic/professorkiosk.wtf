@@ -125,3 +125,10 @@
 - note: fixed during build: Use this example and Clear replaced the values array while the inputs still pointed at the old one; the saved blanks could be overwritten by a visit where the formats had not loaded
 - note: in the build sandbox the receipt, jokeweb, mashup, icon, help and footer suites print "A network error occurred." JS errors on the unmodified files too; cause not found
 - live-tested: no
+
+## 2026-10-13 · Format Deck: Seen in the wild
+- built: `post:` and `search:` lines in `formats.txt`; the page looks each post up live (handle resolved with `com.atproto.identity.resolveHandle`, post read with `app.bsky.feed.getPosts`, both on `public.api.bsky.app`), 8 second timeout, in-memory cache, stale results ignored when the card changes; `scripts/find-examples.mjs` (candidate finder); Help text; 16 new checks in `formats.suite.js` (64 total) using a mocked API
+- changed: F30 now strips `post:` lines from the test copy of the file so dealing makes no requests; F30b allows the two lookups
+- note: left out on purpose, my choice, not stated: posts with any label on the post or author, replies, and images/video (the box points to the original)
+- note: the finder script was tested only against a local mock server; the sandbox cannot reach Bluesky
+- live-tested: no

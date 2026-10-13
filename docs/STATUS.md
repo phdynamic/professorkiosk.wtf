@@ -11,7 +11,8 @@
 - Unit (`npm test`): budget, clientip, links. Last run 2026-10-10 at e89d28b: 17 of 17 pass.
 - Browser (`npm run test:browser`): tracer 39, imagine 7, receipt 122, jokeweb 118, mashup 49, icon 11, help 45, tutorials 29, feeds 12, footer 1. Last run 2026-10-10 at e89d28b: all pass. All use mocked Bluesky responses.
 
-- Format Deck added 2026-10-13 (uncommitted): `formats` suite 48 checks pass; `help` suite now 52 (covers the new page); `mashup` hub checks updated for 12 cards (49). Run in a Linux sandbox with mocked Bluesky. In that sandbox the receipt, jokeweb, mashup, icon, help and footer suites also print "A network error occurred." JS errors on the unmodified files, so they report FAIL there; cause not found; not run on the developer's machine since.
+- Format Deck "Seen in the wild" (2026-10-13, uncommitted): `post:` lines in `formats.txt`, looked up live from the public AppView; `formats` suite now 64 checks pass (mocked API). No `post:` lines are in the file yet; `scripts/find-examples.mjs` is untested against the real Bluesky (the build sandbox cannot reach it).
+- Format Deck added 2026-10-13 (committed): `formats` suite 48 checks pass; `help` suite now 52 (covers the new page); `mashup` hub checks updated for 12 cards (49). Run in a Linux sandbox with mocked Bluesky. In that sandbox the receipt, jokeweb, mashup, icon, help and footer suites also print "A network error occurred." JS errors on the unmodified files, so they report FAIL there; cause not found; not run on the developer's machine since.
 
 ## Not tested / unknown
 - Behavior against real Bluesky and the Railway deployment: not recorded in the repo.

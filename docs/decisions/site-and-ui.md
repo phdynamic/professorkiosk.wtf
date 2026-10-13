@@ -108,3 +108,8 @@
 - what: how-line, worked example (built from the example words), a blank per `{label}`, the post as it builds, a counter against 300 graphemes, Copy post, Open in Bluesky (`https://bsky.app/intent/compose?text=`), Use this example, Clear blanks, a tip; a blank left empty is copied as its `{label}`; no dice button that drops in random Mashup topics
 - why: the developer asked for "some combination of reference and" typing and copying, wanted a worked example, and suggested opening in Bluesky; they chose the option without the dice; copying empty blanks as `{label}` and bsky.app only for Open are my choices, not stated (Blacksky and Northsky users use Copy)
 - source: developer request, 2026-10-13
+
+### 2026-10-13 · Format Deck shows real posts by live lookup, picked by the developer · active
+- what: `post:` lines hold links only; the page asks the public AppView when a card opens and hides a post that is gone, labeled, or a reply; the worked example stays as the backup; candidates come from `scripts/find-examples.mjs`, and the developer copies chosen `post:` lines in by hand
+- why: the developer asked for real Bluesky posts as embedded examples, "live lookup with a backup example if the post disappears" (their words). They picked automatic search for finding matches; my choice, not stated: the search runs as a script they read through before anything goes on the site, instead of on every visitor's page, because search results can't be vetted and there is no moderation capacity (standing rule)
+- source: developer request, 2026-10-13

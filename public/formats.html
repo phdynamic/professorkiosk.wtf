@@ -47,6 +47,15 @@ html[data-theme="dark"] .bench .band { border-color: var(--line); }
 
 .ex { border: 2px solid var(--line); border-radius: 16px; background: var(--tint-yellow); padding: 14px; display: grid; gap: 10px; }
 .ex h3 { margin: 0; }
+.wild { border: 2px solid var(--line); border-radius: 16px; background: var(--surface2); padding: 14px; display: grid; gap: 10px; margin-top: 14px; }
+.wild[hidden] { display: none; }
+.wild h3 { margin: 0; }
+.wp { margin: 0; border: 2px solid var(--line); border-radius: 14px; background: var(--surface); padding: 12px 14px; display: grid; gap: 8px; }
+.wp .txt { white-space: pre-wrap; overflow-wrap: anywhere; font: 400 16px/1.45 var(--font); margin: 0; }
+.wp .by { font-size: 14px; color: var(--ink2); overflow-wrap: anywhere; }
+.wp .by a { font-weight: 700; display: inline-flex; align-items: center; min-height: 44px; text-underline-offset: 3px; }
+.wp .more { font-size: 13px; color: var(--ink2); margin: 0; }
+#wildList { display: grid; gap: 10px; }
 .ex pre, .post { white-space: pre-wrap; overflow-wrap: anywhere; font: 400 17px/1.45 var(--font); }
 .ex .k-btn { justify-self: start; }
 
@@ -130,6 +139,8 @@ html[data-theme="dark"] .tile { border-color: var(--line); box-shadow: 4px 4px 0
 
     <h3>Good to know</h3>
     <p>Everything runs in your browser. No sign-in, and nothing is sent to this site. Your blanks are saved on this device only, so you can come back to a half-finished post. Clear blanks wipes them for the card on the table.</p>
+    <h3>Seen in the wild</h3>
+    <p>Some cards show real public posts that use the format. Your browser asks Bluesky's public servers for them when the card opens, and nothing you type is sent. Each post links to the original. If a post is deleted, hidden, or flagged by a moderation label, it simply does not appear. If one of these posts is yours and you want it gone, tell @professorkiosk.wtf and it will be removed.</p>
   </div>
 </dialog>
 
@@ -160,6 +171,12 @@ html[data-theme="dark"] .tile { border-color: var(--line); box-shadow: 4px 4px 0
           <h3>Worked example</h3>
           <pre id="exText"></pre>
           <button class="k-btn big" id="useEx" type="button">Use this example</button>
+        </div>
+
+        <div class="wild" id="wild" hidden>
+          <h3>Seen in the wild</h3>
+          <div id="wildList"></div>
+          <p class="hint">Public posts, looked up live from Bluesky when this card opens. Each one links to the original. If a post is deleted or hidden, it disappears from here.</p>
         </div>
 
         <div class="cols">
@@ -211,7 +228,7 @@ html[data-theme="dark"] .tile { border-color: var(--line); box-shadow: 4px 4px 0
 <script>
 (function () {
 'use strict';
-var KEY = 'pk-formats-v1', MAX_VAL = 300, LIMIT = 300;
+var KEY = 'pk-formats-v1', MAX_VAL = 300, LIMIT = 300, MAX_POSTS = 3, API = 'https://public.api.bsky.app/xrpc/';
 var COLORS = ['var(--coral)', 'var(--yellow)', 'var(--teal)', 'var(--purple)', 'var(--pink)', 'var(--sky)'];
 function $(id) { return document.getElementById(id); }
 var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -267,11 +284,13 @@ function parse(src) {
   String(src).replace(/\r\n?/g, '\n').split('\n').forEach(function (line) {
     if (/^;;/.test(line)) return;
     var m = /^##\s+(.+?)\s*$/.exec(line);
-    if (m) { cur = { name: m[1], cat: '', how: '', template: [], exampleRaw: '', tip: '' }; list.push(cur); return; }
+    if (m) { cur = { name: m[1], cat: '', how: '', template: [], exampleRaw: '', tip: '', posts: [] }; list.push(cur); return; }
     if (!cur) return;
-    m = /^(category|how|template|example|tip):\s?(.*)$/.exec(line);
+    m = /^(category|how|template|example|tip|post|search):\s?(.*)$/.exec(line);
     if (!m) return;
     var k = m[1], v = m[2].replace(/\s+$/, '');
+    if (k === 'search') return;   // used by scripts/find-examples.mjs, not by the page
+    if (k === 'post') { var ref = postRef(v); if (ref && cur.posts.length < MAX_POSTS) cur.posts.push(ref); return; }
     if (k === 'template') cur.template.push(v);
     else if (k === 'category') cur.cat = v.trim();
     else if (k === 'example') cur.exampleRaw = v;
@@ -307,6 +326,71 @@ function build(f, vals) {
   if (last < text.length) parts.push({ t: text.slice(last) });
   parts.forEach(function (p) { flat += p.t != null ? p.t : p.gap; });
   return { text: flat, parts: parts, empty: empty };
+}
+
+// ---------- posts seen in the wild ----------
+// A post: line holds a link to a public post. Nothing is copied into formats.txt: the page asks Bluesky's
+// public servers for the post when the card opens, and shows nothing if it is gone, hidden, labeled or a reply.
+function postRef(v) {
+  v = String(v || '').trim(); var m;
+  if ((m = /^at:\/\/([^\/\s]+)\/app\.bsky\.feed\.post\/([A-Za-z0-9]+)$/.exec(v))) return { actor: m[1], rkey: m[2] };
+  if (/^https:\/\//.test(v) && (m = /^https:\/\/[^\/\s]+\/profile\/([^\/\s?#]+)\/post\/([A-Za-z0-9]+)\/?(?:[?#].*)?$/.exec(v))) return { actor: m[1], rkey: m[2] };
+  return null;
+}
+var wildCache = Object.create(null), wildToken = 0;
+function getJSON(url) {
+  var ctl = window.AbortController ? new AbortController() : null, t = ctl ? setTimeout(function () { ctl.abort(); }, 8000) : null;
+  return fetch(url, { signal: ctl ? ctl.signal : undefined, credentials: 'omit', referrerPolicy: 'no-referrer' })
+    .then(function (r) { if (t) clearTimeout(t); if (!r.ok) throw new Error('http ' + r.status); return r.json(); },
+          function (e) { if (t) clearTimeout(t); throw e; });
+}
+function resolveActor(actor) {
+  if (/^did:[a-z]+:[A-Za-z0-9._:%-]+$/.test(actor)) return Promise.resolve(actor);
+  if (!/^[A-Za-z0-9.-]{3,253}$/.test(actor)) return Promise.reject(new Error('bad actor'));
+  return getJSON(API + 'com.atproto.identity.resolveHandle?handle=' + encodeURIComponent(actor)).then(function (d) {
+    if (!d || typeof d.did !== 'string' || !/^did:/.test(d.did)) throw new Error('no did');
+    return d.did;
+  });
+}
+// resolves to {did, rkey, handle, name, text, when, media} or null when it should not be shown
+function fetchWild(ref) {
+  var key = ref.actor + '/' + ref.rkey;
+  if (wildCache[key]) return wildCache[key];
+  return (wildCache[key] = resolveActor(ref.actor).then(function (did) {
+    return getJSON(API + 'app.bsky.feed.getPosts?uris=' + encodeURIComponent('at://' + did + '/app.bsky.feed.post/' + ref.rkey)).then(function (d) {
+      var p = d && d.posts && d.posts[0];
+      if (!p || !p.record || !p.author) return null;
+      if (p.record.$type && p.record.$type !== 'app.bsky.feed.post') return null;
+      if ((p.labels && p.labels.length) || (p.author.labels && p.author.labels.length)) return null;   // any label: leave it out
+      if (p.record.reply) return null;                                                                 // a reply needs its context
+      var text = typeof p.record.text === 'string' ? p.record.text.trim() : '';
+      if (!text) return null;
+      return { did: did, rkey: ref.rkey, handle: String(p.author.handle || ''), name: String(p.author.displayName || ''), text: text.slice(0, 3000), when: p.record.createdAt, media: !!p.embed };
+    });
+  }).catch(function () { delete wildCache[key]; return null; }));
+}
+function renderWild(f) {
+  var box = $('wild'), list = $('wildList'), token = ++wildToken;
+  box.hidden = true; list.textContent = '';
+  if (!f.posts || !f.posts.length) return;
+  Promise.all(f.posts.map(fetchWild)).then(function (res) {
+    if (token !== wildToken) return;                 // a different card is on the table now
+    var shown = 0;
+    res.forEach(function (r) {
+      if (!r) return;
+      shown++;
+      var d = new Date(r.when), when = isNaN(d) ? '' : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+      var link = h('a', { href: 'https://bsky.app/profile/' + r.did + '/post/' + r.rkey, target: '_blank', rel: 'noopener', text: 'View the original on Bluesky ↗' });
+      var by = h('div', { class: 'by' });
+      by.appendChild(document.createTextNode((r.name ? r.name + ' ' : '') + '@' + r.handle + (when ? ' · ' + when : '') + ' · '));
+      by.appendChild(link);
+      var fig = h('figure', { class: 'wp' }, h('p', { class: 'txt', text: r.text }));
+      if (r.media) fig.appendChild(h('p', { class: 'more', text: 'This post also has an image, video, or link. See the original.' }));
+      fig.appendChild(by);
+      list.appendChild(fig);
+    });
+    box.hidden = !shown;
+  });
 }
 
 // ---------- state ----------
@@ -345,6 +429,7 @@ function renderBench(f) {
   $('pos').textContent = 'Card ' + (F.indexOf(f) + 1) + ' of ' + F.length;
   $('fname').textContent = f.name;
   var how = $('how'); how.textContent = ''; inline(how, f.how);
+  renderWild(f);
   $('exText').textContent = build(f, f.example).text;
   var fields = $('fields'); fields.textContent = '';
   var text = f.template.join('\n');
@@ -484,7 +569,7 @@ function init(list) {
   else { renderTiles(); show(F[Math.floor(rnd() * F.length)].slug); }
 }
 fetch('/formats.txt', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.text(); }).then(function (t) { init(parse(t)); }).catch(failed);
-window.__formats = { parse: parse, build: build, glen: glen, state: function () { return S; }, formats: function () { return F; }, seed: function (fn) { rnd = fn || Math.random; } };
+window.__formats = { postRef: postRef, parse: parse, build: build, glen: glen, state: function () { return S; }, formats: function () { return F; }, seed: function (fn) { rnd = fn || Math.random; } };
 })();
 </script>
 <script src="/kiosk.js" defer></script>

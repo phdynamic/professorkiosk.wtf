@@ -201,3 +201,7 @@
 ## 2026-10-13 · Format Deck review, category 6 (Wordplay)
 - changed: kept the five Wordplay formats; added Classic Blunder ("You just committed one of the classic blunders: {a surprising or silly pitfall}") to Wordplay; the deck has 30 formats; hub card says "About 30 formats"
 - live-tested: no
+
+## 2026-10-13 · Format Deck review, category 7 (Escalation) and 8 (Tiny scenes)
+- changed: kept the five Escalation formats; deleted Tiny Scene; added LaCroix ("LaCroix is what happens when {a silly way of describing the drink}.") to Tiny scenes; the deck has 30 formats in 7 categories
+- live-tested: no

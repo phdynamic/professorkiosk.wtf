@@ -188,8 +188,7 @@ how: Admit something small and specific with the weight of a major confession.
 template: I have a confession:
 template: {the confession}
 
-## Tiny Scene
+## LaCroix
 category: Tiny scenes
-how: Describe a person doing something small, then reveal one absurd fact they do not know. The reader enjoys knowing more than the character.
-template: A {a kind of person} is {doing something small}.
-template: They do not know that {the absurd truth}.
+how: Describe the sparkling water in a silly way, usually by how faint its flavor is. Say it as if you were explaining a real discovery.
+template: LaCroix is what happens when {a silly way of describing the drink}.

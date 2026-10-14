@@ -32,8 +32,15 @@ const errors = [];
       await page.waitForSelector('#rootcard .card', { timeout: 5000 }).then(() => ok('A2 parses ' + label, true), () => ok('A2 parses ' + label, false));
     }
     await page.goto(BASE);
-    const ex = await page.evaluate(() => ({ small: document.getElementById('ex-small').getAttribute('href'), saga: document.getElementById('ex-saga').getAttribute('href'), tag: document.querySelector('.k-hero .k-tag').textContent, text: document.querySelector('.hint').textContent }));
-    ok('A2b the Tracer shows two example links, a small game and the Imagine Flagons Saga (the post that started it), as /tracer?post= links; the page carries the Tool 07 tag', ex.small === '/tracer?post=https%3A%2F%2Fbsky.app%2Fprofile%2Fprofessorkiosk.wtf%2Fpost%2F3mx6fzdyx3k2s' && ex.saga === '/tracer?post=https%3A%2F%2Fbsky.app%2Fprofile%2Fprofessorkiosk.wtf%2Fpost%2F3ma4vpkdvwk26' && /Tool 07/.test(ex.tag) && /Imagine Flagons Saga/.test(ex.text) && /1,200 people/.test(ex.text), JSON.stringify(ex));
+    const ex = await page.evaluate(() => ({ saga: document.getElementById('ex-saga').getAttribute('href'), small: !!document.getElementById('ex-small'), links: document.querySelectorAll('.hint a').length, tag: document.querySelector('.k-hero .k-tag').textContent, text: document.querySelector('.hint').textContent, ring: !document.getElementById('ringArt').hidden }));
+    ok('A2b the Tracer shows one example, the Imagine Flagons Saga (a /tracer?post= link to the post that started it), says it takes a while, shows no ring yet, and carries the Tool 07 tag', ex.saga === '/tracer?post=https%3A%2F%2Fbsky.app%2Fprofile%2Fprofessorkiosk.wtf%2Fpost%2F3ma4vpkdvwk26' && !ex.small && ex.links === 1 && /Tool 07/.test(ex.tag) && /1,200 people/.test(ex.text) && /takes a while/.test(ex.text) && !ex.ring, JSON.stringify(ex));
+    await page.fill('#postInput', 'https://bsky.app/profile/professorkiosk.wtf/post/3ma4vpkdvwk26'); await page.click('#go');
+    await page.waitForSelector('#ringArt:not([hidden])', { timeout: 3000 });
+    await page.click('#ring', { force: true });
+    const ringUi = await page.evaluate(() => ({ confetti: document.querySelectorAll('.conf').length, toast: document.getElementById('toast').textContent, label: document.getElementById('ring').getAttribute('aria-label') }));
+    ok('A2c tracing the saga puts the One Ring in the corner, and clicking it throws confetti and says "One Ring to rule them all, one pun to find them."', ringUi.confetti >= 30 && /One Ring to rule them all, one pun to find them\./.test(ringUi.toast) && /One Ring/.test(ringUi.label), JSON.stringify(ringUi));
+    await page.fill('#postInput', ROOT); await page.click('#go'); await page.waitForTimeout(300);
+    ok('A2d tracing any other post takes the ring away again', await page.isHidden('#ringArt'));
     await go(page, 'https://bsky.app/profile/nobody.example/post/r0'); await page.waitForSelector('#error:not([hidden])');
     ok('A3 unknown handle -> clear error', /find an account/i.test(await page.locator('#error').innerText()));
     await go(page, 'https://bsky.app/profile/root.bsky.social/post/r99999'); await page.waitForSelector('#error:not([hidden])');

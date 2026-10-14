@@ -27,6 +27,13 @@ html[data-theme="dark"]{--accent:var(--yellow);--hit:#5c4500;--danger:#fca5a5;--
 button{font:inherit;color:inherit;cursor:pointer}
 .wrap{max-width:1040px;margin:0 auto;padding:28px 20px 120px}
 .errbox{max-width:640px;margin:14px 0 0;background:var(--danger-bg);border:2px solid var(--danger);color:var(--danger);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:500}
+/* the One Ring, shown for the Imagine Flagons Saga */
+.ring{width:130px;height:130px;display:block;cursor:pointer;background:none;border:0;padding:0;filter:drop-shadow(4px 4px 0 var(--navy));animation:float 5s ease-in-out infinite}
+.ring:hover{animation-duration:1.2s}
+@keyframes float{50%{transform:translateY(-8px) rotate(6deg)}}
+.conf{position:fixed;top:-30px;font-size:26px;pointer-events:none;z-index:70;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg);opacity:.8}}
+@media (prefers-reduced-motion:reduce){.ring{animation:none}}
 /* hero form */
 .tpanel{margin:-38px auto 0;position:relative;max-width:1040px;padding:0 20px}
 .tform-card{background:var(--surface);border:3px solid var(--line);border-radius:18px;box-shadow:5px 5px 0 var(--yellow);padding:18px 20px}
@@ -190,7 +197,7 @@ dialog::backdrop{background:rgba(20,18,60,.6)}
       <li>A trace loads a couple of thousand quotes at a time. Press "Load more" to keep going, up to 20,000 in one trace. If Bluesky slows down, the Tracer waits and picks up again, and you can resume if it stops.</li>
       <li>Some quotes can't be seen without logging in (locked, blocked or deleted posts). The Tracer tells you how many are missing, and anything quoted under them is missing too.</li>
       <li>Links on cards open the post on Bluesky.</li>
-      <li>Not sure where to start? The example links under the box trace a small quote post game and a very big one, the Imagine Flagons Saga (about 1,200 quotes, so give it a minute).</li>
+      <li>Not sure where to start? The example link under the box traces the Imagine Flagons Saga, a very big quote post game (about 1,200 quotes, so give it a minute). Look for the ring in the corner while it loads, and click it.</li>
     </ul>
   </div>
 </dialog>
@@ -202,6 +209,16 @@ dialog::backdrop{background:rgba(20,18,60,.6)}
       <h1>Quote Post Game Tracer</h1>
       <p>Paste a link to the post that started a quote post game and watch every quote of it unfold as a browsable tree.</p>
     </div>
+    <div class="art" id="ringArt" hidden>
+      <button class="ring" id="ring" type="button" aria-label="The One Ring. Click for a surprise.">
+        <svg viewBox="0 0 120 120" width="100%" height="100%" aria-hidden="true">
+          <defs><linearGradient id="ringg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset=".5" stop-color="#ffd23f"/><stop offset="1" stop-color="#c8961e"/></linearGradient></defs>
+          <circle cx="60" cy="60" r="46" fill="none" stroke="#1d1b4f" stroke-width="26"/>
+          <circle cx="60" cy="60" r="46" fill="none" stroke="url(#ringg)" stroke-width="20"/>
+          <circle cx="60" cy="60" r="46" fill="none" stroke="#1d1b4f" stroke-width="2" stroke-dasharray="3 6" opacity=".8"/>
+        </svg>
+      </button>
+    </div>
   </div>
 </header>
 
@@ -212,7 +229,7 @@ dialog::backdrop{background:rgba(20,18,60,.6)}
       <input id="postInput" type="text" placeholder="https://bsky.app/profile/…/post/…" autocomplete="off" spellcheck="false" />
       <button class="k-btn primary" id="go" type="submit">Trace it →</button>
     </form>
-    <p class="hint"><b>Public posts only.</b> Only quotes visible to logged-out Bluesky viewers can be traced. Want an example? <a href="/tracer?post=https%3A%2F%2Fbsky.app%2Fprofile%2Fprofessorkiosk.wtf%2Fpost%2F3mx6fzdyx3k2s" id="ex-small">Try this quote post game</a>, or the big one: <a href="/tracer?post=https%3A%2F%2Fbsky.app%2Fprofile%2Fprofessorkiosk.wtf%2Fpost%2F3ma4vpkdvwk26" id="ex-saga">The Imagine Flagons Saga</a>. It started with a post about a Lord of the Rings cover band, and then 1,200 people could not stop. Tracing it takes a while.</p>
+    <p class="hint"><b>Public posts only.</b> Only quotes visible to logged-out Bluesky viewers can be traced. Want an example? Try <a href="/tracer?post=https%3A%2F%2Fbsky.app%2Fprofile%2Fprofessorkiosk.wtf%2Fpost%2F3ma4vpkdvwk26" id="ex-saga">The Imagine Flagons Saga</a>. It started with a post about a Lord of the Rings cover band, and then 1,200 people could not stop. It is a big one, so tracing it takes a while, and it is worth the wait.</p>
     <div class="errbox" id="error" hidden></div>
   </div>
 </div>
@@ -279,6 +296,7 @@ const fmtN=n=>Number(n).toLocaleString();
 const hue=h=>{let x=0;for(const c of String(h))x=(x*31+c.charCodeAt(0))%360;return x};
 const avThumb=u=>u.replace('/img/avatar/','/img/avatar_thumbnail/');
 
+const SAGA_RKEY='3ma4vpkdvwk26';
 // ---------- theme ----------
 function applyThemeIcon(){$('#themeToggle').textContent=document.documentElement.getAttribute('data-theme')==='dark'?'☀️ Day mode':'🌙 Night mode'}
 $('#themeToggle').onclick=()=>{
@@ -457,6 +475,7 @@ $('#stopBtn').onclick=()=>{ if(!run) return; run.stopped=true; run.ac.abort(); $
 // ---------- start ----------
 function showError(msg){ const e=$('#error'); if(msg){e.textContent=msg;e.hidden=false}else e.hidden=true }
 function resetAll(){
+  $('#ringArt').hidden=true;
   if(run){ run.stopped=true; run.ac.abort() }
   stopTick(); N=[]; maxDep=0; lastRendered=0; hashDone=false; hits=null; desc=null;
   state.open=new Set(); state.q=''; $('#q').value='';
@@ -468,6 +487,8 @@ async function startTrace(input){
   const parsed=parseInput(input);
   if(!parsed){ showError('That doesn\'t look like a Bluesky post link. Try something like https://bsky.app/profile/someone.bsky.social/post/3abc…'); return }
   resetAll();
+  // the Imagine Flagons Saga gets the One Ring in the corner (the page is a Lord of the Rings joke)
+  $('#ringArt').hidden=!(parsed.id.toLowerCase()==='professorkiosk.wtf'&&parsed.rkey===SAGA_RKEY);
   const r=run={ac:new AbortController(),cap:CFG.cap,frontier:[],busy:0,stopped:false,capped:false,done:false,failed:'',errors:0,
     started:Date.now(),nextStart:0,pauseUntil:0,byUri:new Map(),people:new Set(),requests:0,hidden:0};
   $('#go').disabled=true;
@@ -591,6 +612,12 @@ $('#tree').addEventListener('click',e=>{
   } else if(a==='trace') showTrace(i);
   else if(a==='copy'){ const l=location.href.split('#')[0]+'#'+N[i].k; (navigator.clipboard?navigator.clipboard.writeText(l):Promise.reject()).then(()=>toast('Link copied'),()=>toast(l)) }
 });
+function confetti(){
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  const e=['\u{1F48D}','\u{1F3B8}','\u{1F525}','\u{1F9D9}','\u{1F985}','\u{1F3A4}','\u{1F33F}','✨'];
+  for(let i=0;i<40;i++){const s=document.createElement('span');s.className='conf';s.setAttribute('aria-hidden','true');s.textContent=e[i%e.length];s.style.left=Math.random()*100+'vw';s.style.animationDuration=(2+Math.random()*2.5)+'s';s.style.animationDelay=Math.random()*.6+'s';document.body.append(s);setTimeout(()=>s.remove(),5500)}
+}
+$('#ring').onclick=()=>{confetti();toast('One Ring to rule them all, one pun to find them.')};
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.x);toast.x=setTimeout(()=>t.classList.remove('on'),2200)}
 function path(i){const a=[];while(i>0){a.unshift(i);i=N[i].p}return a}
 function showTrace(i){

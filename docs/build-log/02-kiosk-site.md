@@ -273,3 +273,7 @@
 - removed: `public/imagine-flagons.html`, `test/browser/imagine.suite.js` (7 checks), the Saga hub card and its entries in the help, icon and footer checks
 - changed: `/imagine-flagons` redirects to the Tracer with the saga post; the Tracer shows two example links and its Help mentions them; hub order is now Tutorials, Joke-Web, Mashup, Format Deck, Joke Tightener, Mutual Match, Tracer, Top Skeets, Rush Hour, Transit Pass, Skeet Receipt (01 to 11), separate sites 12 to 15; card colors reassigned (Tracer coral, Top Skeets purple, Rush Hour yellow, Transit Pass teal, Skeet Receipt sky); "Tool NN" tags follow
 - live-tested: no
+
+## 2026-10-14 · Saga is the Tracer's only example; the ring returns
+- changed: removed the small example link; the Saga link now says tracing takes a while and is worth the wait; the One Ring and its confetti were ported from the old saga page (CSS, markup, `confetti()`), shown while the saga is traced; Tracer suite is 42 checks
+- live-tested: no

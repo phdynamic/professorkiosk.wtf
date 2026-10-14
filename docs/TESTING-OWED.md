@@ -91,6 +91,7 @@ Source: the Help text in `public/tracer.html`.
 
 ## The Imagine Flagons Saga as a Tracer example (live site, real Bluesky)
 Source: the example links in `public/tracer.html`; the old separate saga page was removed on 2026-10-13.
+- The ring. How: start the saga trace (the example link). Expect: the gold ring floats in the hero corner on a computer (it is hidden on a phone, like other hero art), clicking it throws emoji confetti and shows "One Ring to rule them all, one pun to find them.", and tracing any other post takes it away.
 - Big trace. How: open /tracer and press "The Imagine Flagons Saga". Expect: the trace starts, loads the first couple of thousand quotes (the saga is about 1,200), and the tree, search, depth, Leaderboards and Lineage all work; note how long it takes here.
 - Old address. How: open /imagine-flagons. Expect: it lands on the Tracer and starts the same trace.
 - Missing features. The old saga page had a random-quote key (r) and showed locked posts with a note; the Tracer does neither (it counts the missing ones instead). Tell the assistant if you want them added to the Tracer.

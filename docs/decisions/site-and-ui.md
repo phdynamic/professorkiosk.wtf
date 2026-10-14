@@ -167,3 +167,9 @@
 - why: the developer asked for it; keeping both example links, the 302 (not 301, so it can be changed) and what the saga page did that the Tracer does not (a random-quote key, showing locked posts with a note) were my calls and are listed in TESTING-OWED
 - source: developer request, 2026-10-13
 - live-tested: no
+
+### 2026-10-14 · The Saga is the Tracer's only example, and the One Ring comes with it · active
+- what: the Tracer's example line offers only the Imagine Flagons Saga (the small example is gone); while the saga post (professorkiosk.wtf, rkey 3ma4vpkdvwk26) is being traced, the gold One Ring shows in the hero, as on the old saga page; clicking it throws emoji confetti and a toast; any other trace hides it; it follows the same rule as other hero art (hidden on phones) and the confetti and float animation respect reduced motion
+- why: the developer asked for it; showing the ring from the start of the trace (not after the post loads) and hiding it on phones and for reduced motion were my calls
+- source: developer request, 2026-10-14
+- live-tested: no

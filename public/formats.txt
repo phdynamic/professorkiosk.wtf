@@ -44,6 +44,21 @@ category: Contrast
 how: Split the world into two groups, where the second group is the point. Make the first side reasonable and the second delightfully specific.
 template: There are two types of people in the world: {type one} and {type two}.
 
+## We Are Not the Same
+category: Contrast
+how: Show what someone else does in a slightly sneaky or small way, then show what you do in the same setting, which is far bigger or more absurd. The second action is the joke.
+template: You're in {his or her} DMs, I'm {something much bigger} {his or her} {a thing}. We are not the same.
+
+## In This Economy
+category: Contrast
+how: Ask for two nice things at once, as if that were wildly unreasonable. The things should be small and ordinary, so the complaint about money feels out of proportion.
+template: {a nice thing} AND {another nice thing}? In this economy?
+
+## A Ten, But
+category: Contrast
+how: Give someone a perfect score, then name the one thing that spoils it. The dealbreaker works best when it is small, odd, and said completely straight.
+template: {He's, she's, or they're} a 10, but {the specific dealbreaker}.
+
 ## Award Ceremony
 category: Lists
 how: Give an award to an unlikely winner and explain it with a reason that is too exact. The reason is the joke.
@@ -67,6 +82,11 @@ how: Review something that cannot be reviewed, or review a normal thing for the 
 template: ★☆☆☆☆ {the thing being reviewed}
 template: "{a review title}"
 template: {the complaint}
+
+## I Hope This Email Finds You
+category: Fake documents
+how: Take the stock opening of a work email and finish it with something that is not "well". The new ending can be a place, a mood, or a very specific situation.
+template: I hope this email finds you {an unexpected state or place}.
 
 ## Overheard
 category: Dialogue
@@ -99,6 +119,17 @@ category: Dialogue
 how: Say something to an object and let it answer back. Give the object a human flaw such as pride, laziness, or passive aggression.
 template: Me: {what I say to the object}
 template: {the object}: {what it says back}
+
+## The Goth Version
+category: Dialogue
+how: Ask how much for the goth version of something. The reply names a real thing that turns out to be exactly that, spiky or dark or dramatic. Whoever answers should be someone who would know, like a pet store clerk. For example: "me: how much for the goth guinea pig / pet store clerk: that's a hedgehog"
+template: me: how much for the goth {a thing for sale}
+template: {someone who would know}: that's a {the real thing that fits}
+
+## The Saying, Answered
+category: Dialogue
+how: Quote a familiar saying, then follow it with a reply that takes it literally, disagrees, or ruins it. Keep the saying sincere and the reply flat.
+template: "{a well-known saying}" {a surprising response}
 
 ## Pun With a Question
 category: Wordplay
@@ -133,6 +164,31 @@ category: Wordplay
 how: Borrow the famous speech from The Princess Bride about the classic blunders and name a pitfall that is either surprising or silly, ideally with a grain of truth. The more seriously you say it, the better.
 template: You just committed one of the classic blunders: {a surprising or silly pitfall}
 
+## You're Telling Me
+category: Wordplay
+how: Act shocked that a creature or person did something to a thing, where their name or nature is the pun. The canonical version is "You're telling me a shrimp fried this rice?"
+template: You're telling me {a creature or person} {a past tense verb} this {a thing}?
+
+## Only If It's From
+category: Wordplay
+how: Borrow the champagne rule. Insist that something only counts if it comes from one exact place, and that everything else is a lesser version. It works best when the place name is surprising, or sounds like part of the thing. The canonical version is "It's only champagne if it's from the Champagne region of France, otherwise it's just sparkling wine."
+template: It's only {a fancy thing} if it's from the {a region} region of {a larger place}, otherwise it's just sparkling {a plain version}.
+
+## What Idiot Called It
+category: Wordplay
+how: Complain that a thing was given a bad name when a much better one was right there. The better name should usually be something that already exists and would still fit the thing literally, which is what makes it so strange that nobody used it.
+template: What idiot called it {the bad name} when {the obvious better name} was right there?
+
+## Couldn't Think of the Word
+category: Wordplay
+how: Admit you could not think of the word for something, so you used a different one. The substitute should be wrong, but more descriptive than the real word. For example: "I couldn't think of the word for tortilla so I just called it a burrito skin."
+template: I couldn't think of the word for {the thing} so I just called it {the substitute}.
+
+## Charlie Brown
+category: Wordplay
+how: End a phrase or a title with ", Charlie Brown," so it sounds like a line from a Peanuts special. The joke is the phrase suddenly becoming something Lucy or Linus would say to him.
+template: {a phrase or title}, Charlie Brown
+
 ## Rule of Three
 category: Escalation
 how: Two items set a pattern and the third breaks it. The pattern is the setup and the break is the punchline.
@@ -165,6 +221,16 @@ template: 1. {a normal step}
 template: 2. {a slightly odd step}
 template: 3. {a step that makes no sense}
 
+## On My Until I
+category: Escalation
+how: Say that someone keeps doing something to one of your things until you finally do something about it. It is spicy and hard to get right. The best versions use blanks that belong to the same world, so the action, the thing and the result all feel related.
+template: {He or she} {a verb}s on my {a thing} until I {a related result}.
+
+## Secret Third Thing
+category: Escalation
+how: Name two options that people treat as the only choices, then reject both. The punchline is always the same: "but a secret third thing." You only fill in the two rejected choices, and the joke is how well they work as a pair.
+template: Not {the first choice}, not {the second choice}, but a secret third thing.
+
 ## Nature Documentary
 category: Tiny scenes
 how: Narrate a mundane human like a wildlife film. The calmer the narrator, the funnier the tiny stakes.
@@ -192,3 +258,8 @@ template: {the confession}
 category: Tiny scenes
 how: Describe the sparkling water in a silly way, usually by how faint its flavor is. Say it as if you were explaining a real discovery.
 template: LaCroix is what happens when {a silly way of describing the drink}.
+
+## Your Honor
+category: Tiny scenes
+how: Write a setup, such as a phrase, a complaint, or a confession, and end it with "your honor." The sudden move to a courtroom is the punchline, because it makes the setup sound like testimony.
+template: {a phrase, complaint, or other setup}, your honor.

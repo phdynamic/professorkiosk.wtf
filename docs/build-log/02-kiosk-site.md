@@ -277,3 +277,8 @@
 ## 2026-10-14 · Saga is the Tracer's only example; the ring returns
 - changed: removed the small example link; the Saga link now says tracing takes a while and is worth the wait; the One Ring and its confetti were ported from the old saga page (CSS, markup, `confetti()`), shown while the saga is traced; Tracer suite is 42 checks
 - live-tested: no
+
+## 2026-10-14 · Fourteen new formats
+- added to `public/formats.txt` (now 44 formats in the same 7 categories): You're Telling Me, Only If It's From, What Idiot Called It, Couldn't Think of the Word, Charlie Brown (Wordplay); On My Until I, Secret Third Thing (Escalation); The Goth Version, The Saying Answered (Dialogue); We Are Not the Same, In This Economy, A Ten But (Contrast); I Hope This Email Finds You (Fake documents); Your Honor (Tiny scenes). The developer supplied the formats and edited the descriptions (a little spice is fine; examples for Couldn't Think of the Word and The Goth Version; Secret Third Thing takes only the two rejected choices); the categories and the first drafts of the descriptions were mine
+- changed: the Format Deck checks now expect 44; the hub card says "About 45 formats"
+- live-tested: no

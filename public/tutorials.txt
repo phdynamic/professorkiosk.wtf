@@ -116,6 +116,8 @@ Contests used to be a big part of Twitter, with both contests and calls for twee
 
 [ContestDashboard.live](https://contestdashboard.live) is a tool for running them: it collects replies as entries, checks who followed the rules, and lets judges pick favorites and award a trophy. Entries are replies to the contest post.
 
+If you want to give a trophy to a post you love, [Now That's a Skeet](https://skeet.contestdashboard.live) is a trophy-awarding app that works a bit like FavStar used to.
+
 ## Images and alt text
 
 You can attach up to ten images to a post. A post with up to four shows them in a grid, and one with more than four appears as a carousel with numbered badges, so check how yours looks before you post it.

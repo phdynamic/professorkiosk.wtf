@@ -286,3 +286,7 @@
 ## 2026-10-18 · Now That's a Skeet added to Elsewhere on the network
 - added: hub card 14, "Now That's a Skeet" (skeet.contestdashboard.live, the developer's new trophy-awarding app, in the spirit of FavStar); placed after ContestDashboard.live and colored coral; Clover Kiss Cinema is now 15 and My Twitter Archive 16; hub checks updated. The card text is my wording of the developer's description
 - live-tested: no (the link was not opened from the build environment)
+
+## 2026-10-18 · Tutorials Contests section links to Now That's a Skeet
+- changed: a short paragraph at the end of Contests points to skeet.contestdashboard.live for giving trophies to favorite posts (my wording; the developer asked for the mention)
+- live-tested: no

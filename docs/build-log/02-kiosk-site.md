@@ -282,3 +282,7 @@
 - added to `public/formats.txt` (now 44 formats in the same 7 categories): You're Telling Me, Only If It's From, What Idiot Called It, Couldn't Think of the Word, Charlie Brown (Wordplay); On My Until I, Secret Third Thing (Escalation); The Goth Version, The Saying Answered (Dialogue); We Are Not the Same, In This Economy, A Ten But (Contrast); I Hope This Email Finds You (Fake documents); Your Honor (Tiny scenes). The developer supplied the formats and edited the descriptions (a little spice is fine; examples for Couldn't Think of the Word and The Goth Version; Secret Third Thing takes only the two rejected choices); the categories and the first drafts of the descriptions were mine
 - changed: the Format Deck checks now expect 44; the hub card says "About 45 formats"
 - live-tested: no
+
+## 2026-10-18 · Now That's a Skeet added to Elsewhere on the network
+- added: hub card 14, "Now That's a Skeet" (skeet.contestdashboard.live, the developer's new trophy-awarding app, in the spirit of FavStar); placed after ContestDashboard.live and colored coral; Clover Kiss Cinema is now 15 and My Twitter Archive 16; hub checks updated. The card text is my wording of the developer's description
+- live-tested: no (the link was not opened from the build environment)

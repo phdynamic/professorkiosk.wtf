@@ -263,3 +263,13 @@ template: LaCroix is what happens when {a silly way of describing the drink}.
 category: Tiny scenes
 how: Write a setup, such as a phrase, a complaint, or a confession, and end it with "your honor." The sudden move to a courtroom is the punchline, because it makes the setup sound like testimony.
 template: {a phrase, complaint, or other setup}, your honor.
+
+## (Seductively) X
+category: Contrast
+how: Put "(seductively)" in front of something that is not normally seductive, like a chore, a warning, or a piece of office news. The joke is the stage direction pretending the plain sentence is smoldering.
+template: (seductively) {something not normally seductive}
+
+## X (Flirting)
+category: Contrast
+how: Say something that is not normally flirty, then add "(flirting)" afterward, as if the label made it true. The flatter and more practical the line, the better the label works.
+template: {something not normally flirty} (flirting)

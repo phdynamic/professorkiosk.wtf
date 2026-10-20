@@ -19,7 +19,7 @@ const TXT = fs.readFileSync(path.join(ROOT, 'public', 'formats.txt'), 'utf8');
     if (!f.category || !f.how || !f.template.length) missing.push(name);   // a tip is optional
     if (f.category && !cats.includes(f.category)) cats.push(f.category);
   }
-  ok('F1a the file holds 44 formats in 7 categories, each with a category, how and template (a tip is optional)', blocks.length === 44 && cats.length === 7 && !missing.length, JSON.stringify([blocks.length, cats.length, missing]));
+  ok('F1a the file holds 46 formats in 7 categories, each with a category, how and template (a tip is optional)', blocks.length === 46 && cats.length === 7 && !missing.length, JSON.stringify([blocks.length, cats.length, missing]));
   ok('F1b every line under a format starts with a known label (category, how, template or tip), so no example:, post:, search:, match: or likes: lines are left over', !bad.length, bad.slice(0, 3).join(' / '));
   ok('F1c the text has no em or en dashes and no tabs', !/[—–\t]/.test(TXT));
   ok('F1d the "Rules for what goes in" note is still at the top', /Rules for what goes in/.test(TXT.split('\n').slice(0, 25).join('\n')));
@@ -42,14 +42,14 @@ const TXT = fs.readFileSync(path.join(ROOT, 'public', 'formats.txt'), 'utf8');
   // ---- the page, loaded fresh ----
   const page = await mk(); await page.goto(BASE); await ready(page);
   const info = await page.evaluate(() => ({ tag: document.querySelector('.k-hero .k-tag').textContent, tiles: document.querySelectorAll('#tiles .tile').length, chips: document.querySelectorAll('#cats button').length, found: document.getElementById('found').textContent, fmts: window.__formats.formats().length, hash: location.hash, footer: !!document.querySelector('footer.k-foot .kofi'), night: !!document.getElementById('themeToggle'), help: !!document.getElementById('helpBtn') }));
-  ok('F2 the page opens with a card on the table, 44 tiles, 8 filter chips, the hero tag, footer, Help and Night mode', /Tool 04/.test(info.tag) && info.tiles === 44 && info.chips === 8 && info.found === '44 formats' && info.fmts === 44 && /^#f=/.test(info.hash) && info.footer && info.night && info.help, JSON.stringify(info));
+  ok('F2 the page opens with a card on the table, 46 tiles, 8 filter chips, the hero tag, footer, Help and Night mode', /Tool 04/.test(info.tag) && info.tiles === 46 && info.chips === 8 && info.found === '46 formats' && info.fmts === 46 && /^#f=/.test(info.hash) && info.footer && info.night && info.help, JSON.stringify(info));
   const allOk = await page.evaluate(() => { const bad = []; window.__formats.formats().forEach(f => { const fill = f.labels.map(() => 'x'.repeat(40)); const b = window.__formats.build(f, fill); const n = window.__formats.glen(b.text); if (b.empty.length) bad.push(f.name + ' has an empty blank'); if (n > 300) bad.push(f.name + ' is ' + n); if (/\{[^}]*\}/.test(b.text)) bad.push(f.name + ' still shows a brace'); }); const slugs = window.__formats.formats().map(f => f.slug); return { bad, unique: new Set(slugs).size === slugs.length }; });
   ok('F3 every format fits in 300 characters with 40 characters in each blank, fills every blank, and has its own address', !allOk.bad.length && allOk.unique, JSON.stringify(allOk));
 
   // ---- deep link and what is shown ----
   await page.goto('about:blank'); await page.goto(BASE + '#f=nobody-me'); await ready(page);
   const nm = await page.evaluate(() => ({ name: document.getElementById('fname').textContent, cat: document.getElementById('cat').textContent, pos: document.getElementById('pos').textContent, how: document.getElementById('how').textContent, labels: [...document.querySelectorAll('#fields label')].map(l => l.textContent), tip: document.getElementById('tip').textContent, current: document.querySelector('.tile[aria-current="true"]') && document.querySelector('.tile[aria-current="true"]').textContent }));
-  ok('F4 #f=nobody-me puts that card on the table: name, category, how, one labeled blank, no tip box text (its tip was removed), and its tile marked', nm.name === 'Nobody / Me' && nm.cat === 'Contrast' && /^Card 1 of 44$/.test(nm.pos) && /quiet, ordinary world/.test(nm.how) && nm.labels.length === 1 && nm.labels[0] === 'An oddly specific thing you do' && nm.tip === '' && /On the table/.test(nm.current || ''), JSON.stringify(nm));
+  ok('F4 #f=nobody-me puts that card on the table: name, category, how, one labeled blank, no tip box text (its tip was removed), and its tile marked', nm.name === 'Nobody / Me' && nm.cat === 'Contrast' && /^Card 1 of 46$/.test(nm.pos) && /quiet, ordinary world/.test(nm.how) && nm.labels.length === 1 && nm.labels[0] === 'An oddly specific thing you do' && nm.tip === '' && /On the table/.test(nm.current || ''), JSON.stringify(nm));
 
   // ---- typing, counting, warnings ----
   const g0 = await page.evaluate(() => ({ gaps: [...document.querySelectorAll('#post .gap')].map(g => g.textContent), warn: document.getElementById('warn').textContent, post: document.getElementById('post').textContent }));
@@ -92,8 +92,8 @@ const TXT = fs.readFileSync(path.join(ROOT, 'public', 'formats.txt'), 'utf8');
   // ---- dealing ----
   await page.goto('about:blank'); await page.goto(BASE); await ready(page);
   const names = []; let dup = false;
-  for (let i = 0; i < 44; i++) { const before = await txt(page, '#fname'); await page.click('#deal'); const after = await txt(page, '#fname'); names.push(after); if (before === after) dup = true; }
-  ok('F17 Deal another card always gives a different card and, over 44 deals, many different ones', !dup && new Set(names).size >= 10, String(new Set(names).size));
+  for (let i = 0; i < 46; i++) { const before = await txt(page, '#fname'); await page.click('#deal'); const after = await txt(page, '#fname'); names.push(after); if (before === after) dup = true; }
+  ok('F17 Deal another card always gives a different card and, over 46 deals, many different ones', !dup && new Set(names).size >= 10, String(new Set(names).size));
   await page.evaluate(() => window.__formats.seed(() => 0));
   await page.click('#deal'); const s0 = await txt(page, '#fname'); await page.click('#deal'); const s1 = await txt(page, '#fname');
   ok('F18 dealing says which card it dealt (status line) and never repeats the card on the table', /^Dealt: /.test(await txt(page, '#status')) && s0 !== s1);
@@ -134,7 +134,7 @@ const TXT = fs.readFileSync(path.join(ROOT, 'public', 'formats.txt'), 'utf8');
   // saved data that was damaged or tampered with (set before the page's own scripts run, so leaving the page can not overwrite it)
   const withStore = async (value, url) => { const p = await mk(); await p.addInitScript(v => { try { localStorage.setItem('pk-formats-v1', v); } catch (e) {} }, value); await p.goto(url); await ready(p); return p; };
   const pb = await withStore('{broken', BASE);
-  ok('F28 damaged saved data is ignored and the page still opens a card', (await pb.locator('#fname').innerText()).length > 0 && (await pb.locator('#tiles .tile').count()) === 44);
+  ok('F28 damaged saved data is ignored and the page still opens a card', (await pb.locator('#fname').innerText()).length > 0 && (await pb.locator('#tiles .tile').count()) === 46);
   await pb.close();
   const ph2 = await withStore(JSON.stringify({ sel: '__proto__', vals: { '__proto__': ['x'], 'nobody-me': ['y'.repeat(5000), 7, null, { a: 1 }], 'nope': ['z'] } }), BASE + '#f=nobody-me');
   const hostile = await ph2.evaluate(() => ({ v: document.getElementById('blank0').value.length, polluted: ({}).x === undefined && typeof ({}).constructor === 'function', st: Object.keys(window.__formats.state().vals) }));

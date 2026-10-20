@@ -290,3 +290,7 @@
 ## 2026-10-18 · Tutorials Contests section links to Now That's a Skeet
 - changed: a short paragraph at the end of Contests points to skeet.contestdashboard.live for giving trophies to favorite posts (my wording; the developer asked for the mention)
 - live-tested: no
+
+## 2026-10-20: two more formats
+- added to `public/formats.txt` (now 46 formats): (Seductively) X and X (Flirting), both in Contrast; the developer supplied the formats and the idea that the action must not normally be flirty or seductive; the descriptions are my first drafts
+- changed: the Format Deck checks now expect 46

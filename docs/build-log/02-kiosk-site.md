@@ -294,3 +294,7 @@
 ## 2026-10-20: two more formats
 - added to `public/formats.txt` (now 46 formats): (Seductively) X and X (Flirting), both in Contrast; the developer supplied the formats and the idea that the action must not normally be flirty or seductive; the descriptions are my first drafts
 - changed: the Format Deck checks now expect 46
+
+## 2026-10-21: docs refresh
+- changed: `NEXT-SESSION.txt` rewritten (the Tightener was built; nothing queued); `STATUS.md` hub line now 16 cards (11 built, 5 external); `CLAUDE.md` says five external sites
+- added: decision entry for Now That's a Skeet in `decisions/site-and-ui.md`

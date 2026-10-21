@@ -1,8 +1,8 @@
 NEXT SESSION
 
-Last commit when these docs were updated: 7390f3b (2026-10-13).
-Format Deck (2026-10-13) is committed and was reviewed with the developer format by format (44 formats now, after 14 were added on 2026-10-14; the first 30 in 7 categories, no tips, no worked examples, no Seen in the wild). It is not live-tested.
-Transit Pass (2026-10-13) is built and tested with mocks, not live-tested. Rush Hour (2026-10-13) is built and tested with mocks, not live-tested; nothing else is queued. (Original description, kept for reference:) The developer's description (2026-10-13): pulls your own post history and draws a heatmap of when your posts land and when they do best, by hour and weekday, using the author-feed pagination the Tracer's approach already uses; big accounts mean many requests, so it needs the same cap-plus-"Load more" approach as the Tracer. A second panel, "What Lands", sits next to the heatmap and compares your top 10% of posts against the rest on length, image or no image, reply or not, and opening word, so it shows what your own hits have in common. The developer said to ask them questions about Rush Hour when that step starts.
-Tightener and Daily Reps will not be built (the developer, 2026-10-13); Transit Pass was built first because Rush Hour builds on the same profile fetch.
+Last commit when these docs were updated: 906c2ac (2026-10-20).
+Nothing is queued. The developer has been adding formats and edits in small steps; wait for their next request.
+Built since 2026-10-13, all tested with mocks and none live-tested: Format Deck (46 formats in 7 categories; the last two, (Seductively) X and X (Flirting), were added 2026-10-20), Transit Pass, Rush Hour (with click-into-square pop-up), Mutual Match (Community and likes-and-reposts tabs), Joke Tightener, the Tracer with the Imagine Flagons Saga as its only example (and the One Ring), the Tutorials rewrite (14 sections, including Posting), and the Now That's a Skeet card (hub 14) plus its mention in the Tutorials Contests section.
+The Tightener was built after all (2026-10-13); Daily Reps will not be built (the developer).
 Rule the developer set: no tool that stores or shares visitor content (moderation). See decisions/site-and-ui.md.
 Live checks owed: see TESTING-OWED.md.

@@ -173,3 +173,9 @@
 - why: the developer asked for it; showing the ring from the start of the trace (not after the post loads) and hiding it on phones and for reduced motion were my calls
 - source: developer request, 2026-10-14
 - live-tested: no
+
+### 2026-10-18 · Now That's a Skeet is listed under Elsewhere and in the Tutorials Contests section · active
+- what: hub card 14 "Now That's a Skeet" (skeet.contestdashboard.live, a trophy-awarding app for giving awards to favorite posts, a bit like FavStar) in Elsewhere on the network, so Clover Kiss Cinema and My Twitter Archive became 15 and 16; the Tutorials Contests section ends with a sentence linking to it
+- why: the developer built the app and asked for both; the card colour and the wording of the Contests sentence were my choices
+- source: developer requests, 2026-10-18
+- live-tested: no

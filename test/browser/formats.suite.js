@@ -227,6 +227,13 @@ const TXT = fs.readFileSync(path.join(ROOT, 'public', 'formats.txt'), 'utf8');
   ok('F41 with reduced motion on, nothing animates (tiles and buttons have no transition)', await rm.evaluate(() => [...document.querySelectorAll('.tile, .k-btn')].every(e => getComputedStyle(e).transitionDuration.split(',').every(d => parseFloat(d) === 0))));
   await rm.close();
 
+  // ---- order: formats of one category sit together, whatever order the file has ----
+  const scr = '## A1\ncategory: Red\nhow: One.\ntemplate: a {x}\n\n## B1\ncategory: Blue\nhow: Two.\ntemplate: b {x}\n\n## A2\ncategory: Red\nhow: Three.\ntemplate: c {x}\n\n## B2\ncategory: Blue\nhow: Four.\ntemplate: d {x}\n';
+  const sp = await mk(); await sp.route('**/formats.txt', r => r.fulfill({ contentType: 'text/plain; charset=utf-8', body: scr })); await sp.goto(BASE); await ready(sp);
+  const sorted = await sp.evaluate(() => [...document.querySelectorAll('#tiles .nm')].map(e => e.textContent).join(',') + '|' + [...document.querySelectorAll('#cats button')].map(e => e.textContent).join(','));
+  ok('F43 tiles are grouped by category (categories in first-appearance order, file order inside each) even when the file interleaves them', sorted === 'A1,A2,B1,B2|All,Red,Blue', sorted);
+  await sp.close();
+
   // ---- Help ----
   const hp = await mk(); await hp.goto(BASE); await ready(hp); await hp.click('#helpBtn');
   const help = await hp.evaluate(() => document.querySelector('#help .hb').textContent);

@@ -11,7 +11,7 @@
 ;; The same {label} used twice is one blank that fills in twice (handy for callbacks).
 ;; The post must fit in 300 characters with about 40 characters in each blank. The test suite checks this.
 ;; In how and tip, a link looks like [text](/tracer) or [text](https://example.com).
-;; Categories show up on the page in the order they first appear here.
+;; Categories show up on the page in the order they first appear here, and the page keeps each category's formats together, so a format can go anywhere in this file.
 ;;
 ;; Rules for what goes in (same as the Mashup Machine's topics): no slurs, no named real people,
 ;; nothing about real tragedies, nothing explicit. Do not use em dashes or en dashes.

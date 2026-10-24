@@ -454,7 +454,10 @@ window.addEventListener('hashchange', function () { var s = fromHash(); if (s &&
 function failed() { $('bench').hidden = true; $('browse').hidden = true; $('loadmsg').hidden = false; }
 function init(list) {
   if (!list.length) { failed(); return; }
-  F = list;
+  // categories keep the order they first appear in the file; formats of one category sit together, in file order
+  var seen = [];
+  list.forEach(function (f) { if (seen.indexOf(f.cat) < 0) seen.push(f.cat); });
+  F = list.map(function (f, i) { return { f: f, i: i }; }).sort(function (a, b) { return seen.indexOf(a.f.cat) - seen.indexOf(b.f.cat) || a.i - b.i; }).map(function (x) { return x.f; });
   F.forEach(function (f) { bySlug[f.slug] = f; if (CATS.indexOf(f.cat) < 0) CATS.push(f.cat); });
   load();
   renderChips();

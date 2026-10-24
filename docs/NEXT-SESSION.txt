@@ -2,7 +2,7 @@ NEXT SESSION
 
 Last commit when these docs were updated: 906c2ac (2026-10-20).
 Nothing is queued. The developer has been adding formats and edits in small steps; wait for their next request.
-Built since 2026-10-13, all tested with mocks and none live-tested: Format Deck (46 formats in 7 categories; the last two, (Seductively) X and X (Flirting), were added 2026-10-20), Transit Pass, Rush Hour (with click-into-square pop-up), Mutual Match (Community and likes-and-reposts tabs), Joke Tightener, the Tracer with the Imagine Flagons Saga as its only example (and the One Ring), the Tutorials rewrite (14 sections, including Posting), and the Now That's a Skeet card (hub 14) plus its mention in the Tutorials Contests section.
+Built since 2026-10-13, all tested with mocks and none live-tested: Format Deck (47 formats in 7 categories; the last three, (Seductively) X, X (Flirting) and Sure Sex Is Great, But, were added 2026-10-20 to 2026-10-24), Transit Pass, Rush Hour (with click-into-square pop-up), Mutual Match (Community and likes-and-reposts tabs), Joke Tightener, the Tracer with the Imagine Flagons Saga as its only example (and the One Ring), the Tutorials rewrite (14 sections, including Posting), and the Now That's a Skeet card (hub 14) plus its mention in the Tutorials Contests section.
 The Tightener was built after all (2026-10-13); Daily Reps will not be built (the developer).
 Rule the developer set: no tool that stores or shares visitor content (moderation). See decisions/site-and-ui.md.
 Live checks owed: see TESTING-OWED.md.

@@ -273,3 +273,8 @@ template: (seductively) {something not normally seductive}
 category: Contrast
 how: Say something that is not normally flirty, then add "(flirting)" afterward, as if the label made it true. The flatter and more practical the line, the better the label works.
 template: {something not normally flirty} (flirting)
+
+## Sure Sex Is Great, But
+category: Contrast
+how: Compare sex to something else that feels good, and let the other thing win. It should be a pleasure almost everyone knows, like a nap or a perfect sandwich, that contrasts with sex in an interesting way. It can be better for just this one person. The joke is undercutting the idea that sex is the best feeling there is.
+template: Sure sex is great, but {a different pleasure that wins}

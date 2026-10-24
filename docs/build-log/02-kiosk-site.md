@@ -298,3 +298,7 @@
 ## 2026-10-21: docs refresh
 - changed: `NEXT-SESSION.txt` rewritten (the Tightener was built; nothing queued); `STATUS.md` hub line now 16 cards (11 built, 5 external); `CLAUDE.md` says five external sites
 - added: decision entry for Now That's a Skeet in `decisions/site-and-ui.md`
+
+## 2026-10-24: another format
+- added to `public/formats.txt` (now 47 formats): Sure Sex Is Great, But (Contrast); the developer supplied the format and its explanation; the description is my first draft
+- changed: the Format Deck checks now expect 47

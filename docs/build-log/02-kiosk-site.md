@@ -302,3 +302,6 @@
 ## 2026-10-24: another format
 - added to `public/formats.txt` (now 47 formats): Sure Sex Is Great, But (Contrast); the developer supplied the format and its explanation; the description is my first draft
 - changed: the Format Deck checks now expect 47
+
+## 2026-10-24: formats regrouped
+- changed: `public/formats.txt` blocks reordered so each category is contiguous (category order and order within each category unchanged); no format text changed

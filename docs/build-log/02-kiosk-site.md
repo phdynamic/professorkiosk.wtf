@@ -309,3 +309,7 @@
 ## 2026-10-24: Format Deck sorts by category
 - changed: `public/formats.html` groups the formats by category when it loads (categories in the order they first appear in `formats.txt`, file order inside each), so a new format shows with its category wherever it is added to the file
 - added: check F43 in `formats.suite.js` (a scrambled file still gives grouped tiles)
+
+## 2026-11-10: night mode contrast
+- changed: night-mode tokens in `public/kiosk.css` (page background darker, panels lighter, outlines brighter, soft fills and tints raised to stay distinct from the lighter panels, footer and "Now serving" darker than the page); `index.html` "Now serving" background matched; no layout or day-mode change
+- note: the developer said panes and background were too close in night mode; the new values are my choice; checked by screenshots of the hub and Mutual Match only, and by the full browser suite

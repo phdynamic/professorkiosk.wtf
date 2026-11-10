@@ -34,19 +34,19 @@
 }
 
 html[data-theme="dark"] {
-  --bg: #14153a;
-  --dots: rgba(255, 255, 255, 0.07);
-  --surface: #1f2150;
-  --surface2: #2a2c66;
-  --ink: #f3f0ff;
-  --ink2: #b9b6e6;
-  --line: #8f93e8;
-  --shadow-c: #07081f;
+  --bg: #0b0c26;
+  --dots: rgba(255, 255, 255, 0.06);
+  --surface: #2b2e72;
+  --surface2: #383c8a;
+  --ink: #f6f3ff;
+  --ink2: #c4c1ee;
+  --line: #a9adff;
+  --shadow-c: #04051a;
   --link: #ffd23f;
-  --tint-coral: #4a2335;
-  --tint-teal: #17413f;
-  --tint-purple: #35306b;
-  --tint-yellow: #4a4220;
+  --tint-coral: #5c2b42;
+  --tint-teal: #1c5552;
+  --tint-purple: #463e8c;
+  --tint-yellow: #5a5224;
 }
 
 html { scroll-behavior: smooth; }
@@ -145,7 +145,7 @@ html[data-theme="dark"] .k-top .night { background: var(--yellow); color: var(--
 
 /* ---- Footer ---- */
 .k-foot { margin-top: 56px; background: var(--navy); color: #fff; border-top: 0; position: relative; }
-html[data-theme="dark"] .k-foot { background: #0b0c26; }
+html[data-theme="dark"] .k-foot { background: #04051a; }
 .k-foot::before {
   content: ""; position: absolute; left: 0; right: 0; top: -6px; height: 6px;
   background: linear-gradient(90deg, var(--coral) 0 16.66%, var(--yellow) 0 33.33%, var(--teal) 0 50%, var(--sky) 0 66.66%, var(--purple) 0 83.33%, var(--pink) 0);
